@@ -93,20 +93,24 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-full bg-stone-950 text-stone-100">
-      <header className="pt-safe sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
-        <div className="mx-auto flex max-w-2xl items-center gap-1 px-2 pb-2">
-          <Link to="/" aria-label="Back to library" className="rounded-lg p-2.5 text-stone-400">
+    <div className="min-h-full bg-paper text-ink">
+      <header className="pt-safe sticky top-0 z-10 border-b border-ink/10 bg-paper/90 backdrop-blur">
+        <div className="mx-auto flex h-14 max-w-2xl items-center gap-2 px-2">
+          <Link
+            to="/"
+            aria-label="Back to library"
+            className="grid h-10 w-10 place-items-center rounded-full text-muted transition hover:bg-ink/8"
+          >
             <BackIcon />
           </Link>
-          <h1 className="text-base font-semibold">Settings</h1>
+          <h1 className="font-serif text-xl font-medium">Settings</h1>
         </div>
       </header>
 
-      <main className="mx-auto max-w-2xl space-y-8 px-4 py-6">
+      <main className="mx-auto max-w-2xl space-y-10 px-4 py-8">
         <section>
-          <h2 className="text-sm font-semibold">Chat model</h2>
-          <p className="mt-1 text-sm text-stone-400">
+          <h2 className="font-serif text-lg font-medium">Chat model</h2>
+          <p className="mt-1 text-sm text-muted">
             Chat works out of the box — no account or key needed.
           </p>
 
@@ -129,8 +133,8 @@ export default function SettingsPage() {
         {settings.provider === 'openai' && (
           <>
             <section>
-              <h2 className="text-sm font-semibold">OpenAI API key</h2>
-              <p className="mt-1 text-sm text-stone-400">
+              <h2 className="font-serif text-lg font-medium">OpenAI API key</h2>
+              <p className="mt-1 text-sm text-muted">
                 Stored only in this browser and sent only to api.openai.com. Don't use this on a
                 shared device.
               </p>
@@ -147,23 +151,19 @@ export default function SettingsPage() {
                 placeholder="sk-…"
                 autoComplete="off"
                 spellCheck={false}
-                className="mt-3 w-full rounded-lg border border-stone-700 bg-stone-900 px-3 py-2.5 font-mono text-sm outline-none focus:border-amber-500"
+                className="mt-3 w-full rounded-xl border border-line bg-card px-3 py-2.5 font-mono text-sm outline-none focus:border-olive"
               />
 
               <div className="mt-3 flex items-center gap-3">
                 <button
                   onClick={() => void testAndSave()}
                   disabled={status === 'checking'}
-                  className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-stone-950 disabled:opacity-50"
+                  className="rounded-full bg-olive px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
                 >
                   {status === 'checking' ? 'Checking…' : 'Test and save'}
                 </button>
                 {message && (
-                  <p
-                    className={`text-sm ${
-                      status === 'error' ? 'text-red-300' : 'text-emerald-300'
-                    }`}
-                  >
+                  <p className={`text-sm ${status === 'error' ? 'text-[#a33a2c]' : 'text-olive'}`}>
                     {message}
                   </p>
                 )}
@@ -171,11 +171,11 @@ export default function SettingsPage() {
             </section>
 
             <section>
-              <h2 className="text-sm font-semibold">OpenAI models</h2>
+              <h2 className="font-serif text-lg font-medium">OpenAI models</h2>
               <select
                 value={settings.model}
                 onChange={(e) => void saveSettings({ model: e.target.value })}
-                className="mt-2 w-full rounded-lg border border-stone-700 bg-stone-900 px-3 py-2.5 text-sm"
+                className="mt-2 w-full rounded-xl border border-line bg-card px-3 py-2.5 text-sm"
               >
                 {MODELS.map((m) => (
                   <option key={m.value} value={m.value}>
@@ -185,13 +185,13 @@ export default function SettingsPage() {
               </select>
 
               <h3 className="mt-5 text-sm font-semibold">Summary model</h3>
-              <p className="mt-1 text-xs text-stone-500">
+              <p className="mt-1 text-xs text-muted">
                 Used for the per-book memory digest. A cheap model is plenty.
               </p>
               <select
                 value={settings.summaryModel}
                 onChange={(e) => void saveSettings({ summaryModel: e.target.value })}
-                className="mt-2 w-full rounded-lg border border-stone-700 bg-stone-900 px-3 py-2.5 text-sm"
+                className="mt-2 w-full rounded-xl border border-line bg-card px-3 py-2.5 text-sm"
               >
                 {MODELS.map((m) => (
                   <option key={m.value} value={m.value}>
@@ -204,8 +204,8 @@ export default function SettingsPage() {
         )}
 
         <section>
-          <h2 className="text-sm font-semibold">Personal audiobook</h2>
-          <p className="mt-1 text-sm text-stone-400">
+          <h2 className="font-serif text-lg font-medium">Personal audiobook</h2>
+          <p className="mt-1 text-sm text-muted">
             Unlocks the private <em>Twilight of the Idols</em> stream. The token is stored only in
             this browser's IndexedDB and is sent only to the audiobook Worker. Don't use it on a
             shared device.
@@ -222,20 +222,20 @@ export default function SettingsPage() {
             placeholder="Personal access token"
             autoComplete="off"
             spellCheck={false}
-            className="mt-3 w-full rounded-lg border border-stone-700 bg-stone-900 px-3 py-2.5 font-mono text-sm outline-none focus:border-amber-500"
+            className="mt-3 w-full rounded-xl border border-line bg-card px-3 py-2.5 font-mono text-sm outline-none focus:border-olive"
           />
           <div className="mt-3 flex items-center gap-3">
             <button
               onClick={() => void testAndSaveAudiobookToken()}
               disabled={audiobookStatus === 'checking'}
-              className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-stone-950 disabled:opacity-50"
+              className="rounded-full bg-olive px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
             >
               {audiobookStatus === 'checking' ? 'Checking…' : 'Test and save'}
             </button>
             {audiobookMessage && (
               <p
                 className={`text-sm ${
-                  audiobookStatus === 'error' ? 'text-red-300' : 'text-emerald-300'
+                  audiobookStatus === 'error' ? 'text-[#a33a2c]' : 'text-olive'
                 }`}
               >
                 {audiobookMessage}
@@ -250,11 +250,11 @@ export default function SettingsPage() {
               type="checkbox"
               checked={settings.spoilerGuard}
               onChange={(e) => void saveSettings({ spoilerGuard: e.target.checked })}
-              className="mt-0.5 h-4 w-4 accent-amber-500"
+              className="mt-0.5 h-4 w-4 accent-rust"
             />
             <span>
               <span className="text-sm font-medium">Avoid spoilers</span>
-              <span className="mt-0.5 block text-sm text-stone-400">
+              <span className="mt-0.5 block text-sm text-muted">
                 Ask the model not to reveal anything past your current position unless you ask.
               </span>
             </span>
@@ -262,8 +262,8 @@ export default function SettingsPage() {
         </section>
 
         <section>
-          <h2 className="text-sm font-semibold">Data</h2>
-          <p className="mt-1 text-sm text-stone-400">
+          <h2 className="font-serif text-lg font-medium">Data</h2>
+          <p className="mt-1 text-sm text-muted">
             Everything lives in this browser's IndexedDB. The export is a JSON file containing your
             highlighted passages and the surrounding text, every chat message, and the AI's running
             notes on each book. It does not include your API key, audiobook token, or the book
@@ -271,7 +271,7 @@ export default function SettingsPage() {
           </p>
           <button
             onClick={() => void exportData()}
-            className="mt-3 rounded-lg border border-stone-700 px-4 py-2 text-sm font-medium"
+            className="mt-3 rounded-full border border-line px-4 py-2 text-sm font-semibold transition hover:bg-ink/5"
           >
             Export highlights and chats
           </button>
@@ -280,15 +280,15 @@ export default function SettingsPage() {
         <KoreaderImport />
 
         <section>
-          <h2 className="text-sm font-semibold">Feedback</h2>
-          <p className="mt-1 text-sm text-stone-400">
+          <h2 className="font-serif text-lg font-medium">Feedback</h2>
+          <p className="mt-1 text-sm text-muted">
             Something broken, or an idea for the app? Open an issue on GitHub.
           </p>
           <a
             href={ISSUES_URL}
             target="_blank"
             rel="noreferrer"
-            className="mt-3 inline-block rounded-lg border border-stone-700 px-4 py-2 text-sm font-medium"
+            className="mt-3 inline-block rounded-full border border-line px-4 py-2 text-sm font-semibold transition hover:bg-ink/5"
           >
             Send feedback on GitHub ↗
           </a>
@@ -314,7 +314,7 @@ function ProviderOption({
   return (
     <label
       className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 ${
-        selected ? 'border-amber-500 bg-stone-900' : 'border-stone-700'
+        selected ? 'border-olive bg-card' : 'border-line'
       }`}
     >
       <input
@@ -323,11 +323,11 @@ function ProviderOption({
         value={value}
         checked={selected}
         onChange={() => void saveSettings({ provider: value })}
-        className="mt-0.5 h-4 w-4 accent-amber-500"
+        className="mt-0.5 h-4 w-4 accent-rust"
       />
       <span>
         <span className="text-sm font-medium">{title}</span>
-        <span className="mt-0.5 block text-sm text-stone-400">{detail}</span>
+        <span className="mt-0.5 block text-sm text-muted">{detail}</span>
       </span>
     </label>
   )

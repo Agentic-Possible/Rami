@@ -82,8 +82,8 @@ export default defineConfig(({ mode }) => {
           name: 'Marginalia — EPUB Reader + AI Chat',
           short_name: 'Marginalia',
           description: 'Read EPUBs and chat with AI about what you highlight.',
-          theme_color: '#1c1917',
-          background_color: '#1c1917',
+          theme_color: '#f3f1e9',
+          background_color: '#f3f1e9',
           display: 'standalone',
           start_url: '/',
           icons: [

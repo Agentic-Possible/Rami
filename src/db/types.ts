@@ -150,7 +150,7 @@ export const DEFAULT_SETTINGS: Settings = {
   provider: 'hosted',
   model: 'gpt-4o-mini',
   summaryModel: 'gpt-4o-mini',
-  theme: 'dark',
+  theme: 'light',
   fontSize: 100,
   spoilerGuard: true,
 }

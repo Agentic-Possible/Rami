@@ -82,6 +82,15 @@ export default function ReaderPage() {
   const palette = THEMES[settings.theme]
   const percent = Math.round((reader.location?.progress ?? book?.progress ?? 0) * 100)
   const isDark = settings.theme === 'dark'
+  const activeStyle = {
+    color: palette.link,
+    background: `color-mix(in srgb, ${palette.link} 10%, transparent)`,
+  }
+  const chatCount =
+    useLiveQuery(
+      () => (bookId ? db.conversations.where('bookId').equals(bookId).count() : 0),
+      [bookId],
+    ) ?? 0
 
   // Keep the painted annotations in sync with stored highlights. epub.js has no
   // "replace all", so track what we painted and repaint on any change.
@@ -244,7 +253,7 @@ export default function ReaderPage() {
     return (
       <CenteredNote>
         That book is not in your library.{' '}
-        <Link to="/" className="text-amber-500 underline">
+        <Link to="/" className="text-rust underline underline-offset-2">
           Back to library
         </Link>
       </CenteredNote>
@@ -255,7 +264,7 @@ export default function ReaderPage() {
       <CenteredNote>
         “{book.title}” was removed from your library. Import the EPUB again to keep reading, or open
         its{' '}
-        <Link to={`/book/${book.id}/chats`} className="text-amber-500 underline">
+        <Link to={`/book/${book.id}/chats`} className="text-rust underline underline-offset-2">
           conversations and memory
         </Link>
         .
@@ -271,53 +280,78 @@ export default function ReaderPage() {
       <header
         className={`pt-safe no-select absolute inset-x-0 top-0 z-30 border-b transition-all duration-200 ${palette.chrome} ${palette.border} ${chromeClasses}`}
       >
-        <div className="flex items-center gap-1 px-2 pb-2">
-          <Link to="/" aria-label="Back to library" className="rounded-lg p-2.5 opacity-80">
-            <BackIcon />
-          </Link>
-          <div className="min-w-0 flex-1 px-1">
-            <p className="truncate text-sm font-medium">{book.title}</p>
-            <p className="truncate text-xs opacity-55">{reader.location?.chapter ?? book.author}</p>
+        <div className="grid h-14 grid-cols-[1fr_auto] items-center gap-2 px-2.5 sm:h-[70px] sm:grid-cols-[1fr_auto_1fr] sm:px-6">
+          <div className="flex min-w-0 items-center gap-1">
+            <Link to="/" aria-label="Back to library" className={iconButton}>
+              <BackIcon />
+            </Link>
+            <div className="ml-1 min-w-0">
+              <p className="truncate font-serif text-[15px] font-medium">{book.title}</p>
+              <p className="truncate text-[11px]" style={{ color: palette.muted }}>
+                {book.author}
+              </p>
+            </div>
           </div>
-          <Link
-            to={`/book/${book.id}/chats`}
-            aria-label="Conversations and highlights"
-            className="rounded-lg p-2.5 opacity-80"
-          >
-            <ChatIcon />
-          </Link>
-          {isTwilightOfTheIdols(book.title) && (
-            <button
-              onClick={() => {
-                setAudiobookStarted(true)
-                setAudiobookOpen((open) => !open)
-              }}
-              aria-label={audiobookOpen ? 'Hide audiobook controls' : 'Show audiobook controls'}
-              aria-pressed={audiobookOpen}
-              className="rounded-lg p-2.5 opacity-80"
+          {reader.location?.chapter && (
+            <p
+              className="hidden max-w-[28vw] truncate text-[10px] font-semibold tracking-[0.17em] uppercase sm:block"
+              style={{ color: palette.muted }}
             >
-              <HeadphonesIcon />
-            </button>
+              {reader.location.chapter}
+            </p>
           )}
-          <button
-            onClick={() => setPanel('toc')}
-            aria-label="Table of contents"
-            className="rounded-lg p-2.5 opacity-80"
-          >
-            <ListIcon />
-          </button>
-          <button
-            onClick={() => setPanel('display')}
-            aria-label="Reader settings"
-            className="rounded-lg p-2.5 opacity-80"
-          >
-            <TypeIcon />
-          </button>
+          <div className="col-start-2 flex items-center justify-end gap-0.5 sm:col-start-3">
+            {isTwilightOfTheIdols(book.title) && (
+              <button
+                onClick={() => {
+                  setAudiobookStarted(true)
+                  setAudiobookOpen((open) => !open)
+                }}
+                aria-label={audiobookOpen ? 'Hide audiobook controls' : 'Show audiobook controls'}
+                aria-pressed={audiobookOpen}
+                className={iconButton}
+                style={audiobookOpen ? activeStyle : undefined}
+              >
+                <HeadphonesIcon />
+              </button>
+            )}
+            <button
+              onClick={() => setPanel('display')}
+              aria-label="Reader settings"
+              className={iconButton}
+              style={panel === 'display' ? activeStyle : undefined}
+            >
+              <TypeIcon />
+            </button>
+            <button
+              onClick={() => setPanel('toc')}
+              aria-label="Table of contents"
+              className={iconButton}
+              style={panel === 'toc' ? activeStyle : undefined}
+            >
+              <ListIcon />
+            </button>
+            <Link
+              to={`/book/${book.id}/chats`}
+              aria-label="Conversations and highlights"
+              className={`relative ml-1 flex h-10 items-center gap-2 rounded-full text-xs font-semibold sm:border sm:px-3.5 ${palette.border}`}
+            >
+              <span className="grid h-10 w-10 place-items-center sm:contents">
+                <ChatIcon className="h-[18px] w-[18px]" />
+              </span>
+              <span className="hidden sm:inline">Marginalia</span>
+              {chatCount > 0 && (
+                <span className="absolute top-0.5 right-0.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-rust px-1 text-[10px] text-white sm:static">
+                  {chatCount}
+                </span>
+              )}
+            </Link>
+          </div>
         </div>
       </header>
 
       {/* epub.js renders its iframe here; it owns all touch/selection inside. */}
-      <div ref={setViewer} className="h-full w-full" />
+      <div ref={setViewer} className="mx-auto h-full w-full max-w-[760px]" />
 
       {!reader.ready && !reader.error && (
         <div
@@ -341,23 +375,27 @@ export default function ReaderPage() {
       )}
 
       <footer
-        className={`pb-safe no-select absolute inset-x-0 bottom-0 z-30 transition-all duration-200 ${palette.chrome} ${
+        className={`pb-safe no-select absolute inset-x-0 bottom-0 z-30 border-t transition-all duration-200 ${palette.chrome} ${palette.border} ${
           chromeVisible ? 'opacity-100' : 'pointer-events-none translate-y-full opacity-0'
         }`}
       >
-        <div className="h-0.5 w-full bg-current/10">
-          <div
-            className="h-full transition-[width] duration-300"
-            style={{ width: `${percent}%`, background: palette.link }}
-          />
-        </div>
-        <div className="flex items-center justify-between px-4 py-2 text-xs opacity-60">
-          <button onClick={reader.prev} className="-my-1 px-4 py-3">
-            ‹ Prev
+        <div
+          className="flex items-center justify-center gap-3 px-2 text-[11px]"
+          style={{ color: palette.muted }}
+        >
+          <button onClick={reader.prev} aria-label="Previous page" className={pageTurn}>
+            <BackIcon className="h-4 w-4" />
           </button>
-          <span>{percent}%</span>
-          <button onClick={reader.next} className="-my-1 px-4 py-3">
-            Next ›
+          <span className="w-9 text-right tabular-nums">{percent}%</span>
+          <div className="h-0.5 w-28 overflow-hidden rounded bg-current/20 sm:w-40">
+            <div
+              className="h-full transition-[width] duration-300"
+              style={{ width: `${percent}%`, background: palette.link }}
+            />
+          </div>
+          <span className="w-9" aria-hidden />
+          <button onClick={reader.next} aria-label="Next page" className={pageTurn}>
+            <BackIcon className="h-4 w-4 rotate-180" />
           </button>
         </div>
       </footer>
@@ -391,6 +429,7 @@ export default function ReaderPage() {
       {panel === 'toc' && (
         <TocDrawer
           toc={reader.toc}
+          bookTitle={book.title}
           theme={settings.theme}
           currentChapterHref={reader.location?.chapterHref}
           onSelect={(href) => {
@@ -413,6 +452,7 @@ export default function ReaderPage() {
         <DisplaySheet
           theme={settings.theme}
           fontSize={settings.fontSize}
+          progress={percent}
           onChange={(patch) =>
             void saveSettings(patch as { theme?: ReaderTheme; fontSize?: number })
           }
@@ -442,9 +482,14 @@ export default function ReaderPage() {
   )
 }
 
+const iconButton =
+  'grid h-10 w-10 shrink-0 place-items-center rounded-full transition hover:bg-current/8 active:scale-95'
+const pageTurn =
+  'grid h-11 w-14 place-items-center rounded-full transition hover:bg-current/8 active:scale-95'
+
 function CenteredNote({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-full items-center justify-center bg-stone-950 p-6 text-center text-sm text-stone-400">
+    <div className="flex h-full items-center justify-center bg-paper p-6 text-center font-serif text-[15px] text-muted">
       <p>{children}</p>
     </div>
   )

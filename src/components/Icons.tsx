@@ -2,155 +2,136 @@ type Props = { className?: string }
 
 const base = 'h-5 w-5'
 
-export function BackIcon({ className = base }: Props) {
+function Svg({ className = base, children }: Props & { children: React.ReactNode }) {
   return (
     <svg
+      aria-hidden="true"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
       className={className}
     >
-      <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+      {children}
     </svg>
   )
 }
 
-export function GearIcon({ className = base }: Props) {
+export function BackIcon({ className }: Props) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      className={className}
-    >
+    <Svg className={className}>
+      <path d="M19 12H5m6-6-6 6 6 6" />
+    </Svg>
+  )
+}
+
+export function ChevronIcon({ className }: Props) {
+  return (
+    <Svg className={className}>
+      <path d="m9 18 6-6-6-6" />
+    </Svg>
+  )
+}
+
+export function GearIcon({ className }: Props) {
+  return (
+    <Svg className={className}>
       <circle cx="12" cy="12" r="3" />
-      <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z" />
-    </svg>
+      <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.6v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z" />
+    </Svg>
   )
 }
 
-export function ChatIcon({ className = base }: Props) {
+export function ChatIcon({ className }: Props) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      className={className}
-    >
-      <path
-        d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+    <Svg className={className}>
+      <path d="M21 12a8 8 0 0 1-8 8H6l-4 3 1.4-5.1A9 9 0 1 1 21 12Z" />
+    </Svg>
   )
 }
 
-export function ListIcon({ className = base }: Props) {
+export function ListIcon({ className }: Props) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      className={className}
-    >
-      <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" />
-    </svg>
+    <Svg className={className}>
+      <path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01" />
+    </Svg>
   )
 }
 
-export function TypeIcon({ className = base }: Props) {
+export function TypeIcon({ className }: Props) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      className={className}
-    >
-      <path d="M4 7V5h16v2M9 19h6M12 5v14" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    <Svg className={className}>
+      <path d="M4 7V4h16v3M9 20h6M12 4v16" />
+    </Svg>
   )
 }
 
-export function HeadphonesIcon({ className = base }: Props) {
+export function HeadphonesIcon({ className }: Props) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      className={className}
-    >
-      <path d="M4 14v-2a8 8 0 0116 0v2" strokeLinecap="round" />
-      <path
-        d="M4 14a2 2 0 012-2h1v7H6a2 2 0 01-2-2v-3zM20 14a2 2 0 00-2-2h-1v7h1a2 2 0 002-2v-3z"
-        strokeLinejoin="round"
-      />
-    </svg>
+    <Svg className={className}>
+      <path d="M4 14v-2a8 8 0 0 1 16 0v2" />
+      <path d="M4 14a2 2 0 0 1 2-2h1v7H6a2 2 0 0 1-2-2v-3zM20 14a2 2 0 0 0-2-2h-1v7h1a2 2 0 0 0 2-2v-3z" />
+    </Svg>
   )
 }
 
-export function PlusIcon({ className = base }: Props) {
+export function PlusIcon({ className }: Props) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      className={className}
-    >
-      <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-    </svg>
+    <Svg className={className}>
+      <path d="M12 5v14M5 12h14" />
+    </Svg>
   )
 }
 
-export function TrashIcon({ className = base }: Props) {
+export function MoreIcon({ className }: Props) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      className={className}
-    >
-      <path
-        d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+    <Svg className={className}>
+      <circle cx="5" cy="12" r="1" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
+      <circle cx="19" cy="12" r="1" fill="currentColor" stroke="none" />
+    </Svg>
   )
 }
 
-export function CloseIcon({ className = base }: Props) {
+export function SunIcon({ className }: Props) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      className={className}
-    >
-      <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
-    </svg>
+    <Svg className={className}>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+    </Svg>
   )
 }
 
-export function SendIcon({ className = base }: Props) {
+export function MoonIcon({ className }: Props) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      className={className}
-    >
-      <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    <Svg className={className}>
+      <path d="M20 15.2A8.5 8.5 0 0 1 8.8 4 8.5 8.5 0 1 0 20 15.2Z" />
+    </Svg>
+  )
+}
+
+export function TrashIcon({ className }: Props) {
+  return (
+    <Svg className={className}>
+      <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6" />
+    </Svg>
+  )
+}
+
+export function CloseIcon({ className }: Props) {
+  return (
+    <Svg className={className}>
+      <path d="m6 6 12 12M18 6 6 18" />
+    </Svg>
+  )
+}
+
+export function SendIcon({ className }: Props) {
+  return (
+    <Svg className={className}>
+      <path d="M12 19V5m-6 6 6-6 6 6" />
+    </Svg>
   )
 }

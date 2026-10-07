@@ -38,7 +38,7 @@ export default function SelectionBar({
         role="toolbar"
         aria-label="Selection actions"
         style={{ top: Math.max(8, top) }}
-        className={`no-select fixed inset-x-3 z-50 rounded-xl border shadow-2xl shadow-black/40 ${palette.chrome} ${palette.chromeText} ${palette.border}`}
+        className={`no-select fixed inset-x-3 z-50 mx-auto max-w-md rounded-2xl border shadow-[0_16px_44px_rgba(30,30,24,0.22)] ${palette.chrome} ${palette.chromeText} ${palette.border}`}
       >
         <div className="flex items-center gap-1.5 px-3 pt-3">
           {(Object.keys(HIGHLIGHT_COLORS) as HighlightColor[]).map((color) => (
@@ -71,14 +71,14 @@ export default function SelectionBar({
         <div className="flex items-center gap-2 p-3">
           <button
             onClick={onChat}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-amber-500 py-2.5 text-sm font-medium text-stone-950"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-olive py-2.5 text-sm font-semibold text-white"
           >
             <ChatIcon className="h-4 w-4" />
             Chat about this
           </button>
           <button
             onClick={onCopy}
-            className={`rounded-lg border px-3.5 py-2.5 text-sm font-medium ${palette.border}`}
+            className={`rounded-full border px-4 py-2.5 text-sm font-semibold ${palette.border}`}
           >
             Copy
           </button>
