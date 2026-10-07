@@ -16,6 +16,10 @@
       "custom_domain": true
     }
   ],
+  // Worker Previews for PR builds; they do not inherit production vars or secrets.
+  // Routes turn workers.dev off by default, so enable preview hostnames explicitly.
+  "preview_urls": true,
+  "previews": {},
   "observability": {
     "enabled": true,
     "logs": {
