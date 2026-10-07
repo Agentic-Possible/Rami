@@ -56,8 +56,7 @@ builds it, runs post-create setup, and exercises the reader inside the container
 dead/duplicate code, Python, and desktop/mobile browser gates. Setup uses a
 separate validation environment and installs a pre-commit hook. See
 [architecture](docs/architecture.md), [API contracts](docs/api.openapi.yml), and
-[operations/privacy](docs/operations.md). Optional Sentry/PostHog identifiers are
-empty in `.env.example`; browser collection is also off until Settings consent.
+[operations/privacy](docs/operations.md).
 
 ## Personal audiobook streaming
 

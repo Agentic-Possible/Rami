@@ -20,7 +20,6 @@ beforeAll(async () => {
         SIGNED_URL_TTL_SECONDS: '600',
         ACCESS_TOKEN: 'synthetic-local-only',
         SIGNING_KEY: 'synthetic-local-only-signing-key',
-        SENTRY_DSN: '',
       },
     }),
   )

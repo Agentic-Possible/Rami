@@ -1,5 +1,4 @@
-import * as Sentry from '@sentry/cloudflare'
-import { operationMetric, sanitizeErrorEvent } from '../../../shared/telemetry'
+import { operationMetric } from '../../../shared/telemetry'
 
 const BOOK_PREFIX = 'twilight-of-the-idols'
 const AUDIO_KEY = `${BOOK_PREFIX}/audiobook.opus`
@@ -44,23 +43,13 @@ const worker = {
 
       return errorResponse('Not found.', 404, cors)
     } catch {
-      Sentry.captureException(new Error('Audiobook operation failed'))
       console.error(JSON.stringify(operationMetric('audiobooks', 500, performance.now() - started)))
       return errorResponse('Internal server error.', 500, cors)
     }
   },
 } satisfies ExportedHandler<Env>
 
-export default Sentry.withSentry(
-  (env: Env) => ({
-    dsn: env.SENTRY_DSN || undefined,
-    enabled: Boolean(env.SENTRY_DSN),
-    defaultIntegrations: false,
-    tracesSampleRate: 0,
-    beforeSend: sanitizeErrorEvent,
-  }),
-  worker,
-)
+export default worker
 
 async function createSession(request: Request, env: Env, cors: Headers | null): Promise<Response> {
   const rateLimit = await env.SESSION_RATE_LIMITER.limit({ key: 'personal-session' })

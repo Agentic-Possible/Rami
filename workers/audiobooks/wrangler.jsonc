@@ -22,7 +22,6 @@
     }
   ],
   "vars": {
-    "SENTRY_DSN": "",
     "ALLOWED_ORIGINS": "https://lexici.netlify.app,https://deploy-preview-17--lexici.netlify.app,https://marginalia.adjacentpossible.dev,http://localhost:5173,http://127.0.0.1:5173",
     "SIGNED_URL_TTL_SECONDS": "86400"
   },

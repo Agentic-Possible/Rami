@@ -7,7 +7,6 @@ import { HOSTED_MODEL_LABEL, verifyKey } from '../lib/inference'
 import { createAudiobookSession } from '../lib/audiobooks'
 import { BackIcon } from '../components/Icons'
 import KoreaderImport from '../components/KoreaderImport'
-import { setTelemetryConsent, telemetryConsent, trackEvent } from '../lib/telemetry'
 
 // Keep retired models listed: a stored value with no matching option renders the
 // select blank, so anything a user might already have saved has to stay.
@@ -35,10 +34,6 @@ export default function SettingsPage() {
   const [audiobookMessage, setAudiobookMessage] = useState<string>()
 
   const settings = stored ?? DEFAULT_SETTINGS
-
-  useEffect(() => {
-    trackEvent('settings_opened')
-  }, [])
 
   useEffect(() => {
     if (stored && !dirtyKey) setApiKey(stored.apiKey ?? '')
@@ -109,22 +104,6 @@ export default function SettingsPage() {
       </header>
 
       <main className="mx-auto max-w-2xl space-y-8 px-4 py-6">
-        <section>
-          <h2 className="text-sm font-semibold">Privacy</h2>
-          <label className="mt-3 flex gap-3 text-sm">
-            <input
-              type="checkbox"
-              defaultChecked={telemetryConsent()}
-              onChange={(event) => setTelemetryConsent(event.target.checked)}
-            />
-            Share anonymous diagnostics and basic usage counts
-          </label>
-          <p className="mt-2 text-sm text-stone-400">
-            Off by default. Only works when the operator configures telemetry. Never sends books,
-            highlights, conversations, keys, or browsing URLs. Changing this setting reloads the
-            app.
-          </p>
-        </section>
         <section>
           <h2 className="text-sm font-semibold">Chat model</h2>
           <p className="mt-1 text-sm text-stone-400">

@@ -31,13 +31,11 @@ The narrator's versioned output contract is `docs/sync.schema.json`.
 HTTP contracts are `docs/api.openapi.yml`. Lua-to-reader handoff validation is
 `src/lib/koreader.ts`, exercised with synthetic fixtures and the real Lua VM.
 
-## Consent and optional services
+## External services
 
 Chat sends the user-selected context to the chosen model provider. Offline
 reading, dry-run narration, and normal tests need no external services.
-Sentry and PostHog are off without configuration. Browser diagnostics additionally
-require explicit Settings consent. No session replay, autocapture, page URLs,
-books, conversations, highlights, keys, or signed URLs enter telemetry.
-Worker metrics are fixed operation names, status codes, and numeric durations.
+The app sends no third-party telemetry. Worker metrics are fixed operation names,
+status codes, and numeric durations.
 Local narrator progress contains book text-derived labels; treat generated
 artifacts as private, never as telemetry or CI uploads.
