@@ -353,6 +353,23 @@ export default function ReaderPage() {
       {/* epub.js renders its iframe here; it owns all touch/selection inside. */}
       <div ref={setViewer} className="mx-auto h-full w-full max-w-[760px]" />
 
+      {/* Wide screens leave gutters beside the capped column; they turn pages
+          like the edges of the book itself. The footer has the labelled controls. */}
+      {(['prev', 'next'] as const).map((side) => (
+        <button
+          key={side}
+          onClick={side === 'prev' ? reader.prev : reader.next}
+          tabIndex={-1}
+          aria-hidden
+          className={`no-select absolute inset-y-0 z-20 hidden w-[calc((100%-760px)/2)] items-center font-serif text-[32px] font-light min-[761px]:flex ${
+            side === 'prev' ? 'left-0 justify-end pr-6' : 'right-0 justify-start pl-6'
+          }`}
+          style={{ color: palette.muted }}
+        >
+          {side === 'prev' ? '‹' : '›'}
+        </button>
+      ))}
+
       {!reader.ready && !reader.error && (
         <div
           className="pointer-events-none absolute inset-0 flex items-center justify-center"
