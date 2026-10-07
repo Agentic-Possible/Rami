@@ -1,5 +1,5 @@
 /**
- * Inference relay shared by the Netlify edge function (production) and the Vite
+ * Inference relay shared by the Cloudflare app Worker (production) and the Vite
  * dev middleware (local). Written against Web APIs only so both runtimes can use
  * it unchanged, and so the OpenRouter key never reaches the browser.
  *

@@ -31,12 +31,9 @@
     "check": "npm run lint && npm run typecheck && npm run test:coverage"
   },
   "dependencies": {
-    "@sentry/cloudflare": "11.4.0",
-    "@sentry/react": "11.4.0",
     "dexie": "^4.4.4",
     "dexie-react-hooks": "^4.4.0",
     "epubjs": "^0.3.93",
-    "posthog-js": "1.438.1",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.18.1"
@@ -44,9 +41,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260823.1",
     "@johnnymorganz/stylua-bin": "2.5.2",
-    "@netlify/edge-functions": "^3.0.8",
     "@playwright/test": "1.63.0",
-    "@sentry/vite-plugin": "5.4.1",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^24.13.2",
     "@types/react": "^19.2.17",

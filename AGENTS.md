@@ -3,7 +3,7 @@
 ## Applications and boundaries
 
 - `.`: React/TypeScript EPUB reader PWA. `src/` contains the UI and IndexedDB
-  model; `shared/relay.ts` serves chat through Vite, Netlify, and Cloudflare.
+  model; `shared/relay.ts` serves chat through Vite and Cloudflare.
   `workers/app/` is a deployment adapter for this app, not a separate service.
 - `workers/audiobooks/`: independently deployed private R2 streaming API.
 - `tools/narrate/`: standalone Python EPUB-to-audio tool.

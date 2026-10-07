@@ -21,8 +21,7 @@ signals as failures rather than treating configuration as live evidence.
 - Production build and 1.2 MB JavaScript budget; isolated setup command and
   installed pre-commit hook; devcontainer image built and Node/Python/GitHub CLI
   runtime smoke-tested.
-- Optional Sentry/PostHog, default-off browser consent, allowlisted diagnostics,
-  health handlers, bounded bodies, 30-second upstream header timeout, and an
+- Health handlers, bounded bodies, 30-second upstream header timeout, and an
   isolate-local circuit breaker. No live telemetry or billed provider calls.
 
 ## Verified GitHub changes, explicitly approved

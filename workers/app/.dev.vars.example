@@ -1,1 +1,3 @@
 OPENROUTER_API_KEY=replace-with-a-local-development-key
+# Set to false with `wrangler secret put CHAT_ENABLED` to stop paid chat.
+CHAT_ENABLED=true

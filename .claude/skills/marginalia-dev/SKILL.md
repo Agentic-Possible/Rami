@@ -236,7 +236,7 @@ never happened" a full second after it did.
 
 Chat defaults to the built-in provider, which POSTs to `/api/chat`. In dev that route is
 served by the `marginalia-chat-relay` Vite plugin in `vite.config.ts`, running the same
-`shared/relay.ts` handler the Netlify edge function runs in production. It needs
+`shared/relay.ts` handler the Cloudflare Worker runs in production. It needs
 `OPENROUTER_API_KEY` in gitignored `.env.local`; without it the relay answers 503 and
 the chat sheet shows the message.
 
@@ -274,7 +274,7 @@ find . -type f -not -path "./node_modules/*" -not -path "./.git/*" -not -path ".
 ```
 
 The `or` branch catches OpenRouter keys, which is what `.env.local` now holds and what
-the deployed relay reads from Netlify's environment. Keep placeholder keys out of docs
+the deployed relay holds as a Worker secret. Keep placeholder keys out of docs
 for the same reason the pattern above is split: a placeholder that matches the scan
 buries the real hit.
 

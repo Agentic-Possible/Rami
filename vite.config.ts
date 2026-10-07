@@ -5,12 +5,11 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { Readable } from 'node:stream'
 import { handleRelayRequest } from './shared/relay.ts'
 import { visualizer } from 'rollup-plugin-visualizer'
-import { sentryVitePlugin } from '@sentry/vite-plugin'
 
 /**
- * Serves /api/chat in dev with the same handler the Netlify edge function uses,
+ * Serves /api/chat in dev with the same handler the Cloudflare Worker uses,
  * so local runs exercise the real relay instead of a stand-in. Reads
- * OPENROUTER_API_KEY from .env.local; the deployed site gets it from Netlify.
+ * OPENROUTER_API_KEY from .env.local; the deployed Worker has it as a secret.
  */
 function chatRelay(apiKey: string, enabled: boolean): Plugin {
   return {
@@ -76,17 +75,6 @@ export default defineConfig(({ mode }) => {
         brotliSize: true,
         open: false,
       }),
-      ...(process.env.SENTRY_UPLOAD_SOURCE_MAPS === 'true'
-        ? [
-            sentryVitePlugin({
-              authToken: process.env.SENTRY_AUTH_TOKEN,
-              org: process.env.SENTRY_ORG,
-              project: process.env.SENTRY_PROJECT,
-              telemetry: false,
-              sourcemaps: { assets: './dist/assets/**' },
-            }),
-          ]
-        : []),
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: ['favicon.svg'],
@@ -115,8 +103,8 @@ export default defineConfig(({ mode }) => {
       }),
     ],
     // epub.js references `global` in a few places.
-    define: { global: 'globalThis', __SENTRY_TRACING__: false, __SENTRY_DEBUG__: false },
-    build: { sourcemap: 'hidden', chunkSizeWarningLimit: 450 },
+    define: { global: 'globalThis' },
+    build: { chunkSizeWarningLimit: 450 },
     server: {
       host: '127.0.0.1',
       // Forward chat to a deployed relay instead of using a local key. The relay

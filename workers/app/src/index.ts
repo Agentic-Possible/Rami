@@ -1,13 +1,10 @@
 import { handleRelayRequest } from '../../../shared/relay.ts'
-import * as Sentry from '@sentry/cloudflare'
-import { operationMetric, sanitizeErrorEvent } from '../../../shared/telemetry.ts'
+import { operationMetric } from '../../../shared/telemetry.ts'
 
 const CONTENT_SECURITY_POLICY =
   "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' blob:; " +
   "img-src 'self' data: blob:; font-src 'self' data: blob:; connect-src 'self' " +
-  'https://api.openai.com https://marginalia-audiobooks.cloudflare-cdd.workers.dev ' +
-  'https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.ingest.de.sentry.io ' +
-  'https://us.i.posthog.com https://eu.i.posthog.com; ' +
+  'https://api.openai.com https://marginalia-audiobooks.cloudflare-cdd.workers.dev; ' +
   "media-src 'self' blob: https://marginalia-audiobooks.cloudflare-cdd.workers.dev; " +
   "frame-src 'self' blob: data:; object-src 'none'; base-uri 'self'; form-action 'self'"
 
@@ -60,7 +57,6 @@ const worker = {
 
       return withSecurityHeaders(await env.ASSETS.fetch(request))
     } catch {
-      Sentry.captureException(new Error('Application operation failed'))
       console.error(JSON.stringify(operationMetric('app', 500, performance.now() - started)))
 
       return url.pathname.startsWith('/api/')
@@ -70,13 +66,4 @@ const worker = {
   },
 } satisfies ExportedHandler<Env>
 
-export default Sentry.withSentry(
-  (env: Env) => ({
-    dsn: env.SENTRY_DSN || undefined,
-    enabled: Boolean(env.SENTRY_DSN),
-    defaultIntegrations: false,
-    tracesSampleRate: 0,
-    beforeSend: sanitizeErrorEvent,
-  }),
-  worker,
-)
+export default worker

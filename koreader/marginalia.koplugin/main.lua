@@ -3,7 +3,7 @@ Marginalia for KOReader.
 
 Two things: ask an AI companion about the passage you just highlighted, and
 export a book's highlights for the Marginalia web reader at
-<https://lexici.netlify.app>.
+<https://marginalia.adjacentpossible.dev>.
 
 Questions go to that site's relay, which holds the inference key server-side and
 pins the model, so there is no key to configure here and no account to make. The
@@ -40,9 +40,11 @@ local View = require("marginalia_view")
 
 local VERSION = "1.0.0"
 
---- The public deployment. Editable, because this repo also deploys to
---- Cloudflare and because a self-hoster should not have to patch the plugin.
-local DEFAULT_ENDPOINT = "https://lexici.netlify.app/api/chat"
+--- The public deployment. Editable, because a self-hoster should not have to
+--- patch the plugin.
+local DEFAULT_ENDPOINT = "https://marginalia.adjacentpossible.dev/api/chat"
+--- The retired Netlify relay, which older versions saved as the endpoint.
+local RETIRED_ENDPOINT = "https://lexici.netlify.app/api/chat"
 
 local Marginalia = WidgetContainer:extend({
     name = "marginalia",
@@ -57,7 +59,7 @@ function Marginalia:init()
     -- A settings table written by an older version may be missing keys the
     -- current one reads, and `readSetting`'s default only applies when the whole
     -- table is absent.
-    if self.settings.endpoint == nil then
+    if self.settings.endpoint == nil or self.settings.endpoint == RETIRED_ENDPOINT then
         self.settings.endpoint = DEFAULT_ENDPOINT
     end
     if self.settings.spoiler_guard == nil then
