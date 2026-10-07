@@ -7,10 +7,18 @@ updates:
     groups:
       development:
         dependency-type: development
+      production:
+        dependency-type: production
   - package-ecosystem: pip
     directory: /tools/narrate
     schedule: { interval: weekly }
     cooldown: { default-days: 7 }
+    groups:
+      narrate:
+        patterns: ['*']
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: weekly }
+    groups:
+      actions:
+        patterns: ['*']
