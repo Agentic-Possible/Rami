@@ -1,0 +1,42 @@
+name: devcontainer
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: devcontainer-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CI: 'true'
+      WRANGLER_SEND_METRICS: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install the pinned devcontainer CLI
+        run: npm install --global @devcontainers/cli@0.84.0
+      - name: Build and run the complete post-create setup
+        run: devcontainer up --workspace-folder "$GITHUB_WORKSPACE"
+      - name: Validate and exercise the application inside the container
+        run: devcontainer exec --workspace-folder "$GITHUB_WORKSPACE" --remote-env CI=true --remote-env WRANGLER_SEND_METRICS=false sh .devcontainer/smoke.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: devcontainer-smoke
+          path: |
+            coverage/
+            reports/
+            playwright-report/
+            test-results/
