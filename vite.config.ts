@@ -60,12 +60,15 @@ function chatRelay(apiKey: string, enabled: boolean): Plugin {
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
+  const remoteRelay = env.CHAT_RELAY_URL?.trim()
 
   return {
     plugins: [
       react(),
       tailwindcss(),
-      chatRelay(env.OPENROUTER_API_KEY ?? '', env.CHAT_ENABLED !== 'false'),
+      ...(remoteRelay
+        ? []
+        : [chatRelay(env.OPENROUTER_API_KEY ?? '', env.CHAT_ENABLED !== 'false')]),
       visualizer({
         filename: 'reports/bundle.html',
         gzipSize: true,
@@ -102,6 +105,21 @@ export default defineConfig(({ mode }) => {
     // epub.js references `global` in a few places.
     define: { global: 'globalThis' },
     build: { chunkSizeWarningLimit: 450 },
-    server: { host: '127.0.0.1' },
+    server: {
+      host: '127.0.0.1',
+      // Forward chat to a deployed relay instead of using a local key. The relay
+      // rejects cross-origin browsers, so drop Origin like a non-browser client.
+      proxy: remoteRelay
+        ? {
+            '/api/chat': {
+              target: remoteRelay,
+              changeOrigin: true,
+              configure: (proxy) => {
+                proxy.on('proxyReq', (proxyReq) => proxyReq.removeHeader('origin'))
+              },
+            },
+          }
+        : undefined,
+    },
   }
 })
