@@ -67,7 +67,7 @@ jobs:
 
   qa:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -75,7 +75,13 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      # Runner package mirrors occasionally stall; retry rather than hit the job timeout.
+      - run: |
+          for attempt in 1 2 3; do
+            timeout 180 npx playwright install --with-deps chromium && exit 0
+            echo "Playwright install attempt $attempt failed"
+          done
+          exit 1
       - run: npm run test:qa
       - uses: actions/upload-artifact@v6
         if: always()
