@@ -412,8 +412,6 @@ export default function ReaderPage() {
           rect={active.rect}
           theme={settings.theme}
           existing={Boolean(active.highlight)}
-          color={highlightColor}
-          onHighlight={() => void saveHighlight()}
           onChat={() => void startChat()}
           onCopy={() => void copySelection()}
           onDelete={() => void deleteHighlight()}

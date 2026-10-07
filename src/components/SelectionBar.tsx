@@ -1,5 +1,5 @@
-import type { HighlightColor, ReaderTheme } from '../db/types'
-import { HIGHLIGHT_COLORS, type SelectionRect } from '../lib/highlights'
+import type { ReaderTheme } from '../db/types'
+import type { SelectionRect } from '../lib/highlights'
 import { THEMES } from '../lib/themes'
 import { ChatIcon, TrashIcon } from './Icons'
 
@@ -9,8 +9,6 @@ export default function SelectionBar({
   rect,
   theme,
   existing,
-  color,
-  onHighlight,
   onChat,
   onCopy,
   onDelete,
@@ -20,9 +18,6 @@ export default function SelectionBar({
   theme: ReaderTheme
   /** Set when the bar was opened by tapping an existing highlight. */
   existing?: boolean
-  /** The reader's highlight colour, from settings. */
-  color: HighlightColor
-  onHighlight: () => void
   onChat: () => void
   onCopy: () => void
   onDelete?: () => void
@@ -44,24 +39,13 @@ export default function SelectionBar({
         className={`no-select fixed inset-x-3 z-50 mx-auto max-w-md rounded-2xl border shadow-[0_16px_44px_rgba(30,30,24,0.22)] ${palette.chrome} ${palette.chromeText} ${palette.border}`}
       >
         <div className="flex items-center gap-2 p-3">
-          {existing && onDelete ? (
+          {existing && onDelete && (
             <button
               onClick={onDelete}
               aria-label="Delete highlight"
               className={`grid h-11 w-11 shrink-0 place-items-center rounded-full border ${palette.border}`}
             >
               <TrashIcon className="h-4 w-4" />
-            </button>
-          ) : (
-            <button
-              onClick={onHighlight}
-              aria-label="Highlight"
-              className={`grid h-11 w-11 shrink-0 place-items-center rounded-full border ${palette.border}`}
-            >
-              <span
-                style={{ background: HIGHLIGHT_COLORS[color] }}
-                className="block h-5 w-5 rounded-full ring-1 ring-black/20"
-              />
             </button>
           )}
           <button
