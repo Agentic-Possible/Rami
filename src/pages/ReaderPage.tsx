@@ -129,10 +129,7 @@ export default function ReaderPage() {
     reader.suppressTap()
 
     void (async () => {
-      const existing = await db.conversations
-        .where('highlightId')
-        .equals(highlight.id)
-        .first()
+      const existing = await db.conversations.where('highlightId').equals(highlight.id).first()
 
       if (existing) {
         setActive(undefined)
@@ -196,10 +193,7 @@ export default function ReaderPage() {
     const highlight = active.highlight ?? (await saveHighlight('yellow'))
     if (!highlight) return
 
-    const existing = await db.conversations
-      .where('highlightId')
-      .equals(highlight.id)
-      .first()
+    const existing = await db.conversations.where('highlightId').equals(highlight.id).first()
 
     if (existing) {
       setActive(undefined)
@@ -259,8 +253,8 @@ export default function ReaderPage() {
   if (book.archivedAt) {
     return (
       <CenteredNote>
-        “{book.title}” was removed from your library. Import the EPUB again to keep
-        reading, or open its{' '}
+        “{book.title}” was removed from your library. Import the EPUB again to keep reading, or open
+        its{' '}
         <Link to={`/book/${book.id}/chats`} className="text-amber-500 underline">
           conversations and memory
         </Link>
@@ -283,9 +277,7 @@ export default function ReaderPage() {
           </Link>
           <div className="min-w-0 flex-1 px-1">
             <p className="truncate text-sm font-medium">{book.title}</p>
-            <p className="truncate text-xs opacity-55">
-              {reader.location?.chapter ?? book.author}
-            </p>
+            <p className="truncate text-xs opacity-55">{reader.location?.chapter ?? book.author}</p>
           </div>
           <Link
             to={`/book/${book.id}/chats`}
@@ -421,7 +413,9 @@ export default function ReaderPage() {
         <DisplaySheet
           theme={settings.theme}
           fontSize={settings.fontSize}
-          onChange={(patch) => void saveSettings(patch as { theme?: ReaderTheme; fontSize?: number })}
+          onChange={(patch) =>
+            void saveSettings(patch as { theme?: ReaderTheme; fontSize?: number })
+          }
           onRemoveBook={() => {
             setPanel(null)
             setRemoving(true)

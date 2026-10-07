@@ -21,9 +21,7 @@ function encryptionXml(entries: string): string {
 }
 
 function encryptedData(uri: string, algorithm?: string): string {
-  const method = algorithm
-    ? `<enc:EncryptionMethod Algorithm="${algorithm}" />`
-    : ''
+  const method = algorithm ? `<enc:EncryptionMethod Algorithm="${algorithm}" />` : ''
 
   return `<enc:EncryptedData>
     ${method}
@@ -63,9 +61,7 @@ describe('EPUB encryption detection', () => {
   })
 
   it('rejects a book that mixes font obfuscation with encrypted content', () => {
-    const xml = encryptionXml(
-      encryptedData(FONT, IDPF) + encryptedData(CHAPTER, AES),
-    )
+    const xml = encryptionXml(encryptedData(FONT, IDPF) + encryptedData(CHAPTER, AES))
     expect(check(xml)).toBe(true)
   })
 

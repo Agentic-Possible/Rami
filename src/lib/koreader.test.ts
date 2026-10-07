@@ -95,9 +95,7 @@ describe('parseHandoff', () => {
   it('reads the offset the device wrote rather than guessing a zone', () => {
     const handoff = parseHandoff(file())
     expect(handoff.highlights[0].createdAt).toBe(Date.parse('2026-08-24T00:39:35Z'))
-    expect(handoff.threads[0].messages[1].createdAt).toBe(
-      Date.parse('2026-08-24T00:40:12Z'),
-    )
+    expect(handoff.threads[0].messages[1].createdAt).toBe(Date.parse('2026-08-24T00:40:12Z'))
   })
 
   it('refuses anything that is not this format', () => {
@@ -107,10 +105,7 @@ describe('parseHandoff', () => {
   })
 
   it('refuses a version it does not understand', () => {
-    rejects(
-      JSON.stringify({ format: 'marginalia-koreader', version: 99 }),
-      'version 99',
-    )
+    rejects(JSON.stringify({ format: 'marginalia-koreader', version: 99 }), 'version 99')
   })
 
   it('insists on a real fingerprint, because that is what picks the edition', () => {

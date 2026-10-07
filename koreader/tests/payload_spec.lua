@@ -65,18 +65,35 @@ local function build(overrides)
         plugin_version = "1.0.0",
         sha256_hex = fake_sha256,
     }
-    for key, value in pairs(overrides or {}) do spec[key] = value end
+    for key, value in pairs(overrides or {}) do
+        spec[key] = value
+    end
     return Payload.build(spec)
 end
 
 -- A sidecar datetime is device-local with no offset. Reading one in a browser
 -- somewhere else would move it silently, so the device resolves it here.
 do
-    H.equal(Payload.to_iso("2026-08-23 19:39:35", "-0500"), "2026-08-23T19:39:35-05:00", "negative offset")
-    H.equal(Payload.to_iso("2026-08-23 19:39:35", "+0530"), "2026-08-23T19:39:35+05:30", "half-hour offset")
-    H.equal(Payload.to_iso("2026-08-23 19:39:35", nil), "2026-08-23T19:39:35Z", "no offset falls back to Z")
-    H.equal(Payload.to_iso("2026-08-23 19:39:35", "Eastern Standard Time"), "2026-08-23T19:39:35Z",
-        "a non-numeric offset is not smuggled into the timestamp")
+    H.equal(
+        Payload.to_iso("2026-08-23 19:39:35", "-0500"),
+        "2026-08-23T19:39:35-05:00",
+        "negative offset"
+    )
+    H.equal(
+        Payload.to_iso("2026-08-23 19:39:35", "+0530"),
+        "2026-08-23T19:39:35+05:30",
+        "half-hour offset"
+    )
+    H.equal(
+        Payload.to_iso("2026-08-23 19:39:35", nil),
+        "2026-08-23T19:39:35Z",
+        "no offset falls back to Z"
+    )
+    H.equal(
+        Payload.to_iso("2026-08-23 19:39:35", "Eastern Standard Time"),
+        "2026-08-23T19:39:35Z",
+        "a non-numeric offset is not smuggled into the timestamp"
+    )
     H.nil_(Payload.to_iso("not a date", "-0500"), "unparseable input yields nothing")
     H.nil_(Payload.to_iso(nil, "-0500"), "missing input yields nothing")
 end
@@ -98,8 +115,11 @@ end
 -- as an xpointer string. Reaching this with one used to be an error rather than
 -- an id, which took out every tap on a PDF highlight.
 do
-    H.equal(Payload.position_key("/body/DocFragment[3]"), "/body/DocFragment[3]",
-        "an xpointer is its own key, so ids already minted do not move")
+    H.equal(
+        Payload.position_key("/body/DocFragment[3]"),
+        "/body/DocFragment[3]",
+        "an xpointer is its own key, so ids already minted do not move"
+    )
     H.equal(Payload.position_key({ page = 12, x = 40, y = 300 }), "12,40,300")
     H.equal(Payload.position_key({ page = 12 }), "12,,", "a partial position still keys")
     H.equal(Payload.position_key(7), "7", "a bare page number too")
@@ -117,7 +137,9 @@ do
     H.equal(id, Payload.external_id(paging, fake_sha256), "and the same one every time")
 
     local moved = {}
-    for k, v in pairs(paging) do moved[k] = v end
+    for k, v in pairs(paging) do
+        moved[k] = v
+    end
     moved.pos0 = { page = 12, x = 41, y = 300 }
     H.ok(Payload.external_id(moved, fake_sha256) ~= id, "a different spot is a different highlight")
 end
@@ -132,20 +154,34 @@ do
     H.equal(#first, #"koreader:" + 16, "sixteen hex characters")
 
     local moved = {}
-    for k, v in pairs(ANNOTATION) do moved[k] = v end
+    for k, v in pairs(ANNOTATION) do
+        moved[k] = v
+    end
     moved.pos0 = "/body/DocFragment[3]/body/p[9]/text()[1].0"
-    H.ok(Payload.external_id(moved, fake_sha256) ~= first, "a different position is a different highlight")
+    H.ok(
+        Payload.external_id(moved, fake_sha256) ~= first,
+        "a different position is a different highlight"
+    )
 
     local reworded = {}
-    for k, v in pairs(ANNOTATION) do reworded[k] = v end
+    for k, v in pairs(ANNOTATION) do
+        reworded[k] = v
+    end
     reworded.text = "something else entirely"
-    H.ok(Payload.external_id(reworded, fake_sha256) ~= first, "different text is a different highlight")
+    H.ok(
+        Payload.external_id(reworded, fake_sha256) ~= first,
+        "different text is a different highlight"
+    )
 
     local later = {}
-    for k, v in pairs(ANNOTATION) do later[k] = v end
+    for k, v in pairs(ANNOTATION) do
+        later[k] = v
+    end
     later.datetime = "2026-08-24 08:00:00"
-    H.ok(Payload.external_id(later, fake_sha256) ~= first,
-        "re-highlighting the same words later is a different highlight")
+    H.ok(
+        Payload.external_id(later, fake_sha256) ~= first,
+        "re-highlighting the same words later is a different highlight"
+    )
 end
 
 -- The document itself.
@@ -155,11 +191,19 @@ do
     H.equal(document.format, "marginalia-koreader", "format tag")
     H.equal(document.version, 1, "version")
     H.equal(document.exportedAt, "2026-08-23T20:00:00-05:00", "export time carries its offset")
-    H.equal(document.exportedAtLocal, "2026-08-23 20:00:00", "and the verbatim device string travels too")
+    H.equal(
+        document.exportedAtLocal,
+        "2026-08-23 20:00:00",
+        "and the verbatim device string travels too"
+    )
     H.equal(document.source.app, "koreader")
     H.equal(document.source.appVersion, "v2026.07.1")
     H.equal(document.book.file.sha256, "abc123", "the hash the app matches editions on")
-    H.equal(document.book.file.partialMd5, "1ae1faef4cb68f7e8f7a545def7995e8", "KOReader's own identity travels")
+    H.equal(
+        document.book.file.partialMd5,
+        "1ae1faef4cb68f7e8f7a545def7995e8",
+        "KOReader's own identity travels"
+    )
 
     local highlight = document.book.highlights[1]
     H.equal(#document.book.highlights, 1, "one highlight")
@@ -178,19 +222,29 @@ end
 
 -- A page bookmark has no highlighted text and is not a highlight.
 do
-    local document = build({ annotations = {
-        ANNOTATION,
-        { datetime = "2026-08-23 19:00:00", page = "/body/DocFragment[2]/body/p[1]" },
-        { datetime = "2026-08-23 19:00:00", text = "   ", page = "/body/DocFragment[2]/body/p[2]" },
-    } })
+    local document = build({
+        annotations = {
+            ANNOTATION,
+            { datetime = "2026-08-23 19:00:00", page = "/body/DocFragment[2]/body/p[1]" },
+            {
+                datetime = "2026-08-23 19:00:00",
+                text = "   ",
+                page = "/body/DocFragment[2]/body/p[2]",
+            },
+        },
+    })
     H.equal(#document.book.highlights, 1, "bookmarks and blank highlights are left out")
 end
 
 -- Missing page counts must not produce a progress of nil-divided-by-nothing.
 do
-    local document = build({ book = {
-        title = "Untitled", authors = "Unknown", file = {},
-    } })
+    local document = build({
+        book = {
+            title = "Untitled",
+            authors = "Unknown",
+            file = {},
+        },
+    })
     H.nil_(document.book.highlights[1].progress, "no page count, no progress")
     H.nil_(document.book.pages, "and no invented page count")
 end
@@ -199,39 +253,64 @@ end
 do
     local id = Payload.external_id(ANNOTATION, fake_sha256)
     local document = build({ contexts = { [id] = "  prose around the passage  " } })
-    H.equal(document.book.highlights[1].context, "prose around the passage", "trimmed, and attached")
+    H.equal(
+        document.book.highlights[1].context,
+        "prose around the passage",
+        "trimmed, and attached"
+    )
 end
 
 -- Threads carry their own ids so a re-import can tell what it has already seen.
 do
-    local document = build({ threads = { {
-        id = "koreader:thread-1",
-        highlight_ref = Payload.external_id(ANNOTATION, fake_sha256),
-        title = "short chapter he devotes to Twilight",
-        seed_text = ANNOTATION.text,
-        chapter = "INTRODUCTION",
-        created_at = "2026-08-23 19:40:00",
-        messages = {
-            { id = "koreader:m1", role = "user", content = "What is he getting at?",
-              created_at = "2026-08-23 19:40:00" },
-            { id = "koreader:m2", role = "assistant", content = "He is describing…",
-              created_at = "2026-08-23 19:40:12" },
+    local document = build({
+        threads = {
+            {
+                id = "koreader:thread-1",
+                highlight_ref = Payload.external_id(ANNOTATION, fake_sha256),
+                title = "short chapter he devotes to Twilight",
+                seed_text = ANNOTATION.text,
+                chapter = "INTRODUCTION",
+                created_at = "2026-08-23 19:40:00",
+                messages = {
+                    {
+                        id = "koreader:m1",
+                        role = "user",
+                        content = "What is he getting at?",
+                        created_at = "2026-08-23 19:40:00",
+                    },
+                    {
+                        id = "koreader:m2",
+                        role = "assistant",
+                        content = "He is describing…",
+                        created_at = "2026-08-23 19:40:12",
+                    },
+                },
+            },
+            {
+                id = "koreader:thread-empty",
+                created_at = "2026-08-23 19:41:00",
+                messages = {},
+            },
         },
-    }, {
-        id = "koreader:thread-empty",
-        created_at = "2026-08-23 19:41:00",
-        messages = {},
-    } } })
+    })
 
     H.equal(#document.book.threads, 1, "a thread with no messages is not worth exporting")
 
     local thread = document.book.threads[1]
     H.equal(thread.externalId, "koreader:thread-1")
-    H.equal(thread.highlightExternalId, Payload.external_id(ANNOTATION, fake_sha256), "linked to its highlight")
+    H.equal(
+        thread.highlightExternalId,
+        Payload.external_id(ANNOTATION, fake_sha256),
+        "linked to its highlight"
+    )
     H.equal(thread.seedText, ANNOTATION.text, "the passage travels with the thread")
     H.equal(thread.createdAt, "2026-08-23T19:40:00-05:00")
     H.equal(#thread.messages, 2)
-    H.equal(thread.messages[1].externalId, "koreader:m1", "message identity is minted on the device")
+    H.equal(
+        thread.messages[1].externalId,
+        "koreader:m1",
+        "message identity is minted on the device"
+    )
     H.equal(thread.messages[1].role, "user")
     H.equal(thread.messages[2].createdAt, "2026-08-23T19:40:12-05:00")
 end

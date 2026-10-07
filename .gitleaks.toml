@@ -1,0 +1,7 @@
+title = "Marginalia secret scanning"
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Explicit synthetic-only local audiobook fixtures, never production values"
+paths = ['''workers/audiobooks/wrangler\.local\.jsonc''']

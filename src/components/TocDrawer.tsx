@@ -23,11 +23,7 @@ export default function TocDrawer({
 
   return (
     <div className="fixed inset-0 z-40 flex">
-      <div
-        className="absolute inset-0 bg-black/50"
-        onClick={onClose}
-        aria-hidden
-      />
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden />
       <aside
         ref={ref}
         role="dialog"
@@ -38,9 +34,7 @@ export default function TocDrawer({
         <header
           className={`pt-safe flex items-center justify-between border-b px-4 pb-3 ${palette.border}`}
         >
-          <h2 className="text-sm font-semibold tracking-wide uppercase opacity-60">
-            Contents
-          </h2>
+          <h2 className="text-sm font-semibold tracking-wide uppercase opacity-60">Contents</h2>
           <button
             onClick={onClose}
             aria-label="Close contents"

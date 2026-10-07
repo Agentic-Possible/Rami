@@ -1,0 +1,8 @@
+{
+  "path": ["src", "shared", "workers", "koreader/marginalia.koplugin", "tools/narrate/narrate"],
+  "ignore": ["**/*.test.ts", "**/worker-configuration.d.ts"],
+  "minLines": 15,
+  "threshold": 5,
+  "reporters": ["console", "json"],
+  "output": "reports/duplicates"
+}

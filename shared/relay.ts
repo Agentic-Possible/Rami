@@ -8,7 +8,11 @@
  * only the conversation, never what it costs to answer it.
  */
 
+import { boundedText, CircuitBreaker } from './resilience.ts'
+import { operationMetric } from './telemetry.ts'
+
 const OPENROUTER_ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions'
+const breaker = new CircuitBreaker()
 
 interface Route {
   model: string
@@ -56,6 +60,7 @@ const UNAVAILABLE = 'The model provider is unavailable right now.'
 
 export interface RelayOptions {
   apiKey: string
+  enabled?: boolean
   /** Sent to OpenRouter as HTTP-Referer, which it uses for app attribution. */
   siteUrl?: string
 }
@@ -67,13 +72,26 @@ export interface RelayRequestContext {
 
 export async function handleRelayRequest(
   request: Request,
-  { apiKey, siteUrl }: RelayOptions,
+  options: RelayOptions,
+  context: RelayRequestContext,
+): Promise<Response> {
+  const started = performance.now()
+  const response = await relay(request, options, context)
+  console.info(
+    JSON.stringify(operationMetric('relay', response.status, performance.now() - started)),
+  )
+  return response
+}
+
+async function relay(
+  request: Request,
+  { apiKey, siteUrl, enabled = true }: RelayOptions,
   { ip }: RelayRequestContext,
 ): Promise<Response> {
   if (request.method !== 'POST') {
     return errorResponse(405, 'Use POST.')
   }
-  if (!apiKey) {
+  if (!apiKey || !enabled) {
     return errorResponse(503, 'This deployment has no inference key configured.')
   }
   if (isCrossOrigin(request)) {
@@ -85,7 +103,7 @@ export async function handleRelayRequest(
 
   let payload: unknown
   try {
-    payload = await request.json()
+    payload = JSON.parse(await boundedText(request, 600_000))
   } catch {
     return errorResponse(400, 'Expected a JSON body.')
   }
@@ -94,12 +112,14 @@ export async function handleRelayRequest(
   if ('error' in parsed) return errorResponse(400, parsed.error)
   const { messages, stream } = parsed
 
+  if (!breaker.available()) return errorResponse(503, UNAVAILABLE)
   const upstream = await callOpenRouter(ROUTE, messages, stream, apiKey, siteUrl)
+  breaker.record(upstream.status)
   if (upstream.ok) return relayResponse(upstream)
 
   return errorResponse(
     upstream.status,
-    upstreamMessage(await upstream.text().catch(() => '')) || UNAVAILABLE,
+    upstreamMessage(await boundedText(upstream, 16_384).catch(() => '')) || UNAVAILABLE,
   )
 }
 
@@ -160,7 +180,7 @@ function relayResponse(upstream: Response): Response {
   return new Response(upstream.body, { status: 200, headers })
 }
 
-export interface RelayMessage {
+interface RelayMessage {
   role: 'system' | 'user' | 'assistant'
   content: string
 }
@@ -232,7 +252,7 @@ function rateLimited(ip: string): boolean {
   const now = Date.now()
   const recent = (hits.get(ip) ?? []).filter((at) => now - at < WINDOW_MS)
   recent.push(now)
-  hits.set(ip, recent)
+  hits.set(ip, recent.slice(-MAX_REQUESTS_PER_WINDOW - 1))
 
   if (hits.size > 5000) {
     for (const [key, times] of hits) {

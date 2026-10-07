@@ -147,11 +147,7 @@ export default function LibraryPage() {
         )}
 
         {archived && archived.length > 0 && (
-          <ArchivedShelf
-            books={archived}
-            chatCounts={chatCounts}
-            onDelete={setConfirmRemove}
-          />
+          <ArchivedShelf books={archived} chatCounts={chatCounts} onDelete={setConfirmRemove} />
         )}
       </main>
 
@@ -206,23 +202,13 @@ function BookCard({
 
   return (
     <li className="group relative">
-      <button
-        onClick={() => navigate(`/book/${book.id}`)}
-        className="block w-full text-left"
-      >
+      <button onClick={() => navigate(`/book/${book.id}`)} className="block w-full text-left">
         <div className="relative aspect-2/3 w-full overflow-hidden rounded-lg bg-stone-800 shadow-lg shadow-black/40 ring-1 ring-stone-700/50">
           {coverUrl ? (
-            <img
-              src={coverUrl}
-              alt=""
-              className="h-full w-full object-cover"
-              loading="lazy"
-            />
+            <img src={coverUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
           ) : (
             <div className="flex h-full flex-col justify-center bg-linear-to-br from-stone-700 to-stone-900 p-3">
-              <span className="line-clamp-4 text-sm font-medium text-stone-200">
-                {book.title}
-              </span>
+              <span className="line-clamp-4 text-sm font-medium text-stone-200">{book.title}</span>
               <span className="mt-1 line-clamp-2 text-xs text-stone-400">{book.author}</span>
             </div>
           )}
@@ -277,8 +263,8 @@ function ArchivedShelf({
     <section className="mt-10 border-t border-stone-800 pt-5">
       <h2 className="text-sm font-medium text-stone-300">Removed books</h2>
       <p className="mt-0.5 text-xs text-stone-500">
-        Their conversations, highlights and memory are kept. Import the same EPUB file
-        again to pick up where you left off.
+        Their conversations, highlights and memory are kept. Import the same EPUB file again to pick
+        up where you left off.
       </p>
 
       <ul className="mt-3 space-y-2">

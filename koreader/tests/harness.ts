@@ -12,8 +12,7 @@
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-// @ts-expect-error fengari ships no types
-import { lauxlib, lua, lualib, to_luastring } from 'fengari'
+import { LuaFactory } from 'wasmoon'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const pluginDir = join(here, '..', 'marginalia.koplugin')
@@ -51,23 +50,35 @@ package.loaded["marginalia_store"] = {}
 package.loaded["marginalia_util"] = {}
 `
 
-function check(L: unknown, status: number, what: string): void {
-  if (status !== lua.LUA_OK) {
-    const message = lua.lua_tojsstring(L, -1)
-    throw new Error(`${what}: ${message}`)
-  }
+const factory = new LuaFactory()
+
+function luaLiteral(source: string): string {
+  let equals = '='
+  while (source.includes(`]${equals}]`)) equals += '='
+  return `[${equals}[${source}]${equals}]`
 }
 
-function defineModule(L: unknown, name: string, directory = pluginDir): void {
-  const source = readFileSync(join(directory, `${name}.lua`))
-  check(L, lauxlib.luaL_loadbuffer(L, source, null, to_luastring(`@${name}.lua`)), `loading ${name}`)
-  check(L, lua.lua_pcall(L, 0, 1, 0), `running ${name}`)
-
-  lua.lua_getglobal(L, to_luastring('package'))
-  lua.lua_getfield(L, -1, to_luastring('loaded'))
-  lua.lua_pushvalue(L, -3)
-  lua.lua_setfield(L, -2, to_luastring(name))
-  lua.lua_pop(L, 3)
+/** Each scenario gets its own VM, and it is freed even when an assertion fails. */
+export async function withLua<T>(
+  bootstrap: string,
+  modules: string[],
+  run: (evaluate: (source: string) => unknown) => T,
+): Promise<T> {
+  const engine = await factory.createEngine({ functionTimeout: 5_000 })
+  try {
+    const evaluate = (source: string): unknown => engine.doStringSync(source)
+    evaluate(bootstrap)
+    for (const name of modules) {
+      const directory = name === 'spec_helper' ? here : pluginDir
+      const source = readFileSync(join(directory, `${name}.lua`), 'utf8')
+      evaluate(`package.loaded[${JSON.stringify(name)}] = assert(load(
+        ${luaLiteral(source)}, ${JSON.stringify(`@${name}.lua`)}
+      ))()`)
+    }
+    return run(evaluate)
+  } finally {
+    engine.global.close()
+  }
 }
 
 /**
@@ -77,31 +88,24 @@ function defineModule(L: unknown, name: string, directory = pluginDir): void {
  * exception carrying the Lua message and line — so a broken assertion reads
  * like any other test failure rather than a silent zero.
  */
-export function runSpec(name: string): string {
-  const L = lauxlib.luaL_newstate()
-  lualib.luaL_openlibs(L)
-
+export async function runSpec(name: string): Promise<string> {
   const printed: string[] = []
-  lua.lua_pushcfunction(L, (state: unknown) => {
-    const count = lua.lua_gettop(state)
-    const parts: string[] = []
-    for (let i = 1; i <= count; i += 1) {
-      parts.push(String(lua.lua_tojsstring(state, i) ?? lua.lua_tonumber(state, i)))
+  const engine = await factory.createEngine({ functionTimeout: 5_000 })
+  try {
+    engine.global.set('recordPrint', (...parts: unknown[]) =>
+      printed.push(parts.map(String).join('\t')),
+    )
+    engine.doStringSync(`print = recordPrint\n${STUBS}`)
+    for (const module of [...MODULES, 'spec_helper']) {
+      const directory = module === 'spec_helper' ? here : pluginDir
+      const source = readFileSync(join(directory, `${module}.lua`), 'utf8')
+      engine.doStringSync(`package.loaded[${JSON.stringify(module)}] = assert(load(
+        ${luaLiteral(source)}, ${JSON.stringify(`@${module}.lua`)}
+      ))()`)
     }
-    printed.push(parts.join('\t'))
-    return 0
-  })
-  lua.lua_setglobal(L, to_luastring('print'))
-
-  check(L, lauxlib.luaL_loadbuffer(L, to_luastring(STUBS), null, to_luastring('@stubs')), 'loading stubs')
-  check(L, lua.lua_pcall(L, 0, 0, 0), 'running stubs')
-
-  for (const module of MODULES) defineModule(L, module)
-  defineModule(L, 'spec_helper', here)
-
-  const source = readFileSync(join(here, `${name}.lua`))
-  check(L, lauxlib.luaL_loadbuffer(L, source, null, to_luastring(`@${name}.lua`)), `loading ${name}`)
-  check(L, lua.lua_pcall(L, 0, 0, 0), `${name}`)
-
-  return printed.join('\n')
+    engine.doStringSync(readFileSync(join(here, `${name}.lua`), 'utf8'))
+    return printed.join('\n')
+  } finally {
+    engine.global.close()
+  }
 }

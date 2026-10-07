@@ -46,9 +46,13 @@ refused outright rather than guessed at, since matching an internationalised
 name properly means punycode, and getting it half right is worse than declining.
 --]]
 local function normalize_host(host)
-    if type(host) ~= "string" or host == "" then return nil end
+    if type(host) ~= "string" or host == "" then
+        return nil
+    end
     local clean = host:gsub("%.$", ""):lower()
-    if clean:match("[\128-\255]") then return nil end
+    if clean:match("[\128-\255]") then
+        return nil
+    end
     return clean
 end
 
@@ -61,11 +65,17 @@ matches `a.example.com` but not `example.com`, not `a.b.example.com`, and
 --]]
 function TLS.name_matches(pattern, host)
     pattern = normalize_host(pattern)
-    if not pattern or not host then return false end
-    if pattern == host then return true end
+    if not pattern or not host then
+        return false
+    end
+    if pattern == host then
+        return true
+    end
 
     local rest = pattern:match("^%*%.(.+)$")
-    if not rest then return false end
+    if not rest then
+        return false
+    end
 
     local label, remainder = host:match("^([^%.]+)%.(.+)$")
     return label ~= nil and remainder == rest
@@ -108,7 +118,9 @@ function TLS.verify_hostname(cert, host)
     if type(names) == "table" and #names > 0 then
         for _, name in ipairs(names) do
             if is_ip then
-                if normalize_host(name) == wanted then return true end
+                if normalize_host(name) == wanted then
+                    return true
+                end
             elseif TLS.name_matches(name, wanted) then
                 return true
             end
@@ -167,12 +179,18 @@ function TLS.create(host, cafile)
             local result = connect(self, connect_host, connect_port)
 
             local cert
-            local ok, value = pcall(function() return self:getpeercertificate() end)
-            if ok then cert = value end
+            local ok, value = pcall(function()
+                return self:getpeercertificate()
+            end)
+            if ok then
+                cert = value
+            end
 
             local matched, reason = TLS.verify_hostname(cert, host)
             if not matched then
-                pcall(function() self:close() end)
+                pcall(function()
+                    self:close()
+                end)
                 socket.try(nil, reason)
             end
 

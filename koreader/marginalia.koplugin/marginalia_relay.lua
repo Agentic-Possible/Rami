@@ -51,7 +51,9 @@ on a device that has very little.
 local function capped_sink(chunks)
     local received = 0
     return function(chunk, err)
-        if not chunk then return 1, err end
+        if not chunk then
+            return 1, err
+        end
         received = received + #chunk
         if received > MAX_RESPONSE_BYTES then
             return nil, "response too large"
@@ -70,14 +72,18 @@ local function upstream_message(body)
     local ok, decoded = pcall(rapidjson.decode, body or "")
     if ok and type(decoded) == "table" and type(decoded.error) == "table" then
         local message = decoded.error.message
-        if type(message) == "string" and message ~= "" then return message end
+        if type(message) == "string" and message ~= "" then
+            return message
+        end
     end
     return nil
 end
 
 local function status_message(code, body)
     local from_relay = upstream_message(body)
-    if from_relay then return from_relay end
+    if from_relay then
+        return from_relay
+    end
     if code == 429 then
         return "Marginalia is rate limiting this device. Wait a minute and try again."
     elseif code == 503 then
@@ -114,7 +120,9 @@ Blocking. Intended to be called inside `Trapper:dismissableRunInSubprocess`.
 --]]
 function Relay.post(endpoint, messages, cafile, plugin_version)
     local usable, why = TLS.check_endpoint(endpoint)
-    if not usable then return { ok = false, error = why } end
+    if not usable then
+        return { ok = false, error = why }
+    end
 
     local host = host_of(endpoint)
     if not host then
@@ -122,7 +130,10 @@ function Relay.post(endpoint, messages, cafile, plugin_version)
     end
 
     if Relay.request_size(messages) > MAX_REQUEST_CHARS then
-        return { ok = false, error = "This conversation has grown too long for the relay. Start a new one." }
+        return {
+            ok = false,
+            error = "This conversation has grown too long for the relay. Start a new one.",
+        }
     end
 
     local encoded, encode_error = rapidjson.encode({
@@ -158,7 +169,10 @@ function Relay.post(endpoint, messages, cafile, plugin_version)
     end
 
     if code >= 300 and code < 400 then
-        return { ok = false, error = "That endpoint redirects. Point the setting at the relay itself." }
+        return {
+            ok = false,
+            error = "That endpoint redirects. Point the setting at the relay itself.",
+        }
     end
 
     if code ~= 200 then
@@ -197,8 +211,11 @@ function Relay.transport_message(err)
         return "Could not verify the server's certificate. If this device's clock is wrong, "
             .. "fix the date first — the Time sync plugin does it."
     end
-    if err:match("^the certificate is not valid") or err:match("^the server sent no certificate") then
-        return "The server's certificate is not for that address, so the connection was refused. " .. err
+    if
+        err:match("^the certificate is not valid") or err:match("^the server sent no certificate")
+    then
+        return "The server's certificate is not for that address, so the connection was refused. "
+            .. err
     end
     if err:match("host not found") or err:match("Name or service not known") then
         return "Could not find that host. Check Wi-Fi and the endpoint address."

@@ -7,7 +7,7 @@ import { epubThemeStyles } from './themes'
 import { buildAnchors, chapterAt, normalizeHref, type ChapterAnchor } from './chapters'
 import { longPressToSelect } from './touchSelect'
 
-export interface ReaderLocation {
+interface ReaderLocation {
   cfi: string
   href: string
   chapter?: string

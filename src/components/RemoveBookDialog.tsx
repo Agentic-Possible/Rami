@@ -59,8 +59,7 @@ export default function RemoveBookDialog({
 
         {archived ? (
           <p className="mt-1.5 text-sm opacity-70">
-            This deletes its highlights, conversations and memory for good. It cannot be
-            undone.
+            This deletes its highlights, conversations and memory for good. It cannot be undone.
           </p>
         ) : (
           <fieldset className="mt-4">

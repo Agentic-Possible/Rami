@@ -12,7 +12,9 @@ local TLS = require("marginalia_tls")
 local function certificate(spec)
     return {
         extensions = function()
-            if not spec.sans then return {} end
+            if not spec.sans then
+                return {}
+            end
             return { ["2.5.29.17"] = spec.sans }
         end,
         subject = function()
@@ -29,7 +31,10 @@ end
 do
     H.ok(TLS.name_matches("lexici.netlify.app", "lexici.netlify.app"), "exact match")
     H.ok(TLS.name_matches("LEXICI.NETLIFY.APP", "lexici.netlify.app"), "certificate case is folded")
-    H.ok(TLS.name_matches("lexici.netlify.app.", "lexici.netlify.app"), "a trailing dot is not a difference")
+    H.ok(
+        TLS.name_matches("lexici.netlify.app.", "lexici.netlify.app"),
+        "a trailing dot is not a difference"
+    )
     H.ok(not TLS.name_matches("evil.example.com", "lexici.netlify.app"), "different host")
     H.ok(not TLS.name_matches("netlify.app", "lexici.netlify.app"), "parent domain is not a match")
 end
@@ -37,11 +42,23 @@ end
 -- Wildcards, only ever as a whole leftmost label.
 do
     H.ok(TLS.name_matches("*.netlify.app", "lexici.netlify.app"), "one label")
-    H.ok(not TLS.name_matches("*.netlify.app", "netlify.app"), "the wildcard needs something to match")
-    H.ok(not TLS.name_matches("*.netlify.app", "a.b.netlify.app"), "a wildcard covers one label, not two")
+    H.ok(
+        not TLS.name_matches("*.netlify.app", "netlify.app"),
+        "the wildcard needs something to match"
+    )
+    H.ok(
+        not TLS.name_matches("*.netlify.app", "a.b.netlify.app"),
+        "a wildcard covers one label, not two"
+    )
     H.ok(not TLS.name_matches("*", "lexici.netlify.app"), "a bare star matches nothing")
-    H.ok(not TLS.name_matches("lex*.netlify.app", "lexici.netlify.app"), "partial-label wildcards are not wildcards")
-    H.ok(not TLS.name_matches("*.*.app", "lexici.netlify.app"), "only the leftmost label may be a wildcard")
+    H.ok(
+        not TLS.name_matches("lex*.netlify.app", "lexici.netlify.app"),
+        "partial-label wildcards are not wildcards"
+    )
+    H.ok(
+        not TLS.name_matches("*.*.app", "lexici.netlify.app"),
+        "only the leftmost label may be a wildcard"
+    )
 end
 
 -- The certificate the default endpoint actually presents, read off the live
@@ -54,8 +71,10 @@ do
     })
     H.ok(TLS.verify_hostname(netlify, "lexici.netlify.app"), "the default endpoint verifies")
     H.ok(TLS.verify_hostname(netlify, "netlify.app"), "the bare apex is covered by its own SAN")
-    H.ok(not TLS.verify_hostname(netlify, "lexici.netlify.app.evil.com"),
-        "and a lookalike host is not")
+    H.ok(
+        not TLS.verify_hostname(netlify, "lexici.netlify.app.evil.com"),
+        "and a lookalike host is not"
+    )
 end
 
 -- Where the name is read from. A certificate with a usable SAN is judged on it
@@ -79,7 +98,9 @@ do
     local wildcard_san = certificate({ sans = { dNSName = { "*.netlify.app" } } })
     H.ok(TLS.verify_hostname(wildcard_san, "lexici.netlify.app"), "wildcard SAN")
 
-    local many = certificate({ sans = { dNSName = { "a.example.com", "b.example.com", "lexici.netlify.app" } } })
+    local many = certificate({
+        sans = { dNSName = { "a.example.com", "b.example.com", "lexici.netlify.app" } },
+    })
     H.ok(TLS.verify_hostname(many, "lexici.netlify.app"), "any one of several SANs will do")
 end
 
@@ -87,10 +108,16 @@ end
 do
     local ip_san = certificate({ sans = { iPAddress = { "192.168.1.10" } } })
     H.ok(TLS.verify_hostname(ip_san, "192.168.1.10"), "address against address")
-    H.ok(not TLS.verify_hostname(ip_san, "lexici.netlify.app"), "an address entry does not vouch for a name")
+    H.ok(
+        not TLS.verify_hostname(ip_san, "lexici.netlify.app"),
+        "an address entry does not vouch for a name"
+    )
 
     local dns_san = certificate({ sans = { dNSName = { "192.168.1.10" } } })
-    H.ok(not TLS.verify_hostname(dns_san, "192.168.1.10"), "a name entry does not vouch for an address")
+    H.ok(
+        not TLS.verify_hostname(dns_san, "192.168.1.10"),
+        "a name entry does not vouch for an address"
+    )
 
     local wildcard_for_ip = certificate({ sans = { iPAddress = { "*.1.10" } } })
     H.ok(not TLS.verify_hostname(wildcard_for_ip, "192.168.1.10"), "addresses have no wildcards")
@@ -109,32 +136,42 @@ do
 
     -- LuaSec has been known to hand back shapes the docs do not describe.
     local broken = {
-        extensions = function() error("no extensions here") end,
-        subject = function() error("nor a subject") end,
+        extensions = function()
+            error("no extensions here")
+        end,
+        subject = function()
+            error("nor a subject")
+        end,
     }
-    H.ok(not TLS.verify_hostname(broken, "lexici.netlify.app"), "a certificate we cannot read is not trusted")
+    H.ok(
+        not TLS.verify_hostname(broken, "lexici.netlify.app"),
+        "a certificate we cannot read is not trusted"
+    )
 
     -- A certificate that has subjectAltName at all is judged on it alone. If
     -- the common name were consulted whenever the SAN held nothing of the kind
     -- this host needs, a certificate listing only an address would be accepted
     -- for a name — the exact crossing-over the type split above exists to stop.
     local empty_sans = certificate({ sans = { dNSName = {} }, common_name = "lexici.netlify.app" })
-    H.ok(not TLS.verify_hostname(empty_sans, "lexici.netlify.app"),
-        "an empty SAN list is still a SAN, so the common name is not a second chance")
+    H.ok(
+        not TLS.verify_hostname(empty_sans, "lexici.netlify.app"),
+        "an empty SAN list is still a SAN, so the common name is not a second chance"
+    )
 
     local address_san_name_cn = certificate({
         sans = { iPAddress = { "192.168.1.10" } },
         common_name = "lexici.netlify.app",
     })
-    H.ok(not TLS.verify_hostname(address_san_name_cn, "lexici.netlify.app"),
-        "a SAN holding only an address does not let the common name vouch for a name")
+    H.ok(
+        not TLS.verify_hostname(address_san_name_cn, "lexici.netlify.app"),
+        "a SAN holding only an address does not let the common name vouch for a name"
+    )
 
     local name_san_address_cn = certificate({
         sans = { dNSName = { "lexici.netlify.app" } },
         common_name = "192.168.1.10",
     })
-    H.ok(not TLS.verify_hostname(name_san_address_cn, "192.168.1.10"),
-        "nor the other way round")
+    H.ok(not TLS.verify_hostname(name_san_address_cn, "192.168.1.10"), "nor the other way round")
 end
 
 -- None of the above matters if the request can be made in the clear.

@@ -40,7 +40,7 @@ export const MAX_SUMMARY_CHARS = 4000
  * generating a new token per request -- but they crowd out the notes they
  * surround, so strip them before anything is written.
  */
-export function stripFenceTokens(text: string): string {
+function stripFenceTokens(text: string): string {
   // Whole lines go first. Blanking them in place would leave the empty line
   // behind, and a delimiter echoed mid-digest would then part the notes around
   // it -- invisible while the markers sit at the very edges, as they do today,

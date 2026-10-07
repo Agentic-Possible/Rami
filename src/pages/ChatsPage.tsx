@@ -18,9 +18,7 @@ export default function ChatsPage() {
   const book = useLiveQuery(() => (bookId ? db.books.get(bookId) : undefined), [bookId])
   const conversations = useLiveQuery(
     () =>
-      bookId
-        ? db.conversations.where('bookId').equals(bookId).reverse().sortBy('updatedAt')
-        : [],
+      bookId ? db.conversations.where('bookId').equals(bookId).reverse().sortBy('updatedAt') : [],
     [bookId],
   )
   const highlights = useLiveQuery(
@@ -28,10 +26,7 @@ export default function ChatsPage() {
       bookId ? db.highlights.where('bookId').equals(bookId).reverse().sortBy('createdAt') : [],
     [bookId],
   )
-  const memory = useLiveQuery(
-    () => (bookId ? db.bookMemory.get(bookId) : undefined),
-    [bookId],
-  )
+  const memory = useLiveQuery(() => (bookId ? db.bookMemory.get(bookId) : undefined), [bookId])
   const settings = useLiveQuery(() => getSettings(), []) ?? DEFAULT_SETTINGS
 
   return (
@@ -68,8 +63,7 @@ export default function ChatsPage() {
           <>
             {conversations?.length === 0 && (
               <Empty>
-                Highlight a passage while reading and tap “Chat about this” to start a
-                conversation.
+                Highlight a passage while reading and tap “Chat about this” to start a conversation.
               </Empty>
             )}
 

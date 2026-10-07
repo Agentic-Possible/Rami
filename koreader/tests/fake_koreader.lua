@@ -18,26 +18,40 @@ test has to be able to do that.
 --]]
 
 -- Scenario-visible state.
-RELAY_REPLIES = {}      -- canned replies, consumed in order
-RELAY_REQUESTS = {}     -- every system prompt sent
-RELAY_FAIL = nil        -- when set, every call fails with this reason
-INPUT_DIALOGS = {}      -- dialogs shown
-SHOWN = {}              -- text of every TextViewer shown
-VIEWERS = {}            -- the TextViewer widgets themselves
-MESSAGES = {}           -- text of every InfoMessage shown
-MENUS = {}              -- every Menu shown
-BUTTON_DIALOGS = {}     -- every ButtonDialog shown
+RELAY_REPLIES = {} -- canned replies, consumed in order
+RELAY_REQUESTS = {} -- every system prompt sent
+RELAY_FAIL = nil -- when set, every call fails with this reason
+INPUT_DIALOGS = {} -- dialogs shown
+SHOWN = {} -- text of every TextViewer shown
+VIEWERS = {} -- the TextViewer widgets themselves
+MESSAGES = {} -- text of every InfoMessage shown
+MENUS = {} -- every Menu shown
+BUTTON_DIALOGS = {} -- every ButtonDialog shown
 NETWORK_DECLINED = false -- when true, runWhenOnline never calls back
 
-package.loaded["logger"] = setmetatable({}, { __index = function() return function() end end })
+package.loaded["logger"] = setmetatable({}, {
+    __index = function()
+        return function() end
+    end,
+})
 package.loaded["gettext"] = setmetatable({
-    ngettext = function(one, many, n) return n == 1 and one or many end,
-}, { __call = function(_, text) return text end })
+    ngettext = function(one, many, n)
+        return n == 1 and one or many
+    end,
+}, {
+    __call = function(_, text)
+        return text
+    end,
+})
 
 package.loaded["ffi/util"] = {
     template = function(text, ...)
         local args = { ... }
-        return (text:gsub("%%(%d)", function(index) return tostring(args[tonumber(index)]) end))
+        return (
+            text:gsub("%%(%d)", function(index)
+                return tostring(args[tonumber(index)])
+            end)
+        )
     end,
 }
 
@@ -64,9 +78,11 @@ package.loaded["util"] = {
     end,
 }
 
-package.loaded["ui/event"] = { new = function(_, name, payload)
-    return { name = name, payload = payload }
-end }
+package.loaded["ui/event"] = {
+    new = function(_, name, payload)
+        return { name = name, payload = payload }
+    end,
+}
 
 package.loaded["ui/uimanager"] = {
     show = function(_, widget)
@@ -80,28 +96,40 @@ package.loaded["ui/uimanager"] = {
     close = function() end,
 }
 
-package.loaded["ui/widget/infomessage"] = { new = function(_, spec)
-    spec.__kind = "infomessage"
-    return spec
-end }
+package.loaded["ui/widget/infomessage"] = {
+    new = function(_, spec)
+        spec.__kind = "infomessage"
+        return spec
+    end,
+}
 
-package.loaded["ui/widget/textviewer"] = { new = function(_, spec)
-    spec.__kind = "textviewer"
-    return spec
-end }
+package.loaded["ui/widget/textviewer"] = {
+    new = function(_, spec)
+        spec.__kind = "textviewer"
+        return spec
+    end,
+}
 
-package.loaded["ui/widget/confirmbox"] = { new = function(_, spec) return spec end }
-package.loaded["ui/widget/buttondialog"] = { new = function(_, spec)
-    spec.__kind = "buttondialog"
-    BUTTON_DIALOGS[#BUTTON_DIALOGS + 1] = spec
-    return spec
-end }
+package.loaded["ui/widget/confirmbox"] = {
+    new = function(_, spec)
+        return spec
+    end,
+}
+package.loaded["ui/widget/buttondialog"] = {
+    new = function(_, spec)
+        spec.__kind = "buttondialog"
+        BUTTON_DIALOGS[#BUTTON_DIALOGS + 1] = spec
+        return spec
+    end,
+}
 
-package.loaded["ui/widget/menu"] = { new = function(_, spec)
-    spec.__kind = "menu"
-    MENUS[#MENUS + 1] = spec
-    return spec
-end }
+package.loaded["ui/widget/menu"] = {
+    new = function(_, spec)
+        spec.__kind = "menu"
+        MENUS[#MENUS + 1] = spec
+        return spec
+    end,
+}
 
 --- Chooses a row of the most recent menu by its visible text.
 function CHOOSE_ROW(fragment)
@@ -120,7 +148,9 @@ function TAP_BUTTON(widget, label)
     for _, row in ipairs(widget.buttons or widget.buttons_table or {}) do
         for _, button in ipairs(row) do
             if button.text == label then
-                if button.enabled == false then error(label .. " is disabled") end
+                if button.enabled == false then
+                    error(label .. " is disabled")
+                end
                 button.callback()
                 return
             end
@@ -129,12 +159,16 @@ function TAP_BUTTON(widget, label)
     error("no button " .. label)
 end
 
-package.loaded["ui/widget/inputdialog"] = { new = function(_, spec)
-    spec.getInputText = function() return spec.__answer end
-    spec.onShowKeyboard = function() end
-    INPUT_DIALOGS[#INPUT_DIALOGS + 1] = spec
-    return spec
-end }
+package.loaded["ui/widget/inputdialog"] = {
+    new = function(_, spec)
+        spec.getInputText = function()
+            return spec.__answer
+        end
+        spec.onShowKeyboard = function() end
+        INPUT_DIALOGS[#INPUT_DIALOGS + 1] = spec
+        return spec
+    end,
+}
 
 --- Taps "Ask" on the most recent dialog with the given text.
 function ANSWER_QUESTION(text)
@@ -142,7 +176,10 @@ function ANSWER_QUESTION(text)
     dialog.__answer = text
     for _, row in ipairs(dialog.buttons) do
         for _, button in ipairs(row) do
-            if button.text == "Ask" then button.callback() return end
+            if button.text == "Ask" then
+                button.callback()
+                return
+            end
         end
     end
     error("no Ask button on the dialog")
@@ -175,38 +212,82 @@ which is a path with its own behaviour rather than an absence of one. Set
 NETWORK_DECLINED = false
 package.loaded["ui/network/manager"] = {
     runWhenOnline = function(_, callback)
-        if NETWORK_DECLINED then return end
+        if NETWORK_DECLINED then
+            return
+        end
         callback()
     end,
 }
 
 package.loaded["ui/trapper"] = {
-    wrap = function(_, task) return task() end,
+    wrap = function(_, task)
+        return task()
+    end,
     -- Nothing forks here, so the task simply runs. `true` is "not dismissed".
-    dismissableRunInSubprocess = function(_, task) return true, task() end,
-    info = function() return true end,
+    dismissableRunInSubprocess = function(_, task)
+        return true, task()
+    end,
+    info = function()
+        return true
+    end,
 }
 
 package.loaded["datastorage"] = {
-    getDataDir = function() return "/data" end,
-    getFullDataDir = function() return "/data" end,
+    getDataDir = function()
+        return "/data"
+    end,
+    getFullDataDir = function()
+        return "/data"
+    end,
 }
-package.loaded["device"] = { screen = {
-    getHeight = function() return 800 end,
-    getWidth = function() return 600 end,
-} }
-package.loaded["version"] = { getShortVersion = function() return "v-test" end }
+package.loaded["device"] = {
+    screen = {
+        getHeight = function()
+            return 800
+        end,
+        getWidth = function()
+            return 600
+        end,
+    },
+}
+package.loaded["version"] = {
+    getShortVersion = function()
+        return "v-test"
+    end,
+}
 package.loaded["dispatcher"] = { registerAction = function() end }
 package.loaded["libs/libkoreader-lfs"] = {
-    attributes = function() return nil end,
-    mkdir = function() return true end,
+    attributes = function()
+        return nil
+    end,
+    mkdir = function()
+        return true
+    end,
 }
-package.loaded["rapidjson"] = { encode = function() return "{}" end, decode = function() return {} end }
-package.loaded["socket"] = { try = function(ok, err) if not ok then error(err, 0) end end }
-package.loaded["socket.http"] = { request = function() return nil, "not wired" end }
+package.loaded["rapidjson"] = {
+    encode = function()
+        return "{}"
+    end,
+    decode = function()
+        return {}
+    end,
+}
+package.loaded["socket"] = {
+    try = function(ok, err)
+        if not ok then
+            error(err, 0)
+        end
+    end,
+}
+package.loaded["socket.http"] = {
+    request = function()
+        return nil, "not wired"
+    end,
+}
 package.loaded["ltn12"] = { source = { string = function() end } }
 package.loaded["socketutil"] = {
-    set_timeout = function() end, reset_timeout = function() end,
+    set_timeout = function() end,
+    reset_timeout = function() end,
 }
 
 --- A sidecar that behaves like `LuaSettings`: in memory, flushed on demand.
@@ -215,11 +296,17 @@ local function FakeDocSettings()
         store = {},
         flushes = 0,
         readSetting = function(self, key)
-            if key == "doc_pages" then return 100 end
+            if key == "doc_pages" then
+                return 100
+            end
             return self.store[key]
         end,
-        saveSetting = function(self, key, value) self.store[key] = value end,
-        flush = function(self) self.flushes = self.flushes + 1 end,
+        saveSetting = function(self, key, value)
+            self.store[key] = value
+        end,
+        flush = function(self)
+            self.flushes = self.flushes + 1
+        end,
     }
 end
 
@@ -235,9 +322,15 @@ function FakeUI()
         doc_settings = FakeDocSettings(),
         document = {
             file = "/books/moby.epub",
-            getPageFromXPointer = function() return 9 end,
+            getPageFromXPointer = function()
+                return 9
+            end,
         },
-        toc = { getTocTitleByPage = function() return "CHAPTER 9. The Sermon." end },
+        toc = {
+            getTocTitleByPage = function()
+                return "CHAPTER 9. The Sermon."
+            end,
+        },
         annotation = {
             annotations = {},
             addItem = function(self, item)
@@ -295,9 +388,13 @@ function INSTALL_FAKE_RELAY()
     local Relay = package.loaded["marginalia_relay"]
     Relay.post = function(_, messages, _, _)
         RELAY_REQUESTS[#RELAY_REQUESTS + 1] = messages[1].content
-        if RELAY_FAIL then return { ok = false, error = RELAY_FAIL } end
+        if RELAY_FAIL then
+            return { ok = false, error = RELAY_FAIL }
+        end
         local reply = table.remove(RELAY_REPLIES, 1)
-        if not reply then return { ok = false, error = "no canned reply left" } end
+        if not reply then
+            return { ok = false, error = "no canned reply left" }
+        end
         return { ok = true, text = reply }
     end
 end

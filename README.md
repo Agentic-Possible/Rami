@@ -23,7 +23,7 @@ Not yet done (M6): PWA share-target import, re-anchoring highlights by text when
 ## Running it
 
 ```bash
-npm install
+npm run setup
 npm run dev
 ```
 
@@ -38,8 +38,22 @@ A Vite plugin serves `/api/chat` in dev using the same handler the deployed edge
 ```bash
 npm run build     # production build + service worker
 npm run lint      # oxlint
-npx tsc -b        # typecheck
+npm run typecheck # PWA, relay, and test-harness type checks
+npm run test:list # collect Vitest tests without running them
+npm run check     # lint + typecheck + PWA/KOReader unit and integration tests
 ```
+
+See [AGENTS.md](AGENTS.md) for application boundaries, conventions, focused tests,
+and interactive QA. CI runs the documented checks and production build. Python
+narrator setup and its standard-library test runner are documented there and in
+[tools/narrate/README.md](tools/narrate/README.md).
+
+`npm run quality`, `npm run check:narrate`, and `npm run test:qa` add formatter,
+dead/duplicate code, Python, and desktop/mobile browser gates. Setup uses a
+separate validation environment and installs a pre-commit hook. See
+[architecture](docs/architecture.md), [API contracts](docs/api.openapi.yml), and
+[operations/privacy](docs/operations.md). Optional Sentry/PostHog identifiers are
+empty in `.env.example`; browser collection is also off until Settings consent.
 
 ## Personal audiobook streaming
 

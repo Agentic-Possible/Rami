@@ -1,12 +1,6 @@
 import type { Book as EpubBook } from 'epubjs'
 import { db } from '../db/db'
-import type {
-  Conversation,
-  Highlight,
-  HighlightColor,
-  Message,
-  Role,
-} from '../db/types'
+import type { Conversation, Highlight, HighlightColor, Message, Role } from '../db/types'
 import { BookAnchors, isMatch, type AnchorFailure } from './anchor'
 import { newId } from './id'
 
@@ -32,8 +26,8 @@ import { newId } from './id'
  *   rather than being merged under a policy nobody asked for.
  */
 
-export const HANDOFF_FORMAT = 'marginalia-koreader'
-export const HANDOFF_VERSION = 1
+const HANDOFF_FORMAT = 'marginalia-koreader'
+const HANDOFF_VERSION = 1
 
 /** Ceilings. Generous for real books, closed against a hostile file. */
 const LIMITS = {
@@ -48,7 +42,7 @@ const LIMITS = {
 
 export class HandoffError extends Error {}
 
-export interface HandoffHighlight {
+interface HandoffHighlight {
   externalId: string
   text: string
   note?: string
@@ -59,14 +53,14 @@ export interface HandoffHighlight {
   context?: string
 }
 
-export interface HandoffMessage {
+interface HandoffMessage {
   externalId: string
   role: Role
   content: string
   createdAt: number
 }
 
-export interface HandoffThread {
+interface HandoffThread {
   externalId: string
   highlightExternalId?: string
   title: string
@@ -205,10 +199,14 @@ export function parseHandoff(text: string): Handoff {
     threads.push({
       externalId: asString(entry.externalId, 'a conversation id', LIMITS.shortChars),
       highlightExternalId: optionalString(
-        entry.highlightExternalId, 'a conversation highlight id', LIMITS.shortChars,
+        entry.highlightExternalId,
+        'a conversation highlight id',
+        LIMITS.shortChars,
       ),
-      title: optionalString(entry.title, 'a conversation title', LIMITS.shortChars)
-        ?? seedText?.slice(0, 60) ?? 'Conversation',
+      title:
+        optionalString(entry.title, 'a conversation title', LIMITS.shortChars) ??
+        seedText?.slice(0, 60) ??
+        'Conversation',
       seedText,
       context: optionalString(entry.context, 'a conversation context', LIMITS.contextChars),
       chapter: optionalString(entry.chapter, 'a chapter name', LIMITS.shortChars),
@@ -229,7 +227,7 @@ export function parseHandoff(text: string): Handoff {
 }
 
 /** What could not be brought in, and why, so the summary can be specific. */
-export interface Rejection {
+interface Rejection {
   text: string
   failure: AnchorFailure
 }
@@ -266,9 +264,7 @@ export async function importHandoff(
 ): Promise<ImportResult> {
   const existingHighlights = await db.highlights.where('bookId').equals(bookId).toArray()
   const knownHighlight = new Map(
-    existingHighlights
-      .filter((h) => h.externalId)
-      .map((h) => [h.externalId as string, h]),
+    existingHighlights.filter((h) => h.externalId).map((h) => [h.externalId as string, h]),
   )
   const existingThreads = await db.conversations.where('bookId').equals(bookId).toArray()
   const knownThread = new Map(
@@ -336,10 +332,7 @@ export async function importHandoff(
       // on the e-reader appends to the same thread under the same id. So a
       // conversation already here is not skipped wholesale — only the turns it
       // already holds are.
-      const held = await db.messages
-        .where('conversationId')
-        .equals(existing.id)
-        .toArray()
+      const held = await db.messages.where('conversationId').equals(existing.id).toArray()
       const seen = new Set(held.map((m) => m.externalId).filter(Boolean))
 
       const fresh = thread.messages.filter((m) => !seen.has(m.externalId))

@@ -1,0 +1,7 @@
+{
+  "CHAT_ENABLED": {
+    "purpose": "Emergency kill switch for paid hosted inference, not a temporary experiment",
+    "owners": ["@critesjosh"],
+    "consumers": ["vite.config.ts", "workers/app/src/index.ts", "netlify/edge-functions/chat.ts"]
+  }
+}

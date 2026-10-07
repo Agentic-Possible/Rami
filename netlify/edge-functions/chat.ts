@@ -10,6 +10,7 @@ export default async function handler(request: Request, context: Context): Promi
     request,
     {
       apiKey: Netlify.env.get('OPENROUTER_API_KEY') ?? '',
+      enabled: Netlify.env.get('CHAT_ENABLED') !== 'false',
       siteUrl: Netlify.env.get('URL') ?? new URL(request.url).origin,
     },
     { ip: context.ip ?? '' },

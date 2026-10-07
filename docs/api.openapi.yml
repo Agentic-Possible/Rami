@@ -1,0 +1,85 @@
+openapi: 3.1.0
+info:
+  title: Marginalia APIs
+  version: 1.0.0
+paths:
+  /api/chat:
+    post:
+      summary: Server-pinned OpenRouter chat relay
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [messages]
+              properties:
+                stream: {type: boolean}
+                messages:
+                  type: array
+                  minItems: 1
+                  maxItems: 60
+                  items:
+                    type: object
+                    required: [role, content]
+                    properties:
+                      role: {enum: [system, user, assistant]}
+                      content: {type: string}
+              description: At most 120000 total content characters and 600000 body bytes. Model/provider fields are ignored.
+      responses:
+        "200":
+          description: OpenAI-compatible completion or SSE stream
+          content:
+            text/event-stream: {schema: {type: string}}
+            application/json: {schema: {type: object}}
+        "400": {description: Invalid JSON or content limits}
+        "403": {description: Cross-origin browser request}
+        "429": {description: Best-effort isolate-local throttle}
+        "503": {description: Key absent, chat disabled, circuit open, or upstream unavailable}
+        "504": {description: Upstream headers exceeded 30 seconds}
+  /health:
+    get:
+      summary: Worker liveness, no provider or storage requests
+      responses:
+        "200": {description: Running, not a dependency readiness guarantee}
+  /session:
+    post:
+      summary: Audiobook Worker only, exchange bearer token for signed object URLs
+      security: [{bearerAuth: []}]
+      parameters:
+        - in: header
+          name: Origin
+          required: true
+          schema: {type: string}
+      responses:
+        "200":
+          description: Session, never cached
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [audioUrl, metadataUrl, expiresAt]
+                properties:
+                  audioUrl: {type: string, format: uri}
+                  metadataUrl: {type: string, format: uri}
+                  expiresAt: {type: integer}
+        "401": {description: Invalid token}
+        "403": {description: Missing or disallowed Origin}
+        "429": {description: Session rate limit}
+  /objects/{key}:
+    get:
+      summary: Audiobook Worker only, allowlisted R2 object with optional single byte range
+      parameters:
+        - {in: path, name: key, required: true, schema: {type: string}}
+        - {in: query, name: expires, required: true, schema: {type: integer}}
+        - {in: query, name: signature, required: true, schema: {type: string}}
+        - {in: header, name: Range, schema: {type: string}}
+      responses:
+        "200": {description: Full object}
+        "206": {description: Single byte range}
+        "401": {description: Invalid or expired signature}
+        "404": {description: Not allowlisted or missing}
+        "416": {description: Invalid range}
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer}

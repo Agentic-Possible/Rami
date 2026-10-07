@@ -127,10 +127,7 @@ function encryptedTarget(entry: Element): string | undefined {
  * are not in the spine (stale metadata for a file the book no longer uses is
  * no reason to refuse the book).
  */
-export function hasUnsupportedEncryption(
-  xml: string,
-  spinePaths: Iterable<string>,
-): boolean {
+export function hasUnsupportedEncryption(xml: string, spinePaths: Iterable<string>): boolean {
   const doc = new DOMParser().parseFromString(xml, 'application/xml')
   if (doc.getElementsByTagName('parsererror').length > 0) return false
 
