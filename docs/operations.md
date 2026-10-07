@@ -16,7 +16,7 @@ emit source maps.
 App and audiobook Workers expose `/health`, a liveness check only. It does not
 call OpenRouter or R2. An absent inference key returns 503 for chat, not a reader
 failure. Set `CHAT_ENABLED=false` on the relevant deploy target to stop paid chat
-while keeping reading available. Vite, Netlify, and Cloudflare honor it. On
+while keeping reading available. Vite and Cloudflare honor it. On
 Cloudflare, use `wrangler secret put CHAT_ENABLED` so later deploys keep it.
 
 Relay metrics log operation/status/duration, never URLs, prompts, or IPs.
@@ -50,7 +50,7 @@ For Cloudflare, dry-run first, then upload an immutable Worker version and use
 `wrangler versions deploy` for a small canary before 100% rollout. Monitor error
 rate, health, and latency. The exact traffic split must be an explicit operator
 decision. Restore the previous known-good version with `wrangler rollback`
-on regression. Netlify operators restore a previously published deploy.
+on regression.
 These actions require hosted credentials and authorization; local QA never runs
 them. No deployment-frequency or successful-rollback claim follows from this doc.
 

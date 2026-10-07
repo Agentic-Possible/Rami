@@ -7,9 +7,9 @@ import { handleRelayRequest } from './shared/relay.ts'
 import { visualizer } from 'rollup-plugin-visualizer'
 
 /**
- * Serves /api/chat in dev with the same handler the Netlify edge function uses,
+ * Serves /api/chat in dev with the same handler the Cloudflare Worker uses,
  * so local runs exercise the real relay instead of a stand-in. Reads
- * OPENROUTER_API_KEY from .env.local; the deployed site gets it from Netlify.
+ * OPENROUTER_API_KEY from .env.local; the deployed Worker has it as a secret.
  */
 function chatRelay(apiKey: string, enabled: boolean): Plugin {
   return {

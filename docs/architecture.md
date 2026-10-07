@@ -3,7 +3,7 @@
 ```mermaid
 flowchart LR
   PWA[Reader PWA] --> IDB[(IndexedDB)]
-  PWA --> Relay[Vite / Netlify / App Worker]
+  PWA --> Relay[Vite / App Worker]
   KO[KOReader plugin] --> Relay
   Relay --> OR[OpenRouter, billed]
   PWA --> OA[Optional own-key OpenAI, billed]

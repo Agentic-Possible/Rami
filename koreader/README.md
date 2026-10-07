@@ -161,8 +161,8 @@ storage, so there is no server to sync through.
 
 - **Avoid spoilers** — on by default. Asks the model not to reveal anything past
   where you are.
-- **Relay** — where questions are sent, `https://lexici.netlify.app/api/chat` by
-  default. Change it only if you host your own. It must be `https://`.
+- **Relay** — where questions are sent, `https://marginalia.adjacentpossible.dev/api/chat`
+  by default. Change it only if you host your own. It must be `https://`.
 
 ## Connections
 
