@@ -83,12 +83,16 @@ device that does not have much.
 --]]
 function Util.sha256_file(path)
     local file, open_error = io.open(path, "rb")
-    if not file then return nil, open_error or "could not open the book file" end
+    if not file then
+        return nil, open_error or "could not open the book file"
+    end
 
     local feed = sha2.sha256()
     while true do
         local chunk = file:read(HASH_CHUNK)
-        if not chunk or #chunk == 0 then break end
+        if not chunk or #chunk == 0 then
+            break
+        end
         feed(chunk)
     end
     file:close()
@@ -115,7 +119,9 @@ end
 --- A filename-safe version of a book title.
 function Util.slug(text)
     local clean = (text or "book"):gsub("[^%w]+", "-"):gsub("^%-+", ""):gsub("%-+$", ""):lower()
-    if clean == "" then clean = "book" end
+    if clean == "" then
+        clean = "book"
+    end
     return clean:sub(1, 60)
 end
 

@@ -11,13 +11,17 @@ import shutil
 import subprocess
 import wave
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .types import Samples
 
 
 def encode_available(fmt: str) -> bool:
     return fmt == 'wav' or shutil.which('ffmpeg') is not None
 
 
-def write_wav(path: Path, samples, sample_rate: int) -> None:
+def write_wav(path: Path, samples: Samples, sample_rate: int) -> None:
     import numpy as np
 
     clipped = np.clip(np.asarray(samples, dtype='float32'), -1.0, 1.0)
@@ -35,9 +39,21 @@ def encode_opus(wav_path: Path, out_path: Path, bitrate: str) -> None:
     """Re-encodes to Ogg Opus, which is roughly a tenth the size at speech bitrates."""
     result = subprocess.run(
         [
-            'ffmpeg', '-hide_banner', '-loglevel', 'error', '-y',
-            '-i', str(wav_path),
-            '-c:a', 'libopus', '-b:a', bitrate, '-ac', '1', '-vbr', 'on',
+            'ffmpeg',
+            '-hide_banner',
+            '-loglevel',
+            'error',
+            '-y',
+            '-i',
+            str(wav_path),
+            '-c:a',
+            'libopus',
+            '-b:a',
+            bitrate,
+            '-ac',
+            '1',
+            '-vbr',
+            'on',
             str(out_path),
         ],
         capture_output=True,
@@ -47,7 +63,9 @@ def encode_opus(wav_path: Path, out_path: Path, bitrate: str) -> None:
         raise RuntimeError(f'ffmpeg failed: {result.stderr.strip()}')
 
 
-def concatenate(clips, sample_rate: int, gap: float):
+def concatenate(
+    clips: list[Samples], sample_rate: int, gap: float
+) -> tuple[Samples, list[tuple[float, float]]]:
     """Joins clips with a fixed gap, returning the buffer and each clip's [start, end).
 
     The gap belongs to the segment that precedes it: a reader who taps a segment
@@ -56,7 +74,7 @@ def concatenate(clips, sample_rate: int, gap: float):
     import numpy as np
 
     silence = np.zeros(int(gap * sample_rate), dtype='float32')
-    buffers: list = []
+    buffers: list[Samples] = []
     bounds: list[tuple[float, float]] = []
     position = 0
 

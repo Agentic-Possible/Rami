@@ -1,9 +1,13 @@
 import { handleRelayRequest } from '../../../shared/relay.ts'
+import * as Sentry from '@sentry/cloudflare'
+import { operationMetric, sanitizeErrorEvent } from '../../../shared/telemetry.ts'
 
 const CONTENT_SECURITY_POLICY =
   "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' blob:; " +
   "img-src 'self' data: blob:; font-src 'self' data: blob:; connect-src 'self' " +
-  'https://api.openai.com https://marginalia-audiobooks.cloudflare-cdd.workers.dev; ' +
+  'https://api.openai.com https://marginalia-audiobooks.cloudflare-cdd.workers.dev ' +
+  'https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.ingest.de.sentry.io ' +
+  'https://us.i.posthog.com https://eu.i.posthog.com; ' +
   "media-src 'self' blob: https://marginalia-audiobooks.cloudflare-cdd.workers.dev; " +
   "frame-src 'self' blob: data:; object-src 'none'; base-uri 'self'; form-action 'self'"
 
@@ -21,21 +25,31 @@ function withSecurityHeaders(response: Response): Response {
 }
 
 function apiError(status: number, message: string): Response {
-  return Response.json(
-    { error: { message } },
-    { status, headers: { 'Cache-Control': 'no-store' } },
-  )
+  return Response.json({ error: { message } }, { status, headers: { 'Cache-Control': 'no-store' } })
 }
 
-export default {
+const worker = {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url)
+    const started = performance.now()
 
     try {
+      if (url.pathname === '/health') {
+        return Response.json(
+          { status: 'ok', service: 'app' },
+          {
+            headers: { 'Cache-Control': 'no-store' },
+          },
+        )
+      }
       if (url.pathname === '/api/chat') {
         return await handleRelayRequest(
           request,
-          { apiKey: env.OPENROUTER_API_KEY, siteUrl: url.origin },
+          {
+            apiKey: env.OPENROUTER_API_KEY,
+            siteUrl: url.origin,
+            enabled: env.CHAT_ENABLED !== 'false',
+          },
           { ip: request.headers.get('CF-Connecting-IP') ?? '' },
         )
       }
@@ -45,15 +59,9 @@ export default {
       }
 
       return withSecurityHeaders(await env.ASSETS.fetch(request))
-    } catch (error) {
-      console.error(
-        JSON.stringify({
-          message: 'Unhandled application Worker error',
-          error: error instanceof Error ? error.message : String(error),
-          method: request.method,
-          path: url.pathname,
-        }),
-      )
+    } catch {
+      Sentry.captureException(new Error('Application operation failed'))
+      console.error(JSON.stringify(operationMetric('app', 500, performance.now() - started)))
 
       return url.pathname.startsWith('/api/')
         ? apiError(500, 'Internal server error.')
@@ -61,3 +69,14 @@ export default {
     }
   },
 } satisfies ExportedHandler<Env>
+
+export default Sentry.withSentry(
+  (env: Env) => ({
+    dsn: env.SENTRY_DSN || undefined,
+    enabled: Boolean(env.SENTRY_DSN),
+    defaultIntegrations: false,
+    tracesSampleRate: 0,
+    beforeSend: sanitizeErrorEvent,
+  }),
+  worker,
+)

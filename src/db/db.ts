@@ -60,8 +60,7 @@ class MarginaliaDB extends Dexie {
     // the index, which is what a sparse index does.
     this.version(4).stores({
       highlights: 'id, bookId, createdAt, [bookId+createdAt], [bookId+externalId]',
-      conversations:
-        'id, bookId, highlightId, updatedAt, [bookId+updatedAt], [bookId+externalId]',
+      conversations: 'id, bookId, highlightId, updatedAt, [bookId+updatedAt], [bookId+externalId]',
       messages:
         'id, conversationId, createdAt, [conversationId+createdAt], [conversationId+externalId]',
     })
@@ -104,10 +103,7 @@ export async function deleteBook(bookId: string): Promise<void> {
     'rw',
     [db.books, db.highlights, db.conversations, db.messages, db.bookMemory],
     async () => {
-      const conversationIds = await db.conversations
-        .where('bookId')
-        .equals(bookId)
-        .primaryKeys()
+      const conversationIds = await db.conversations.where('bookId').equals(bookId).primaryKeys()
       await db.messages.where('conversationId').anyOf(conversationIds).delete()
       await db.conversations.where('bookId').equals(bookId).delete()
       await db.highlights.where('bookId').equals(bookId).delete()

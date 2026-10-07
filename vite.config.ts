@@ -4,19 +4,30 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { Readable } from 'node:stream'
 import { handleRelayRequest } from './shared/relay.ts'
+import { visualizer } from 'rollup-plugin-visualizer'
+import { sentryVitePlugin } from '@sentry/vite-plugin'
 
 /**
  * Serves /api/chat in dev with the same handler the Netlify edge function uses,
  * so local runs exercise the real relay instead of a stand-in. Reads
  * OPENROUTER_API_KEY from .env.local; the deployed site gets it from Netlify.
  */
-function chatRelay(apiKey: string): Plugin {
+function chatRelay(apiKey: string, enabled: boolean): Plugin {
   return {
     name: 'marginalia-chat-relay',
     configureServer(server) {
       server.middlewares.use('/api/chat', async (req, res) => {
         const chunks: Buffer[] = []
-        for await (const chunk of req) chunks.push(chunk as Buffer)
+        let bytes = 0
+        for await (const chunk of req) {
+          bytes += (chunk as Buffer).length
+          if (bytes > 600_000) {
+            res.statusCode = 413
+            res.end('Request body too large.')
+            return
+          }
+          chunks.push(chunk as Buffer)
+        }
 
         const headers = new Headers()
         for (const [name, value] of Object.entries(req.headers)) {
@@ -32,7 +43,7 @@ function chatRelay(apiKey: string): Plugin {
 
         const response = await handleRelayRequest(
           request,
-          { apiKey, siteUrl: origin },
+          { apiKey, siteUrl: origin, enabled },
           { ip: req.socket.remoteAddress ?? '' },
         )
 
@@ -55,7 +66,24 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       tailwindcss(),
-      chatRelay(env.OPENROUTER_API_KEY ?? ''),
+      chatRelay(env.OPENROUTER_API_KEY ?? '', env.CHAT_ENABLED !== 'false'),
+      visualizer({
+        filename: 'reports/bundle.html',
+        gzipSize: true,
+        brotliSize: true,
+        open: false,
+      }),
+      ...(process.env.SENTRY_UPLOAD_SOURCE_MAPS === 'true'
+        ? [
+            sentryVitePlugin({
+              authToken: process.env.SENTRY_AUTH_TOKEN,
+              org: process.env.SENTRY_ORG,
+              project: process.env.SENTRY_PROJECT,
+              telemetry: false,
+              sourcemaps: { assets: './dist/assets/**' },
+            }),
+          ]
+        : []),
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: ['favicon.svg'],
@@ -84,7 +112,8 @@ export default defineConfig(({ mode }) => {
       }),
     ],
     // epub.js references `global` in a few places.
-    define: { global: 'globalThis' },
-    server: { host: true },
+    define: { global: 'globalThis', __SENTRY_TRACING__: false, __SENTRY_DEBUG__: false },
+    build: { sourcemap: 'hidden', chunkSizeWarningLimit: 450 },
+    server: { host: '127.0.0.1' },
   }
 })

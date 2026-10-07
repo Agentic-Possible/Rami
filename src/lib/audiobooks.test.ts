@@ -83,7 +83,10 @@ describe('resume position', () => {
   it('rejects stale, malformed, and out-of-range positions', () => {
     expect(parseStoredAudiobookPosition('{', metadata)).toBeUndefined()
     expect(
-      parseStoredAudiobookPosition(JSON.stringify({ ...position, audioId: 'sha256:old' }), metadata),
+      parseStoredAudiobookPosition(
+        JSON.stringify({ ...position, audioId: 'sha256:old' }),
+        metadata,
+      ),
     ).toBeUndefined()
     expect(
       parseStoredAudiobookPosition(

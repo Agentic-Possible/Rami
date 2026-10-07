@@ -100,14 +100,18 @@ function Memory.window(thread)
     local start = #messages + 1
     while start > first_pending do
         local content = messages[start - 1].content or ""
-        if bytes + #content > Memory.MAX_TRANSCRIPT_BYTES then break end
+        if bytes + #content > Memory.MAX_TRANSCRIPT_BYTES then
+            break
+        end
         bytes = bytes + #content
         start = start - 1
     end
 
     -- Never fewer than the newest few, whatever they weigh.
     local floor = math.max(first_pending, #messages - Memory.MESSAGES_PER_UPDATE + 1)
-    if start > floor then start = floor end
+    if start > floor then
+        start = floor
+    end
 
     local window = {}
     for index = start, #messages do
@@ -150,9 +154,14 @@ function Memory:fold(thread_id, minimum)
 
     local thread
     for _, candidate in ipairs(data.threads or {}) do
-        if candidate.id == thread_id then thread = candidate break end
+        if candidate.id == thread_id then
+            thread = candidate
+            break
+        end
     end
-    if not thread then return false, "no such conversation" end
+    if not thread then
+        return false, "no such conversation"
+    end
     if Memory.pending_count(thread) < (minimum or Memory.MESSAGES_PER_UPDATE) then
         return false, "nothing new to fold in"
     end
@@ -168,16 +177,18 @@ function Memory:fold(thread_id, minimum)
     local existing = data.memory and data.memory.summary
     local book = self:book_metadata()
 
-    local fence, fence_error = Prompt.fence_for(
-        { transcript, existing, book.title, book.authors }, Util.random_hex)
-    if not fence then return false, fence_error end
+    local fence, fence_error =
+        Prompt.fence_for({ transcript, existing, book.title, book.authors }, Util.random_hex)
+    if not fence then
+        return false, fence_error
+    end
 
-    local messages = Prompt.summary_messages{
+    local messages = Prompt.summary_messages({
         book = book,
         existing = existing,
         transcript = transcript,
         fence = fence,
-    }
+    })
 
     local endpoint = self.settings.endpoint
     local cafile = self.cafile
@@ -187,7 +198,9 @@ function Memory:fold(thread_id, minimum)
         return Relay.post(endpoint, messages, cafile, version)
     end, _("Catching up on your notes…"))
 
-    if not completed then return false, "cancelled" end
+    if not completed then
+        return false, "cancelled"
+    end
     if type(result) ~= "table" or not result.ok then
         local reason = type(result) == "table" and result.error or "the summary failed"
         logger.warn("marginalia: digest update failed:", reason)
@@ -197,7 +210,9 @@ function Memory:fold(thread_id, minimum)
     -- A reply that is nothing but echoed delimiters normalises to empty, and
     -- storing that would wipe notes the reader may have written by hand.
     local summary = Digest.normalize_summary(result.text)
-    if summary == "" then return false, "the summary came back empty" end
+    if summary == "" then
+        return false, "the summary came back empty"
+    end
 
     -- Re-read: the fold above went out to the network, and nothing guarantees
     -- the table read at the top is still what is stored.
@@ -241,9 +256,13 @@ function Memory:fold_all()
 
     local pending = {}
     for _, thread in ipairs(data.threads or {}) do
-        if Memory.pending_count(thread) > 0 then pending[#pending + 1] = thread.id end
+        if Memory.pending_count(thread) > 0 then
+            pending[#pending + 1] = thread.id
+        end
     end
-    if #pending == 0 then return 0, 0, "nothing new to fold in" end
+    if #pending == 0 then
+        return 0, 0, "nothing new to fold in"
+    end
 
     local folded, failed = 0, 0
     local last_reason
@@ -256,7 +275,9 @@ function Memory:fold_all()
             last_reason = reason
             -- A cancelled fold means the reader wants out of this altogether,
             -- not just out of this one conversation.
-            if reason == "cancelled" then break end
+            if reason == "cancelled" then
+                break
+            end
         end
     end
     return folded, failed, last_reason
@@ -296,7 +317,9 @@ end
 function Memory:undo()
     local data = Store.read(self.ui.doc_settings)
     local previous = data.memory and data.memory.previous
-    if not previous then return false end
+    if not previous then
+        return false
+    end
 
     data.memory = {
         summary = previous,

@@ -59,7 +59,9 @@ while the markers sit at the very edges, as they usually do, but not once one
 lands in the middle.
 --]]
 function Digest.strip_fence_tokens(text)
-    if type(text) ~= "string" then return "" end
+    if type(text) ~= "string" then
+        return ""
+    end
 
     local kept = {}
     -- `gmatch` on a pattern anchored to line ends misses a trailing line with no
@@ -75,7 +77,9 @@ function Digest.strip_fence_tokens(text)
             kept[#kept + 1] = without
         end
 
-        if not at then break end
+        if not at then
+            break
+        end
         from = at + 1
     end
 
@@ -107,11 +111,15 @@ local function last_boundary(head, minimum)
         local from = 1
         while true do
             local at = head:find(pattern, from)
-            if not at then break end
+            if not at then
+                break
+            end
             best = at
             from = at + 1
         end
-        if best and best > minimum then return best end
+        if best and best > minimum then
+            return best
+        end
     end
     return nil
 end
@@ -128,7 +136,9 @@ function Digest.normalize_summary(text)
 
     local offsets = char_offsets(clean)
     local characters = #offsets - 1
-    if characters <= Digest.MAX_SUMMARY_CHARS then return clean end
+    if characters <= Digest.MAX_SUMMARY_CHARS then
+        return clean
+    end
 
     local head = clean:sub(1, offsets[Digest.MAX_SUMMARY_CHARS + 1] - 1)
     -- Half the allowance, in characters. Taking half the *byte* length instead

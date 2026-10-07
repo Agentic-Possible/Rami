@@ -44,10 +44,7 @@ export default function ChatSheet({
   // past the close button first is the wrong default.
   const sheetRef = useModal<HTMLElement>(onClose, 'textarea')
 
-  const conversation = useLiveQuery(
-    () => db.conversations.get(conversationId),
-    [conversationId],
-  )
+  const conversation = useLiveQuery(() => db.conversations.get(conversationId), [conversationId])
   const messages = useLiveQuery(
     () => db.messages.where('conversationId').equals(conversationId).sortBy('createdAt'),
     [conversationId],
@@ -328,10 +325,7 @@ function Bubble({
   const isUser = role === 'user'
 
   return (
-    <div
-      data-message={id}
-      className={isUser ? 'flex justify-end' : 'flex justify-start'}
-    >
+    <div data-message={id} className={isUser ? 'flex justify-end' : 'flex justify-start'}>
       <div
         className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
           isUser ? 'text-stone-950' : `border ${palette.border}`

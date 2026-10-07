@@ -37,7 +37,9 @@ end
 
 --- Writes and flushes, so a kill rather than a clean close does not lose the thread.
 function Store.write(doc_settings, data)
-    if not doc_settings then return end
+    if not doc_settings then
+        return
+    end
     doc_settings:saveSetting(Store.KEY, data)
     doc_settings:flush()
 end
@@ -46,18 +48,26 @@ end
 The thread hanging off a given highlight, if there is one.
 --]]
 function Store.find_thread(data, highlight_ref)
-    if not highlight_ref then return nil end
+    if not highlight_ref then
+        return nil
+    end
     for _, thread in ipairs(data.threads or {}) do
-        if thread.highlight_ref == highlight_ref then return thread end
+        if thread.highlight_ref == highlight_ref then
+            return thread
+        end
     end
     return nil
 end
 
 --- A thread by its own id, for reacquiring one across a store re-read.
 function Store.find_thread_by_id(data, id)
-    if not id then return nil end
+    if not id then
+        return nil
+    end
     for _, thread in ipairs(data.threads or {}) do
-        if thread.id == id then return thread end
+        if thread.id == id then
+            return thread
+        end
     end
     return nil
 end

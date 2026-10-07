@@ -1,0 +1,39 @@
+name: Feature request
+description: Propose an improvement to Marginalia.
+labels: ['enhancement']
+body:
+  - type: dropdown
+    id: application
+    attributes:
+      label: Application
+      options:
+        - PWA / chat relay
+        - Audiobook Worker
+        - Narrator
+        - KOReader plugin
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Describe the user need without including private reading data.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: What observable behavior would show that this is complete?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered

@@ -38,15 +38,15 @@ KOReader offers nine highlight colours; Marginalia has four.
 and has to land somewhere sensible rather than on whatever sorts first.
 --]]
 local COLORS = {
-    red     = "pink",
-    orange  = "pink",
-    purple  = "pink",
-    yellow  = "yellow",
-    gray    = "yellow",
-    green   = "green",
-    olive   = "green",
-    blue    = "blue",
-    cyan    = "blue",
+    red = "pink",
+    orange = "pink",
+    purple = "pink",
+    yellow = "yellow",
+    gray = "yellow",
+    green = "green",
+    olive = "green",
+    blue = "blue",
+    cyan = "blue",
 }
 
 function Payload.color(koreader_color)
@@ -61,9 +61,13 @@ Turns a sidecar datetime into ISO 8601 with an explicit offset.
 @treturn string or nil if the datetime is not in the expected shape
 --]]
 function Payload.to_iso(datetime, tz_offset)
-    if type(datetime) ~= "string" then return nil end
+    if type(datetime) ~= "string" then
+        return nil
+    end
     local date, time = datetime:match("^(%d%d%d%d%-%d%d%-%d%d)[ T](%d%d:%d%d:%d%d)")
-    if not date then return nil end
+    if not date then
+        return nil
+    end
 
     local sign, hours, minutes = (tz_offset or ""):match("^([+%-])(%d%d)(%d%d)$")
     local zone = sign and (sign .. hours .. ":" .. minutes) or "Z"
@@ -76,9 +80,13 @@ local function is_highlight(annotation)
 end
 
 local function trimmed(value)
-    if type(value) ~= "string" then return nil end
+    if type(value) ~= "string" then
+        return nil
+    end
     local clean = value:gsub("^%s+", ""):gsub("%s+$", "")
-    if clean == "" then return nil end
+    if clean == "" then
+        return nil
+    end
     return clean
 end
 
@@ -91,8 +99,12 @@ this with a PDF highlight used to be an error rather than an id. Strings pass
 through untouched, so ids already minted for EPUBs do not move.
 --]]
 function Payload.position_key(position)
-    if type(position) == "string" then return position end
-    if type(position) == "number" then return tostring(position) end
+    if type(position) == "string" then
+        return position
+    end
+    if type(position) == "number" then
+        return tostring(position)
+    end
     if type(position) == "table" then
         return table.concat({
             tostring(position.page or ""),
@@ -149,23 +161,22 @@ function Payload.build(spec)
             local pageno = tonumber(annotation.pageno)
             local external_id = Payload.external_id(annotation, sha256_hex)
             table.insert(highlights, {
-                externalId     = external_id,
-                text           = annotation.text,
-                note           = trimmed(annotation.note),
-                chapter        = trimmed(annotation.chapter),
-                color          = Payload.color(annotation.color),
-                createdAt      = Payload.to_iso(annotation.datetime, tz),
+                externalId = external_id,
+                text = annotation.text,
+                note = trimmed(annotation.note),
+                chapter = trimmed(annotation.chapter),
+                color = Payload.color(annotation.color),
+                createdAt = Payload.to_iso(annotation.datetime, tz),
                 createdAtLocal = annotation.datetime,
-                pageno         = pageno,
+                pageno = pageno,
                 -- Cosmetic only. KOReader pages depend on font size and margins,
                 -- so this is not comparable with the app's own progress and must
                 -- never be used to decide *where* a highlight goes.
-                progress       = (pageno and pages and pages > 0)
-                                 and (pageno / pages) or nil,
-                context        = trimmed(contexts[external_id]),
-                anchor         = {
+                progress = (pageno and pages and pages > 0) and (pageno / pages) or nil,
+                context = trimmed(contexts[external_id]),
+                anchor = {
                     engine = "crengine",
-                    start  = annotation.pos0,
+                    start = annotation.pos0,
                     ["end"] = annotation.pos1,
                 },
             })
@@ -177,25 +188,25 @@ function Payload.build(spec)
         local messages = {}
         for _, message in ipairs(thread.messages or {}) do
             table.insert(messages, {
-                externalId     = message.id,
-                role           = message.role,
-                content        = message.content,
-                createdAt      = Payload.to_iso(message.created_at, tz),
+                externalId = message.id,
+                role = message.role,
+                content = message.content,
+                createdAt = Payload.to_iso(message.created_at, tz),
                 createdAtLocal = message.created_at,
             })
         end
         if #messages > 0 then
             table.insert(threads, {
-                externalId          = thread.id,
+                externalId = thread.id,
                 highlightExternalId = thread.highlight_ref,
-                title               = thread.title,
-                seedText            = thread.seed_text,
-                context             = thread.context,
-                chapter             = thread.chapter,
-                progress            = thread.progress,
-                createdAt           = Payload.to_iso(thread.created_at, tz),
-                createdAtLocal      = thread.created_at,
-                messages            = messages,
+                title = thread.title,
+                seedText = thread.seed_text,
+                context = thread.context,
+                chapter = thread.chapter,
+                progress = thread.progress,
+                createdAt = Payload.to_iso(thread.created_at, tz),
+                createdAtLocal = thread.created_at,
+                messages = messages,
             })
         end
     end

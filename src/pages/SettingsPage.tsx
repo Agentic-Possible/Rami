@@ -7,6 +7,7 @@ import { HOSTED_MODEL_LABEL, verifyKey } from '../lib/inference'
 import { createAudiobookSession } from '../lib/audiobooks'
 import { BackIcon } from '../components/Icons'
 import KoreaderImport from '../components/KoreaderImport'
+import { setTelemetryConsent, telemetryConsent, trackEvent } from '../lib/telemetry'
 
 // Keep retired models listed: a stored value with no matching option renders the
 // select blank, so anything a user might already have saved has to stay.
@@ -34,6 +35,10 @@ export default function SettingsPage() {
   const [audiobookMessage, setAudiobookMessage] = useState<string>()
 
   const settings = stored ?? DEFAULT_SETTINGS
+
+  useEffect(() => {
+    trackEvent('settings_opened')
+  }, [])
 
   useEffect(() => {
     if (stored && !dirtyKey) setApiKey(stored.apiKey ?? '')
@@ -104,6 +109,22 @@ export default function SettingsPage() {
       </header>
 
       <main className="mx-auto max-w-2xl space-y-8 px-4 py-6">
+        <section>
+          <h2 className="text-sm font-semibold">Privacy</h2>
+          <label className="mt-3 flex gap-3 text-sm">
+            <input
+              type="checkbox"
+              defaultChecked={telemetryConsent()}
+              onChange={(event) => setTelemetryConsent(event.target.checked)}
+            />
+            Share anonymous diagnostics and basic usage counts
+          </label>
+          <p className="mt-2 text-sm text-stone-400">
+            Off by default. Only works when the operator configures telemetry. Never sends books,
+            highlights, conversations, keys, or browsing URLs. Changing this setting reloads the
+            app.
+          </p>
+        </section>
         <section>
           <h2 className="text-sm font-semibold">Chat model</h2>
           <p className="mt-1 text-sm text-stone-400">
@@ -206,9 +227,9 @@ export default function SettingsPage() {
         <section>
           <h2 className="text-sm font-semibold">Personal audiobook</h2>
           <p className="mt-1 text-sm text-stone-400">
-            Unlocks the private <em>Twilight of the Idols</em> stream. The token is stored only
-            in this browser's IndexedDB and is sent only to the audiobook Worker. Don't use it
-            on a shared device.
+            Unlocks the private <em>Twilight of the Idols</em> stream. The token is stored only in
+            this browser's IndexedDB and is sent only to the audiobook Worker. Don't use it on a
+            shared device.
           </p>
           <input
             type="password"
@@ -264,10 +285,10 @@ export default function SettingsPage() {
         <section>
           <h2 className="text-sm font-semibold">Data</h2>
           <p className="mt-1 text-sm text-stone-400">
-            Everything lives in this browser's IndexedDB. The export is a JSON file containing
-            your highlighted passages and the surrounding text, every chat message, and the
-            AI's running notes on each book. It does not include your API key, audiobook token,
-            or the book files. Treat it as a record of what you read and thought.
+            Everything lives in this browser's IndexedDB. The export is a JSON file containing your
+            highlighted passages and the surrounding text, every chat message, and the AI's running
+            notes on each book. It does not include your API key, audiobook token, or the book
+            files. Treat it as a record of what you read and thought.
           </p>
           <button
             onClick={() => void exportData()}

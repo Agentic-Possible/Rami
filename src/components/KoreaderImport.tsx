@@ -122,9 +122,9 @@ export default function KoreaderImport() {
     <section>
       <h2 className="text-sm font-semibold">Import from KOReader</h2>
       <p className="mt-1 text-sm text-stone-400">
-        Highlights made on an e-reader running KOReader, brought in through the Marginalia
-        plugin's export file. Each passage is found again by its text, so the import needs
-        the same EPUB file that is on the e-reader.
+        Highlights made on an e-reader running KOReader, brought in through the Marginalia plugin's
+        export file. Each passage is found again by its text, so the import needs the same EPUB file
+        that is on the e-reader.
       </p>
 
       <input
@@ -148,9 +148,7 @@ export default function KoreaderImport() {
       </button>
 
       {phase.name === 'working' && <Working phase={phase} />}
-      {phase.name === 'error' && (
-        <p className="mt-3 text-sm text-red-300">{phase.message}</p>
-      )}
+      {phase.name === 'error' && <p className="mt-3 text-sm text-red-300">{phase.message}</p>}
       {phase.name === 'done' && <Summary result={phase.result} handoff={phase.handoff} />}
     </section>
   )
@@ -159,9 +157,7 @@ export default function KoreaderImport() {
 function Working({ phase }: { phase: Extract<Phase, { name: 'working' }> }) {
   const { progress } = phase
   const percent =
-    progress && progress.total > 0
-      ? Math.round((progress.done / progress.total) * 100)
-      : undefined
+    progress && progress.total > 0 ? Math.round((progress.done / progress.total) * 100) : undefined
 
   return (
     <p className="mt-3 text-sm text-stone-400" aria-live="polite">
@@ -176,8 +172,7 @@ function Summary({ result, handoff }: { result: ImportResult; handoff: Handoff }
   // Rejections do not make an import eventful: a re-import that places nothing
   // new still re-reports the passages it could not place, and "Imported 0
   // highlights" reads like a failure rather than like nothing to do.
-  const nothingNew =
-    added === 0 && result.threadsAdded === 0 && result.messagesAdded === 0
+  const nothingNew = added === 0 && result.threadsAdded === 0 && result.messagesAdded === 0
 
   return (
     <div className="mt-3 space-y-2 text-sm" aria-live="polite">
@@ -195,8 +190,8 @@ function Summary({ result, handoff }: { result: ImportResult; handoff: Handoff }
 
       {result.messagesAdded > 0 && (
         <p className="text-stone-400">
-          {result.messagesAdded} new {result.messagesAdded === 1 ? 'turn' : 'turns'} added
-          to conversations you already had.
+          {result.messagesAdded} new {result.messagesAdded === 1 ? 'turn' : 'turns'} added to
+          conversations you already had.
         </p>
       )}
 
@@ -209,9 +204,8 @@ function Summary({ result, handoff }: { result: ImportResult; handoff: Handoff }
       {result.rejected.length > 0 && (
         <details className="rounded-lg border border-stone-800 p-3">
           <summary className="cursor-pointer text-amber-300">
-            {result.rejected.length}{' '}
-            {result.rejected.length === 1 ? 'passage' : 'passages'} could not be placed in
-            this edition
+            {result.rejected.length} {result.rejected.length === 1 ? 'passage' : 'passages'} could
+            not be placed in this edition
           </summary>
           <ul className="mt-2 space-y-2">
             {result.rejected.map((rejection, index) => (
@@ -222,9 +216,9 @@ function Summary({ result, handoff }: { result: ImportResult; handoff: Handoff }
             ))}
           </ul>
           <p className="mt-2 text-xs text-stone-500">
-            These are still in the export file, which is the record of them. They are left
-            out here rather than added without a position, because a highlight that cannot
-            be opened in the book is a dead end in every screen that lists it.
+            These are still in the export file, which is the record of them. They are left out here
+            rather than added without a position, because a highlight that cannot be opened in the
+            book is a dead end in every screen that lists it.
           </p>
         </details>
       )}

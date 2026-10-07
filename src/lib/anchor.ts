@@ -29,11 +29,7 @@ import { EpubCFI, type Book as EpubBook } from 'epubjs'
 
 /** Why a passage could not be anchored, in words the import summary can use. */
 export type AnchorFailure =
-  | 'not-found'
-  | 'ambiguous'
-  | 'unverified'
-  | 'section-failed'
-  | 'incomplete-book'
+  'not-found' | 'ambiguous' | 'unverified' | 'section-failed' | 'incomplete-book'
 
 export interface AnchorMatch {
   cfiRange: string
@@ -100,10 +96,39 @@ const WHITESPACE = /\s/
 
 /** A block boundary, so adjacent paragraphs cannot fuse into `lastwordFirstword`. */
 const BLOCK_TAGS = new Set([
-  'address', 'article', 'aside', 'blockquote', 'br', 'caption', 'div', 'dd',
-  'dl', 'dt', 'figcaption', 'figure', 'footer', 'h1', 'h2', 'h3', 'h4', 'h5',
-  'h6', 'header', 'hr', 'li', 'main', 'nav', 'ol', 'p', 'pre', 'section',
-  'table', 'td', 'th', 'tr', 'ul',
+  'address',
+  'article',
+  'aside',
+  'blockquote',
+  'br',
+  'caption',
+  'div',
+  'dd',
+  'dl',
+  'dt',
+  'figcaption',
+  'figure',
+  'footer',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'header',
+  'hr',
+  'li',
+  'main',
+  'nav',
+  'ol',
+  'p',
+  'pre',
+  'section',
+  'table',
+  'td',
+  'th',
+  'tr',
+  'ul',
 ])
 
 /** Never part of the prose. */
@@ -252,7 +277,7 @@ export function normalizeQuery(query: string): string {
  * a mismatch means this document is not the one those offsets were measured
  * against, and no range from it can be trusted.
  */
-export function rangeAt(
+function rangeAt(
   doc: Document,
   offset: number,
   length: number,

@@ -85,7 +85,7 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-def _report(parts, args) -> None:
+def _report(parts: list[pipeline.Part], args: argparse.Namespace) -> None:
     """Dry run: what this book would cost to narrate, before spending the GPU time."""
     print()
     print(f'{"part":<6}{"segments":>10}{"chars":>10}  label')
@@ -106,8 +106,10 @@ def _report(parts, args) -> None:
     print(f'estimated      {pipeline.format_duration(seconds)} of audio')
     print(f'at {args.bitrate:<12} ~{seconds * kbps * 1000 / 8 / 1e6:.0f} MB as Opus')
     print()
-    print('For comparison, a hosted API at $15 per million characters would be '
-          f'about ${chars / 1e6 * 15:.2f} for this book.')
+    print(
+        'For comparison, a hosted API at $15 per million characters would be '
+        f'about ${chars / 1e6 * 15:.2f} for this book.'
+    )
 
 
 def _parse_args(argv: list[str] | None) -> argparse.Namespace:

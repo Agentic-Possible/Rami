@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+npm run check
+npm run quality
+npm run check:narrate
+npm run docs:check

@@ -15,15 +15,13 @@ export class InferenceError extends Error {
 }
 
 /** Raised when the reader picked their own OpenAI key but has not entered one. */
-export class MissingKeyError extends InferenceError {}
+class MissingKeyError extends InferenceError {}
 
 /**
  * Where a request goes. `hosted` is this site's own relay, which holds an
  * OpenRouter key server-side and pins the model, so visitors need no setup.
  */
-export type Target =
-  | { provider: 'hosted' }
-  | { provider: 'openai'; apiKey: string; model: string }
+export type Target = { provider: 'hosted' } | { provider: 'openai'; apiKey: string; model: string }
 
 const HOSTED_ENDPOINT = '/api/chat'
 const OPENAI_ENDPOINT = 'https://api.openai.com/v1/chat/completions'
@@ -35,7 +33,9 @@ export function targetFor(settings: Settings, kind: 'chat' | 'summary' = 'chat')
   if (settings.provider !== 'openai') return { provider: 'hosted' }
 
   if (!settings.apiKey) {
-    throw new MissingKeyError('Add your OpenAI API key in Settings, or switch back to the built-in model.')
+    throw new MissingKeyError(
+      'Add your OpenAI API key in Settings, or switch back to the built-in model.',
+    )
   }
   return {
     provider: 'openai',

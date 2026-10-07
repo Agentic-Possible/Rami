@@ -8,7 +8,10 @@ with no GPU and no model weights.
 
 from __future__ import annotations
 
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
+
+if TYPE_CHECKING:
+    from .types import Samples
 
 #: Speaking rate used to fake durations in the silence backend. Roughly 155 wpm,
 #: which is where an unhurried narrator lands.
@@ -19,7 +22,7 @@ class Backend(Protocol):
     name: str
     sample_rate: int
 
-    def synth(self, text: str):
+    def synth(self, text: str) -> Samples:
         """Returns mono float32 samples in [-1, 1] for one utterance."""
 
 
@@ -31,7 +34,7 @@ class SilenceBackend:
     def __init__(self, sample_rate: int = 24000) -> None:
         self.sample_rate = sample_rate
 
-    def synth(self, text: str):
+    def synth(self, text: str) -> Samples:
         import numpy as np
 
         seconds = max(len(text) / CHARS_PER_SECOND, 0.2)
@@ -69,7 +72,7 @@ class KokoroBackend:
         self.speed = speed
         self._pipeline = KPipeline(lang_code=lang, device=device)
 
-    def synth(self, text: str):
+    def synth(self, text: str) -> Samples:
         import numpy as np
 
         chunks = []

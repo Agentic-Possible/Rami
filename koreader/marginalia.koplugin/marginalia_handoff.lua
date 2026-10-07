@@ -66,14 +66,18 @@ The book's SHA-256.
 @treturn string lowercase hex, or nil plus a reason ("cancelled" if dismissed)
 --]]
 function Handoff:file_hash(path)
-    if not lfs.attributes(path) then return nil, "could not read the book file" end
+    if not lfs.attributes(path) then
+        return nil, "could not read the book file"
+    end
 
     local completed, result = Trapper:dismissableRunInSubprocess(function()
         local hash, err = Util.sha256_file(path)
         return { sha256 = hash, error = err }
     end, _("Identifying the book…"))
 
-    if not completed then return nil, "cancelled" end
+    if not completed then
+        return nil, "cancelled"
+    end
     if type(result) ~= "table" or not result.sha256 then
         return nil, (type(result) == "table" and result.error) or "could not hash the book file"
     end
@@ -90,20 +94,29 @@ which the web app already treats as optional.
 --]]
 function Handoff:contexts(annotations)
     local contexts = {}
-    if not self.ui.rolling then return contexts end
+    if not self.ui.rolling then
+        return contexts
+    end
 
     for _, annotation in ipairs(annotations) do
         if annotation.pos0 and annotation.pos1 and annotation.text then
             local ok, before, after = pcall(function()
                 return self.ui.document:getSelectedWordContext(
-                    annotation.text, CONTEXT_WORDS, annotation.pos0, annotation.pos1, false)
+                    annotation.text,
+                    CONTEXT_WORDS,
+                    annotation.pos0,
+                    annotation.pos1,
+                    false
+                )
             end)
             if ok then
                 local parts = {}
                 for _, part in ipairs({ before, annotation.text, after }) do
                     if type(part) == "string" then
                         local clean = part:gsub("%s+", " "):gsub("^ ", ""):gsub(" $", "")
-                        if clean ~= "" then table.insert(parts, clean) end
+                        if clean ~= "" then
+                            table.insert(parts, clean)
+                        end
                     end
                 end
                 if #parts > 1 then
@@ -129,9 +142,9 @@ Exports the open book. Runs inside its own Trapper wrap.
 --]]
 function Handoff:export()
     if not self:is_exportable() then
-        UIManager:show(InfoMessage:new{
+        UIManager:show(InfoMessage:new({
             text = _("Marginalia reads EPUB files, so only EPUBs can be exported."),
-        })
+        }))
         return
     end
 
@@ -148,18 +161,18 @@ function Handoff:export()
         end
 
         if highlight_count == 0 and #(data.threads or {}) == 0 then
-            UIManager:show(InfoMessage:new{
+            UIManager:show(InfoMessage:new({
                 text = _("This book has no highlights to export yet."),
-            })
+            }))
             return
         end
 
         local hash, hash_error = self:file_hash(path)
         if not hash then
             if hash_error ~= "cancelled" then
-                UIManager:show(InfoMessage:new{
+                UIManager:show(InfoMessage:new({
                     text = T(_("Could not identify the book: %1"), hash_error),
-                })
+                }))
             end
             return
         end
@@ -167,7 +180,7 @@ function Handoff:export()
         local attributes = lfs.attributes(path)
         local props = self.ui.doc_props or {}
 
-        local document = Payload.build{
+        local document = Payload.build({
             book = {
                 title = props.display_title or props.title,
                 authors = props.authors,
@@ -190,35 +203,42 @@ function Handoff:export()
             app_version = Version:getShortVersion(),
             plugin_version = self.plugin_version,
             sha256_hex = Util.sha256_hex,
-        }
+        })
 
         local encoded, encode_error = rapidjson.encode(document, { pretty = true })
         if not encoded then
             logger.warn("marginalia: could not encode export", encode_error)
-            UIManager:show(InfoMessage:new{ text = _("Could not build the export file.") })
+            UIManager:show(InfoMessage:new({ text = _("Could not build the export file.") }))
             return
         end
 
-        local filename = string.format("%s-%s.json",
+        local filename = string.format(
+            "%s-%s.json",
             Util.slug(props.display_title or props.title),
-            os.date("%Y%m%d-%H%M%S"))
+            os.date("%Y%m%d-%H%M%S")
+        )
         local destination = Handoff.directory() .. "/" .. filename
 
         local file, open_error = io.open(destination, "w")
         if not file then
-            UIManager:show(InfoMessage:new{
+            UIManager:show(InfoMessage:new({
                 text = T(_("Could not write the export: %1"), tostring(open_error)),
-            })
+            }))
             return
         end
         file:write(encoded)
         file:write("\n")
         file:close()
 
-        UIManager:show(InfoMessage:new{
-            text = T(_("Exported %1 highlights to:\n\n%2\n\nOpen Marginalia, go to Settings, and import this file."),
-                highlight_count, destination),
-        })
+        UIManager:show(InfoMessage:new({
+            text = T(
+                _(
+                    "Exported %1 highlights to:\n\n%2\n\nOpen Marginalia, go to Settings, and import this file."
+                ),
+                highlight_count,
+                destination
+            ),
+        }))
     end)
 end
 

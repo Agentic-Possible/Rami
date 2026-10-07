@@ -59,9 +59,7 @@ export default function DisplaySheet({
           ))}
         </div>
 
-        <p className="mb-2 text-xs font-semibold tracking-wide uppercase opacity-50">
-          Text size
-        </p>
+        <p className="mb-2 text-xs font-semibold tracking-wide uppercase opacity-50">Text size</p>
         <div className="mb-5 flex items-center gap-3">
           <button
             onClick={() => onChange({ fontSize: Math.max(MIN_FONT, fontSize - 10) })}
@@ -91,9 +89,7 @@ export default function DisplaySheet({
           </button>
         </div>
 
-        <p className="mb-2 text-xs font-semibold tracking-wide uppercase opacity-50">
-          This book
-        </p>
+        <p className="mb-2 text-xs font-semibold tracking-wide uppercase opacity-50">This book</p>
         <button
           onClick={onRemoveBook}
           className={`mb-5 flex w-full items-center gap-2 rounded-lg border py-2.5 pl-3 text-sm font-medium text-red-500 ${palette.border}`}

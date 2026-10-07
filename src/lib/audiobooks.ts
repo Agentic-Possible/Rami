@@ -1,4 +1,4 @@
-export const AUDIOBOOK_WORKER_URL = 'https://marginalia-audiobooks.cloudflare-cdd.workers.dev'
+const AUDIOBOOK_WORKER_URL = 'https://marginalia-audiobooks.cloudflare-cdd.workers.dev'
 export const AUDIOBOOK_POSITION_KEY = 'marginalia:audiobook-position'
 
 export interface AudiobookChapter {
@@ -42,8 +42,7 @@ export async function createAudiobookSession(token: string): Promise<AudiobookSe
   })
 
   const body = (await response.json().catch(() => undefined)) as
-    | Partial<AudiobookSession> & { error?: string }
-    | undefined
+    (Partial<AudiobookSession> & { error?: string }) | undefined
   if (!response.ok) throw new Error(body?.error ?? 'Could not unlock the audiobook.')
   if (
     typeof body?.audioUrl !== 'string' ||
@@ -158,11 +157,17 @@ export function clampPlaybackTime(timeSeconds: number, durationSeconds: number):
 }
 
 export function chapterRelativeTime(chapter: AudiobookChapter, absoluteSeconds: number): number {
-  return clampPlaybackTime(absoluteSeconds - chapter.startSeconds, chapter.endSeconds - chapter.startSeconds)
+  return clampPlaybackTime(
+    absoluteSeconds - chapter.startSeconds,
+    chapter.endSeconds - chapter.startSeconds,
+  )
 }
 
 export function absoluteChapterTime(chapter: AudiobookChapter, relativeSeconds: number): number {
-  return chapter.startSeconds + clampPlaybackTime(relativeSeconds, chapter.endSeconds - chapter.startSeconds)
+  return (
+    chapter.startSeconds +
+    clampPlaybackTime(relativeSeconds, chapter.endSeconds - chapter.startSeconds)
+  )
 }
 
 export function parseStoredAudiobookPosition(

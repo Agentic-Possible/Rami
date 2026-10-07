@@ -68,9 +68,9 @@ export default function MemoryPanel({
           What the companion remembers
         </h2>
         <p className="mt-1.5 text-sm leading-relaxed text-stone-500">
-          A running digest of your conversations about this book, written by the model and
-          sent with every message. Edit it to correct what it thinks, or to tell it
-          something it never worked out on its own.
+          A running digest of your conversations about this book, written by the model and sent with
+          every message. Edit it to correct what it thinks, or to tell it something it never worked
+          out on its own.
         </p>
 
         <textarea
@@ -125,8 +125,8 @@ export default function MemoryPanel({
           Everything sent with your next message
         </h2>
         <p className="mt-1.5 text-sm leading-relaxed text-stone-500">
-          The instructions, the book’s own metadata, and the digest above, exactly as the
-          model receives them.
+          The instructions, the book’s own metadata, and the digest above, exactly as the model
+          receives them.
         </p>
         <pre className="mt-3 max-h-96 overflow-auto rounded-xl border border-stone-800 bg-stone-900/60 p-3 text-xs leading-relaxed whitespace-pre-wrap text-stone-400">
           {prompt}

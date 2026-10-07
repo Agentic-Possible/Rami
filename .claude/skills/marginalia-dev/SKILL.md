@@ -6,22 +6,26 @@ description: Run, verify and debug Marginalia locally. Use when starting the dev
 # Running and verifying Marginalia
 
 Almost everything is client side. The one server piece is `/api/chat`, the inference
-relay. There is no test suite, so "does it work" is answered by driving the real app in
-a browser.
+relay. Vitest covers the PWA's pure logic and the KOReader plugin (including a fake-host
+integration harness). Reader layout and touch behavior still need the real browser
+checks below. See root `AGENTS.md` for all applications and the validation workflow.
 
 ## Commands
 
 ```bash
-npm install
+npm ci
 npm run dev       # vite on http://localhost:5173
 npm run build     # tsc -b && vite build, emits the service worker
 npm run lint      # oxlint
-npx tsc -b        # typecheck only, not a package script
+npm run typecheck # app, relay, and test-harness type checks
+npm run test:list # test discovery without execution
+npm run check     # lint, typecheck, and all Vitest tests
 ```
 
-`npm run lint` currently exits 0 with four `only-export-components` warnings in
-`src/router.tsx`. That is pre-existing and expected; `router.tsx` exports the router
-next to its `Deferred` wrapper. Only new warnings are worth acting on.
+`npm run lint` rejects warnings. Run `npm run quality`, `npm run check:narrate`,
+and `npm run test:qa` for quality, strict Python checks, and desktop/mobile smoke
+tests. The Wasmoon Lua VM harness uses synthetic hosts and closes each VM.
+`npm run setup` installs pinned validation tools and the local pre-commit hook.
 
 ## Start the dev server detached
 

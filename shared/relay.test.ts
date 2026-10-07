@@ -20,7 +20,9 @@ function upstreamResponse(status: number, body: unknown): Response {
 
 /** The model each recorded call asked for, in order. */
 function requestedModels(fetchMock: ReturnType<typeof vi.fn>): string[] {
-  return fetchMock.mock.calls.map(([, init]) => JSON.parse((init as RequestInit).body as string).model)
+  return fetchMock.mock.calls.map(
+    ([, init]) => JSON.parse((init as RequestInit).body as string).model,
+  )
 }
 
 async function errorMessage(response: Response): Promise<string> {
@@ -60,6 +62,12 @@ describe('request policy', () => {
 
     const empty = await handleRelayRequest(chatRequest({ messages: [] }), OPTIONS, { ip: '' })
     expect(empty.status).toBe(400)
+    const disabled = await handleRelayRequest(
+      chatRequest(),
+      { ...OPTIONS, enabled: false },
+      { ip: '' },
+    )
+    expect(disabled.status).toBe(503)
 
     expect(fetchMock).not.toHaveBeenCalled()
   })
@@ -68,7 +76,10 @@ describe('request policy', () => {
 describe('upstream routing', () => {
   it('streams the answer back untouched, from the one pinned route', async () => {
     fetchMock.mockResolvedValue(
-      new Response('data: {}\n\n', { status: 200, headers: { 'Content-Type': 'text/event-stream' } }),
+      new Response('data: {}\n\n', {
+        status: 200,
+        headers: { 'Content-Type': 'text/event-stream' },
+      }),
     )
 
     const response = await handleRelayRequest(chatRequest(), OPTIONS, { ip: '' })
