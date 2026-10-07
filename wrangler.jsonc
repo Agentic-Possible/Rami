@@ -16,8 +16,8 @@
       "custom_domain": true
     }
   ],
-  // Routes disable workers.dev by default; keep per-version preview URLs for PR builds.
-  "preview_urls": true,
+  // Worker Previews for PR builds; they do not inherit production vars or secrets.
+  "previews": {},
   "observability": {
     "enabled": true,
     "logs": {
