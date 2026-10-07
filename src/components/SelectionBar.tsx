@@ -3,12 +3,13 @@ import { HIGHLIGHT_COLORS, type SelectionRect } from '../lib/highlights'
 import { THEMES } from '../lib/themes'
 import { ChatIcon, TrashIcon } from './Icons'
 
-const BAR_HEIGHT = 92
+const BAR_HEIGHT = 68
 
 export default function SelectionBar({
   rect,
   theme,
   existing,
+  color,
   onHighlight,
   onChat,
   onCopy,
@@ -19,7 +20,9 @@ export default function SelectionBar({
   theme: ReaderTheme
   /** Set when the bar was opened by tapping an existing highlight. */
   existing?: boolean
-  onHighlight: (color: HighlightColor) => void
+  /** The reader's highlight colour, from settings. */
+  color: HighlightColor
+  onHighlight: () => void
   onChat: () => void
   onCopy: () => void
   onDelete?: () => void
@@ -40,35 +43,27 @@ export default function SelectionBar({
         style={{ top: Math.max(8, top) }}
         className={`no-select fixed inset-x-3 z-50 mx-auto max-w-md rounded-2xl border shadow-[0_16px_44px_rgba(30,30,24,0.22)] ${palette.chrome} ${palette.chromeText} ${palette.border}`}
       >
-        <div className="flex items-center gap-1.5 px-3 pt-3">
-          {(Object.keys(HIGHLIGHT_COLORS) as HighlightColor[]).map((color) => (
-            <button
-              key={color}
-              onClick={() => onHighlight(color)}
-              aria-label={`Highlight ${color}`}
-              className="flex h-11 w-11 items-center justify-center rounded-full"
-            >
-              {/* The swatch stays 32px; the button around it meets the 44px
-                  minimum touch target. */}
-              <span
-                style={{ background: HIGHLIGHT_COLORS[color] }}
-                className="block h-8 w-8 rounded-full ring-1 ring-black/20"
-              />
-            </button>
-          ))}
-          <div className="flex-1" />
-          {existing && onDelete && (
+        <div className="flex items-center gap-2 p-3">
+          {existing && onDelete ? (
             <button
               onClick={onDelete}
               aria-label="Delete highlight"
-              className="flex h-11 w-11 items-center justify-center rounded-lg opacity-70"
+              className={`grid h-11 w-11 shrink-0 place-items-center rounded-full border ${palette.border}`}
             >
               <TrashIcon className="h-4 w-4" />
             </button>
+          ) : (
+            <button
+              onClick={onHighlight}
+              aria-label="Highlight"
+              className={`grid h-11 w-11 shrink-0 place-items-center rounded-full border ${palette.border}`}
+            >
+              <span
+                style={{ background: HIGHLIGHT_COLORS[color] }}
+                className="block h-5 w-5 rounded-full ring-1 ring-black/20"
+              />
+            </button>
           )}
-        </div>
-
-        <div className="flex items-center gap-2 p-3">
           <button
             onClick={onChat}
             className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-olive py-2.5 text-sm font-semibold text-white"

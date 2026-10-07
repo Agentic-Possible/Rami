@@ -3,13 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import type { Contents } from 'epubjs'
 import { archiveBook, db, deleteBook, getSettings, saveSettings } from '../db/db'
-import {
-  DEFAULT_SETTINGS,
-  type Conversation,
-  type Highlight,
-  type HighlightColor,
-  type ReaderTheme,
-} from '../db/types'
+import { DEFAULT_SETTINGS, type Conversation, type Highlight, type ReaderTheme } from '../db/types'
 import { useReader } from '../lib/useReader'
 import { THEMES } from '../lib/themes'
 import { newId } from '../lib/id'
@@ -82,6 +76,7 @@ export default function ReaderPage() {
   const palette = THEMES[settings.theme]
   const percent = Math.round((reader.location?.progress ?? book?.progress ?? 0) * 100)
   const isDark = settings.theme === 'dark'
+  const highlightColor = settings.highlightColor
   const activeStyle = {
     color: palette.link,
     background: `color-mix(in srgb, ${palette.link} 10%, transparent)`,
@@ -103,7 +98,7 @@ export default function ReaderPage() {
     painted.current = []
 
     for (const highlight of highlights) {
-      paintHighlight(rendition, highlight.id, highlight.cfiRange, highlight.color, isDark, () =>
+      paintHighlight(rendition, highlight.id, highlight.cfiRange, highlightColor, isDark, () =>
         openHighlight(highlight),
       )
       painted.current.push(highlight.cfiRange)
@@ -111,7 +106,7 @@ export default function ReaderPage() {
     // `openHighlight` is stable enough for this effect; re-running on every
     // render would make highlights flicker on each page turn.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reader.rendition, highlights, isDark, reader.ready])
+  }, [reader.rendition, highlights, highlightColor, isDark, reader.ready])
 
   // Deep link from the highlights list: jump once, then drop the param so a
   // later page turn isn't undone by a re-render.
@@ -153,14 +148,9 @@ export default function ReaderPage() {
     })()
   }
 
-  async function saveHighlight(color: HighlightColor): Promise<Highlight | undefined> {
+  async function saveHighlight(): Promise<Highlight | undefined> {
     if (!active || !bookId) return undefined
-
-    if (active.highlight) {
-      await db.highlights.update(active.highlight.id, { color })
-      setActive(undefined)
-      return { ...active.highlight, color }
-    }
+    if (active.highlight) return active.highlight
 
     const highlight: Highlight = {
       id: newId(),
@@ -171,7 +161,7 @@ export default function ReaderPage() {
       context: active.contents ? contextAround(active.contents, active.cfiRange) : undefined,
       chapter: reader.location?.chapter,
       progress: reader.location?.progress,
-      color,
+      color: highlightColor,
       createdAt: Date.now(),
     }
     await db.highlights.add(highlight)
@@ -199,7 +189,7 @@ export default function ReaderPage() {
   async function startChat() {
     if (!active || !bookId) return
 
-    const highlight = active.highlight ?? (await saveHighlight('yellow'))
+    const highlight = active.highlight ?? (await saveHighlight())
     if (!highlight) return
 
     const existing = await db.conversations.where('highlightId').equals(highlight.id).first()
@@ -422,7 +412,8 @@ export default function ReaderPage() {
           rect={active.rect}
           theme={settings.theme}
           existing={Boolean(active.highlight)}
-          onHighlight={(color) => void saveHighlight(color)}
+          color={highlightColor}
+          onHighlight={() => void saveHighlight()}
           onChat={() => void startChat()}
           onCopy={() => void copySelection()}
           onDelete={() => void deleteHighlight()}

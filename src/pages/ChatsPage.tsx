@@ -110,7 +110,7 @@ export default function ChatsPage() {
                 >
                   <span
                     className="mt-1 h-3 w-3 shrink-0 rounded-full"
-                    style={{ background: HIGHLIGHT_COLORS[highlight.color] }}
+                    style={{ background: HIGHLIGHT_COLORS[settings.highlightColor] }}
                   />
                   <Link
                     to={`/book/${bookId}?cfi=${encodeURIComponent(highlight.cfiRange)}`}

@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, getSettings, saveSettings } from '../db/db'
-import { DEFAULT_SETTINGS, type Provider } from '../db/types'
+import { DEFAULT_SETTINGS, type HighlightColor, type Provider } from '../db/types'
+import { HIGHLIGHT_COLORS } from '../lib/highlights'
 import { HOSTED_MODEL_LABEL, verifyKey } from '../lib/inference'
 import { createAudiobookSession } from '../lib/audiobooks'
 import { BackIcon } from '../components/Icons'
@@ -241,6 +242,33 @@ export default function SettingsPage() {
                 {audiobookMessage}
               </p>
             )}
+          </div>
+        </section>
+
+        <section>
+          <h2 className="font-serif text-lg font-medium">Highlight color</h2>
+          <p className="mt-1 text-sm text-muted">Used for every highlight, old and new.</p>
+          <div role="radiogroup" aria-label="Highlight color" className="mt-3 flex gap-2">
+            {(Object.keys(HIGHLIGHT_COLORS) as HighlightColor[]).map((color) => {
+              const selected = settings.highlightColor === color
+              return (
+                <button
+                  key={color}
+                  role="radio"
+                  aria-checked={selected}
+                  aria-label={color}
+                  onClick={() => void saveSettings({ highlightColor: color })}
+                  className={`grid h-11 w-11 place-items-center rounded-full border-2 transition ${
+                    selected ? 'border-olive' : 'border-transparent'
+                  }`}
+                >
+                  <span
+                    style={{ background: HIGHLIGHT_COLORS[color] }}
+                    className="block h-8 w-8 rounded-full ring-1 ring-black/15"
+                  />
+                </button>
+              )
+            })}
           </div>
         </section>
 
