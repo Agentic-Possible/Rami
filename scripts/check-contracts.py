@@ -1,4 +1,5 @@
 """Validate documentation/configuration using only repository fixtures."""
+
 import json
 from pathlib import Path
 
@@ -14,5 +15,9 @@ api = yaml.safe_load((root / 'docs/api.openapi.yml').read_text())
 assert api['openapi'] == '3.1.0'
 assert set(api['paths']) == {'/api/chat', '/health', '/session', '/objects/{key}'}
 container = json.loads((root / '.devcontainer/devcontainer.json').read_text())
-assert container['postCreateCommand'] == 'npm run setup'
+assert container['postCreateCommand'] == (
+    'npm run setup && npx --no-install playwright install --with-deps chromium'
+)
+assert container['waitFor'] == 'postCreateCommand'
+assert (root / '.devcontainer/smoke.sh').is_file()
 print('Workflow, API, artifact, and devcontainer contracts passed')

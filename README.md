@@ -48,6 +48,10 @@ and interactive QA. CI runs the documented checks and production build. Python
 narrator setup and its standard-library test runner are documented there and in
 [tools/narrate/README.md](tools/narrate/README.md).
 
+For a containerized environment, follow the
+[devcontainer setup and smoke check](.devcontainer/README.md). A dedicated CI job
+builds it, runs post-create setup, and exercises the reader inside the container.
+
 `npm run quality`, `npm run check:narrate`, and `npm run test:qa` add formatter,
 dead/duplicate code, Python, and desktop/mobile browser gates. Setup uses a
 separate validation environment and installs a pre-commit hook. See
