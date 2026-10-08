@@ -17,6 +17,8 @@ import Wordmark from '../components/Wordmark'
 import { ChatIcon, GearIcon, MoreIcon, PlusIcon, TrashIcon } from '../components/Icons'
 import { button, iconButton } from '../components/ui'
 
+const COFFEE_URL = 'https://buymeacoffee.com/critesjosh'
+
 export default function LibraryPage() {
   const fileInput = useRef<HTMLInputElement>(null)
   const [importing, setImporting] = useState(false)
@@ -196,6 +198,21 @@ export default function LibraryPage() {
           <ArchivedShelf books={archived} chatCounts={chatCounts} onDelete={setConfirmRemove} />
         )}
       </main>
+
+      <footer className="pb-safe mx-auto max-w-page px-4 sm:px-8">
+        <p className="border-t border-rule py-8 text-center font-book text-body text-ink-soft">
+          Rami is made by one reader. If it has kept you good company,{' '}
+          <a
+            href={COFFEE_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="text-moss underline underline-offset-2 hover:text-moss-deep"
+          >
+            buy me a coffee
+          </a>
+          .
+        </p>
+      </footer>
 
       {showAddBook && (
         <AddBookDialog
