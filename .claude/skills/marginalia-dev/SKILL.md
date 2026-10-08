@@ -54,7 +54,7 @@ The auto-import is one-shot — `sampleBookSeeded` in settings stops it coming b
 a delete, and it is only set once all three land, so a partial first run retries. To
 re-test seeding, clear the `marginalia` IndexedDB database.
 
-To test the import path itself, use a different EPUB through the UI (Add EPUB) rather
+To test the import path itself, use a different EPUB through the UI (Add book, then "Choose an EPUB from this device") rather
 than seeding IndexedDB, since import parses the OPF and extracts the cover.
 
 ## Reading the reader from a browser: the one real trap

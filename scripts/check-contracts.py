@@ -13,7 +13,13 @@ schema = json.loads((root / 'docs/sync.schema.json').read_text())
 Draft202012Validator.check_schema(schema)
 api = yaml.safe_load((root / 'docs/api.openapi.yml').read_text())
 assert api['openapi'] == '3.1.0'
-assert set(api['paths']) == {'/api/chat', '/health', '/session', '/objects/{key}'}
+assert set(api['paths']) == {
+    '/api/chat',
+    '/api/gutenberg',
+    '/health',
+    '/session',
+    '/objects/{key}',
+}
 container = json.loads((root / '.devcontainer/devcontainer.json').read_text())
 assert container['postCreateCommand'] == (
     'npm run setup && npx --no-install playwright install --with-deps chromium'

@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { archiveBook, db, deleteBook, findArchivedMatch, restoreBook } from '../db/db'
+import { archiveBook, db, deleteBook } from '../db/db'
 import type { Book } from '../db/types'
-import { EpubImportError, parseEpubFile } from '../lib/epub'
+import { EpubImportError } from '../lib/epub'
+import { importEpub } from '../lib/importBook'
 import { seedSampleBooks } from '../lib/sampleBook'
 import { useBlobUrl } from '../lib/useBlobUrl'
+import AddBookDialog from '../components/AddBookDialog'
 import RemoveBookDialog from '../components/RemoveBookDialog'
 import { ChatIcon, ChevronIcon, GearIcon, MoreIcon, PlusIcon, TrashIcon } from '../components/Icons'
 
@@ -15,6 +17,7 @@ export default function LibraryPage() {
   const [seeding, setSeeding] = useState(true)
   const [error, setError] = useState<string>()
   const [confirmRemove, setConfirmRemove] = useState<Book>()
+  const [showAddBook, setShowAddBook] = useState(false)
 
   // Most recently read first, so the book in progress is the one under the
   // thumb. A book that has never been opened falls back to when it arrived,
@@ -61,13 +64,7 @@ export default function LibraryPage() {
     const failures: string[] = []
     for (const file of Array.from(files)) {
       try {
-        const book = await parseEpubFile(file, file.name)
-        // Importing the same file as a book that was removed but kept picks its
-        // shelf back up, rather than standing a second, empty copy next to the
-        // notes it belongs to.
-        const archivedMatch = await findArchivedMatch(book)
-        if (archivedMatch) await restoreBook(archivedMatch.id, book)
-        else await db.books.add(book)
+        await importEpub(file)
       } catch (err) {
         failures.push(
           `${file.name}: ${err instanceof EpubImportError ? err.message : 'Import failed.'}`,
@@ -102,9 +99,9 @@ export default function LibraryPage() {
               <GearIcon />
             </Link>
             <button
-              onClick={() => fileInput.current?.click()}
+              onClick={() => setShowAddBook(true)}
               disabled={importing}
-              aria-label="Add EPUB"
+              aria-label="Add book"
               className="ml-1 flex h-10 items-center gap-2 rounded-full bg-olive px-3 text-sm font-semibold text-white shadow-[0_4px_14px_rgba(49,61,47,0.15)] transition hover:bg-olive-deep disabled:opacity-50 sm:h-[42px] sm:px-[18px]"
             >
               <PlusIcon className="h-[18px] w-[18px]" />
@@ -153,7 +150,7 @@ export default function LibraryPage() {
         {continuing && <ContinueCard book={continuing} />}
 
         {books && books.length === 0 && !seeding && (
-          <EmptyState onPick={() => fileInput.current?.click()} />
+          <EmptyState onPick={() => setShowAddBook(true)} />
         )}
 
         {books && books.length === 0 && seeding && (
@@ -174,16 +171,14 @@ export default function LibraryPage() {
               ))}
               <li>
                 <button
-                  onClick={() => fileInput.current?.click()}
+                  onClick={() => setShowAddBook(true)}
                   disabled={importing}
                   className="flex aspect-2/3 w-full flex-col items-center justify-center rounded-lg border border-dashed border-[#b9baae] bg-white/20 px-3 text-center text-[#707168] transition hover:bg-white/40"
                 >
                   <span className="mb-4 grid h-[45px] w-[45px] place-items-center rounded-full border border-[#c9c9bf]">
                     <PlusIcon className="h-[22px] w-[22px]" />
                   </span>
-                  <strong className="text-[13px]">
-                    {importing ? 'Importing…' : 'Add an EPUB'}
-                  </strong>
+                  <strong className="text-[13px]">{importing ? 'Importing…' : 'Add a book'}</strong>
                   <small className="mt-1.5 text-[11px] text-faint">
                     Stored privately on this device
                   </small>
@@ -197,6 +192,17 @@ export default function LibraryPage() {
           <ArchivedShelf books={archived} chatCounts={chatCounts} onDelete={setConfirmRemove} />
         )}
       </main>
+
+      {showAddBook && (
+        <AddBookDialog
+          onClose={() => setShowAddBook(false)}
+          onChooseFile={() => {
+            setShowAddBook(false)
+            fileInput.current?.click()
+          }}
+          onImport={importEpub}
+        />
+      )}
 
       {confirmRemove && (
         <RemoveBookDialog
@@ -331,13 +337,13 @@ function EmptyState({ onPick }: { onPick: () => void }) {
     <div className="mt-20 text-center">
       <h2 className="font-serif text-2xl font-medium">Your library is empty</h2>
       <p className="mx-auto mt-2 max-w-xs text-sm text-muted">
-        Add a DRM-free EPUB to start reading. Books are stored on this device only.
+        Search Project Gutenberg or add a DRM-free EPUB. Books are stored on this device only.
       </p>
       <button
         onClick={onPick}
         className="mt-6 rounded-full bg-olive px-5 py-2.5 text-sm font-semibold text-white"
       >
-        Choose a file
+        Add a book
       </button>
     </div>
   )
