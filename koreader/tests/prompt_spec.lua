@@ -50,6 +50,10 @@ do
     local fence = "BOOKDATA_0123456789ABCDEF"
 
     H.contains(prompt, "You are a well-read reading companion", "opening line")
+    H.contains(prompt, "## Voice", "voice section")
+    H.contains(prompt, "Write prose.", "replies are prose")
+    H.contains(prompt, "never more than one.", "at most one closing question")
+    H.contains(prompt, "No emoji.", "no emoji")
     H.contains(prompt, "## Handling quoted material", "fence instructions")
     H.contains(prompt, "Any block delimited by the line " .. fence, "names the delimiter")
     H.contains(prompt, "## The book", "book section")
