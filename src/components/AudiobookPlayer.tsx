@@ -78,7 +78,9 @@ export default function AudiobookPlayer({ token, theme, hidden, initialPosition,
   useEffect(() => {
     if (!token) return
     if (!document.createElement('audio').canPlayType('audio/ogg; codecs="opus"')) {
-      setError('This browser cannot play the Opus audiobook. On iPhone or iPad, use iOS 18.4 or newer.')
+      setError(
+        'This browser cannot play the Opus audiobook. On iPhone or iPad, use iOS 18.4 or newer.',
+      )
       return
     }
     let cancelled = false
@@ -91,10 +93,7 @@ export default function AudiobookPlayer({ token, theme, hidden, initialPosition,
 
         if (!pendingRestore.current) {
           const serializedPosition = window.localStorage.getItem(AUDIOBOOK_POSITION_KEY)
-          const stored = parseStoredAudiobookPosition(
-            serializedPosition,
-            nextMetadata,
-          )
+          const stored = parseStoredAudiobookPosition(serializedPosition, nextMetadata)
           pendingRestore.current = {
             positionSeconds: clampPlaybackTime(
               stored?.positionSeconds ??
@@ -126,32 +125,38 @@ export default function AudiobookPlayer({ token, theme, hidden, initialPosition,
     [currentTime, metadata],
   )
   const activeChapter = metadata?.chapters[activeChapterIndex]
-  const chapterDuration = activeChapter
-    ? activeChapter.endSeconds - activeChapter.startSeconds
-    : 0
+  const chapterDuration = activeChapter ? activeChapter.endSeconds - activeChapter.startSeconds : 0
   const chapterTime = activeChapter ? chapterRelativeTime(activeChapter, currentTime) : 0
   const displayedChapterTime = isScrubbing ? scrubValue : chapterTime
 
-  const persistPosition = useCallback((force = false) => {
-    const audio = audioRef.current
-    if (!audio || !metadata || restorePending.current || audio.readyState < HTMLMediaElement.HAVE_METADATA) {
-      return
-    }
-    const position = clampPlaybackTime(audio.currentTime, metadata.audiobook.durationSeconds)
-    if (!force && Math.abs(position - lastSavedPosition.current) < 5) return
+  const persistPosition = useCallback(
+    (force = false) => {
+      const audio = audioRef.current
+      if (
+        !audio ||
+        !metadata ||
+        restorePending.current ||
+        audio.readyState < HTMLMediaElement.HAVE_METADATA
+      ) {
+        return
+      }
+      const position = clampPlaybackTime(audio.currentTime, metadata.audiobook.durationSeconds)
+      if (!force && Math.abs(position - lastSavedPosition.current) < 5) return
 
-    lastSavedPosition.current = position
-    const stored = {
-      audioId: metadata.audiobook.audioId,
-      positionSeconds: position,
-      updatedAt: Date.now(),
-    }
-    window.localStorage.setItem(AUDIOBOOK_POSITION_KEY, JSON.stringify(stored))
-    // localStorage is the hot path; the settings mirror only needs to be current
-    // at the moments a reader can actually leave, and each write re-runs the
-    // live settings query that re-renders the whole reader.
-    if (force) void saveSettings({ audiobookPositionSeconds: position })
-  }, [metadata])
+      lastSavedPosition.current = position
+      const stored = {
+        audioId: metadata.audiobook.audioId,
+        positionSeconds: position,
+        updatedAt: Date.now(),
+      }
+      window.localStorage.setItem(AUDIOBOOK_POSITION_KEY, JSON.stringify(stored))
+      // localStorage is the hot path; the settings mirror only needs to be current
+      // at the moments a reader can actually leave, and each write re-runs the
+      // live settings query that re-renders the whole reader.
+      if (force) void saveSettings({ audiobookPositionSeconds: position })
+    },
+    [metadata],
+  )
 
   useEffect(() => {
     function persistWhenLeaving() {
@@ -169,33 +174,39 @@ export default function AudiobookPlayer({ token, theme, hidden, initialPosition,
     }
   }, [persistPosition])
 
-  const seekTo = useCallback((absoluteSeconds: number) => {
-    const audio = audioRef.current
-    if (!audio || !metadata) return
-    const position = clampPlaybackTime(absoluteSeconds, metadata.audiobook.durationSeconds)
-    if (audio.readyState < HTMLMediaElement.HAVE_METADATA) {
-      pendingRestore.current = { positionSeconds: position, shouldPlay: false }
-      restorePending.current = true
+  const seekTo = useCallback(
+    (absoluteSeconds: number) => {
+      const audio = audioRef.current
+      if (!audio || !metadata) return
+      const position = clampPlaybackTime(absoluteSeconds, metadata.audiobook.durationSeconds)
+      if (audio.readyState < HTMLMediaElement.HAVE_METADATA) {
+        pendingRestore.current = { positionSeconds: position, shouldPlay: false }
+        restorePending.current = true
+        setCurrentTime(position)
+        return
+      }
+      pendingSeekTarget.current = position
+      audio.currentTime = position
       setCurrentTime(position)
-      return
-    }
-    pendingSeekTarget.current = position
-    audio.currentTime = position
-    setCurrentTime(position)
-  }, [metadata])
+    },
+    [metadata],
+  )
 
-  const updateMediaSessionPosition = useCallback((position: number) => {
-    if (!metadata || !('mediaSession' in navigator)) return
-    try {
-      navigator.mediaSession.setPositionState({
-        duration: metadata.audiobook.durationSeconds,
-        playbackRate: audioRef.current?.playbackRate ?? 1,
-        position: Math.min(position, metadata.audiobook.durationSeconds),
-      })
-    } catch {
-      // Some browsers expose Media Session but not position state.
-    }
-  }, [metadata])
+  const updateMediaSessionPosition = useCallback(
+    (position: number) => {
+      if (!metadata || !('mediaSession' in navigator)) return
+      try {
+        navigator.mediaSession.setPositionState({
+          duration: metadata.audiobook.durationSeconds,
+          playbackRate: audioRef.current?.playbackRate ?? 1,
+          position: Math.min(position, metadata.audiobook.durationSeconds),
+        })
+      } catch {
+        // Some browsers expose Media Session but not position state.
+      }
+    },
+    [metadata],
+  )
 
   useEffect(() => {
     if (!metadata || !activeChapter || !('mediaSession' in navigator)) return
@@ -219,16 +230,35 @@ export default function AudiobookPlayer({ token, theme, hidden, initialPosition,
     const audio = audioRef.current
     setHandler('play', () => void audio?.play())
     setHandler('pause', () => audio?.pause())
-    setHandler('seekbackward', (details) => seekTo((audio?.currentTime ?? 0) - (details.seekOffset ?? 15)))
-    setHandler('seekforward', (details) => seekTo((audio?.currentTime ?? 0) + (details.seekOffset ?? 15)))
+    setHandler('seekbackward', (details) =>
+      seekTo((audio?.currentTime ?? 0) - (details.seekOffset ?? 15)),
+    )
+    setHandler('seekforward', (details) =>
+      seekTo((audio?.currentTime ?? 0) + (details.seekOffset ?? 15)),
+    )
     setHandler('seekto', (details) => {
       if (typeof details.seekTime === 'number') seekTo(details.seekTime)
     })
-    setHandler('previoustrack', () => seekTo(metadata.chapters[Math.max(0, activeChapterIndex - 1)].startSeconds))
-    setHandler('nexttrack', () => seekTo(metadata.chapters[Math.min(metadata.chapters.length - 1, activeChapterIndex + 1)].startSeconds))
+    setHandler('previoustrack', () =>
+      seekTo(metadata.chapters[Math.max(0, activeChapterIndex - 1)].startSeconds),
+    )
+    setHandler('nexttrack', () =>
+      seekTo(
+        metadata.chapters[Math.min(metadata.chapters.length - 1, activeChapterIndex + 1)]
+          .startSeconds,
+      ),
+    )
 
     return () => {
-      for (const action of ['play', 'pause', 'seekbackward', 'seekforward', 'seekto', 'previoustrack', 'nexttrack'] as MediaSessionAction[]) {
+      for (const action of [
+        'play',
+        'pause',
+        'seekbackward',
+        'seekforward',
+        'seekto',
+        'previoustrack',
+        'nexttrack',
+      ] as MediaSessionAction[]) {
         setHandler(action, null)
       }
     }
@@ -240,10 +270,7 @@ export default function AudiobookPlayer({ token, theme, hidden, initialPosition,
       positionSeconds: initialPosition,
       shouldPlay: false,
     }
-    const position = clampPlaybackTime(
-      restore.positionSeconds,
-      metadata.audiobook.durationSeconds,
-    )
+    const position = clampPlaybackTime(restore.positionSeconds, metadata.audiobook.durationSeconds)
     audio.currentTime = position
     setCurrentTime(position)
     lastSavedPosition.current = position
@@ -306,11 +333,13 @@ export default function AudiobookPlayer({ token, theme, hidden, initialPosition,
   return (
     <section
       aria-label="Audiobook player"
-      className={`no-select absolute inset-x-3 bottom-16 z-40 rounded-xl border p-3 shadow-2xl ${palette.chrome} ${palette.chromeText} ${palette.border} ${hidden ? 'hidden' : ''}`}
+      className={`no-select absolute inset-x-3 bottom-16 z-40 mx-auto max-w-xl rounded-2xl border p-3 shadow-[0_16px_44px_rgba(30,30,24,0.18)] ${palette.chrome} ${palette.chromeText} ${palette.border} ${hidden ? 'hidden' : ''}`}
     >
       <div className="mb-3 flex items-start gap-2">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium">{metadata?.title ?? 'Twilight of the Idols'}</p>
+          <p className="truncate text-sm font-medium">
+            {metadata?.title ?? 'Twilight of the Idols'}
+          </p>
           <p className="truncate text-xs opacity-60">
             {activeChapter?.title ?? 'Personal audiobook · starts at the Introduction'}
           </p>
@@ -329,7 +358,7 @@ export default function AudiobookPlayer({ token, theme, hidden, initialPosition,
           Add your personal audiobook token in Settings, then reopen the player.
         </p>
       ) : error ? (
-        <p className="text-sm text-red-500">{error}</p>
+        <p className="text-sm text-[#b4483a]">{error}</p>
       ) : audioUrl && metadata && activeChapter ? (
         <>
           <audio
@@ -369,11 +398,14 @@ export default function AudiobookPlayer({ token, theme, hidden, initialPosition,
             onEnded={() => {
               setIsPlaying(false)
               lastSavedPosition.current = 0
-              window.localStorage.setItem(AUDIOBOOK_POSITION_KEY, JSON.stringify({
-                audioId: metadata.audiobook.audioId,
-                positionSeconds: 0,
-                updatedAt: Date.now(),
-              }))
+              window.localStorage.setItem(
+                AUDIOBOOK_POSITION_KEY,
+                JSON.stringify({
+                  audioId: metadata.audiobook.audioId,
+                  positionSeconds: 0,
+                  updatedAt: Date.now(),
+                }),
+              )
               void saveSettings({ audiobookPositionSeconds: 0 })
             }}
             onError={(event) => handlePlaybackError(event.currentTarget)}
@@ -402,7 +434,7 @@ export default function AudiobookPlayer({ token, theme, hidden, initialPosition,
           </label>
           <input
             id="audiobook-progress"
-            className="h-7 w-full accent-amber-500"
+            className="h-7 w-full accent-rust"
             type="range"
             min="0"
             max={chapterDuration}
@@ -450,7 +482,7 @@ export default function AudiobookPlayer({ token, theme, hidden, initialPosition,
             </button>
             <button
               type="button"
-              className={`${controlClass} rounded-full bg-amber-500 text-lg text-stone-950`}
+              className={`${controlClass} rounded-full border-transparent bg-olive text-lg text-white`}
               aria-label={isPlaying ? 'Pause audiobook' : 'Play audiobook'}
               onClick={togglePlayback}
             >

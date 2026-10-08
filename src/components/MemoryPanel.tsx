@@ -64,13 +64,13 @@ export default function MemoryPanel({
   return (
     <div className="space-y-6">
       <section>
-        <h2 className="text-xs font-semibold tracking-wide text-stone-400 uppercase">
+        <h2 className="text-xs font-semibold tracking-wide text-muted uppercase">
           What the companion remembers
         </h2>
-        <p className="mt-1.5 text-sm leading-relaxed text-stone-500">
-          A running digest of your conversations about this book, written by the model and
-          sent with every message. Edit it to correct what it thinks, or to tell it
-          something it never worked out on its own.
+        <p className="mt-1.5 text-sm leading-relaxed text-muted">
+          A running digest of your conversations about this book, written by the model and sent with
+          every message. Edit it to correct what it thinks, or to tell it something it never worked
+          out on its own.
         </p>
 
         <textarea
@@ -82,14 +82,14 @@ export default function MemoryPanel({
           rows={10}
           maxLength={MAX_SUMMARY_CHARS}
           placeholder="Nothing yet. The companion starts a digest after a few exchanges, or you can write one here."
-          className="mt-3 w-full resize-y rounded-xl border border-stone-800 bg-stone-900/60 p-3 text-sm leading-relaxed text-stone-200 outline-none placeholder:text-stone-600 focus:border-stone-600"
+          className="mt-3 w-full resize-y rounded-xl border border-ink/10 bg-card/70 p-3 text-sm leading-relaxed text-ink outline-none placeholder:text-faint focus:border-olive"
         />
 
         <div className="mt-2 flex items-center gap-2">
           <button
             onClick={() => void commit(draft)}
             disabled={!dirty}
-            className="rounded-lg bg-amber-500 px-3.5 py-2 text-sm font-medium text-stone-950 disabled:opacity-40"
+            className="rounded-full bg-olive px-3.5 py-2 text-sm font-semibold text-white disabled:opacity-40"
           >
             Save
           </button>
@@ -99,11 +99,11 @@ export default function MemoryPanel({
               setDirty(true)
             }}
             disabled={!draft}
-            className="rounded-lg border border-stone-800 px-3.5 py-2 text-sm text-stone-300 disabled:opacity-40"
+            className="rounded-full border border-ink/10 px-3.5 py-2 text-sm text-ink/80 disabled:opacity-40"
           >
             Clear
           </button>
-          <span className="text-xs text-stone-500">
+          <span className="text-xs text-muted">
             {saved
               ? 'Saved'
               : dirty
@@ -113,7 +113,7 @@ export default function MemoryPanel({
                   : ''}
           </span>
           {draft.length > MAX_SUMMARY_CHARS * 0.9 && (
-            <span className="ml-auto text-xs text-stone-500">
+            <span className="ml-auto text-xs text-muted">
               {MAX_SUMMARY_CHARS - draft.length} characters left
             </span>
           )}
@@ -121,14 +121,14 @@ export default function MemoryPanel({
       </section>
 
       <section>
-        <h2 className="text-xs font-semibold tracking-wide text-stone-400 uppercase">
+        <h2 className="text-xs font-semibold tracking-wide text-muted uppercase">
           Everything sent with your next message
         </h2>
-        <p className="mt-1.5 text-sm leading-relaxed text-stone-500">
-          The instructions, the book’s own metadata, and the digest above, exactly as the
-          model receives them.
+        <p className="mt-1.5 text-sm leading-relaxed text-muted">
+          The instructions, the book’s own metadata, and the digest above, exactly as the model
+          receives them.
         </p>
-        <pre className="mt-3 max-h-96 overflow-auto rounded-xl border border-stone-800 bg-stone-900/60 p-3 text-xs leading-relaxed whitespace-pre-wrap text-stone-400">
+        <pre className="mt-3 max-h-96 overflow-auto rounded-xl border border-ink/10 bg-card/70 p-3 text-xs leading-relaxed whitespace-pre-wrap text-muted">
           {prompt}
         </pre>
       </section>

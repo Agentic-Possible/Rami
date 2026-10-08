@@ -6,22 +6,26 @@ description: Run, verify and debug Marginalia locally. Use when starting the dev
 # Running and verifying Marginalia
 
 Almost everything is client side. The one server piece is `/api/chat`, the inference
-relay. There is no test suite, so "does it work" is answered by driving the real app in
-a browser.
+relay. Vitest covers the PWA's pure logic and the KOReader plugin (including a fake-host
+integration harness). Reader layout and touch behavior still need the real browser
+checks below. See root `AGENTS.md` for all applications and the validation workflow.
 
 ## Commands
 
 ```bash
-npm install
+npm ci
 npm run dev       # vite on http://localhost:5173
 npm run build     # tsc -b && vite build, emits the service worker
 npm run lint      # oxlint
-npx tsc -b        # typecheck only, not a package script
+npm run typecheck # app, relay, and test-harness type checks
+npm run test:list # test discovery without execution
+npm run check     # lint, typecheck, and all Vitest tests
 ```
 
-`npm run lint` currently exits 0 with four `only-export-components` warnings in
-`src/router.tsx`. That is pre-existing and expected; `router.tsx` exports the router
-next to its `Deferred` wrapper. Only new warnings are worth acting on.
+`npm run lint` rejects warnings. Run `npm run quality`, `npm run check:narrate`,
+and `npm run test:qa` for quality, strict Python checks, and desktop/mobile smoke
+tests. The Wasmoon Lua VM harness uses synthetic hosts and closes each VM.
+`npm run setup` installs pinned validation tools and the local pre-commit hook.
 
 ## Start the dev server detached
 
@@ -50,7 +54,7 @@ The auto-import is one-shot — `sampleBookSeeded` in settings stops it coming b
 a delete, and it is only set once all three land, so a partial first run retries. To
 re-test seeding, clear the `marginalia` IndexedDB database.
 
-To test the import path itself, use a different EPUB through the UI (Add EPUB) rather
+To test the import path itself, use a different EPUB through the UI (Add book, then "Choose an EPUB from this device") rather
 than seeding IndexedDB, since import parses the OPF and extracts the cover.
 
 ## Reading the reader from a browser: the one real trap
@@ -232,7 +236,7 @@ never happened" a full second after it did.
 
 Chat defaults to the built-in provider, which POSTs to `/api/chat`. In dev that route is
 served by the `marginalia-chat-relay` Vite plugin in `vite.config.ts`, running the same
-`shared/relay.ts` handler the Netlify edge function runs in production. It needs
+`shared/relay.ts` handler the Cloudflare Worker runs in production. It needs
 `OPENROUTER_API_KEY` in gitignored `.env.local`; without it the relay answers 503 and
 the chat sheet shows the message.
 
@@ -270,7 +274,7 @@ find . -type f -not -path "./node_modules/*" -not -path "./.git/*" -not -path ".
 ```
 
 The `or` branch catches OpenRouter keys, which is what `.env.local` now holds and what
-the deployed relay reads from Netlify's environment. Keep placeholder keys out of docs
+the deployed relay holds as a Worker secret. Keep placeholder keys out of docs
 for the same reason the pattern above is split: a placeholder that matches the scan
 buries the real hit.
 

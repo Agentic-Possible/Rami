@@ -33,7 +33,7 @@ def parse_xml(data: bytes) -> etree._ElementTree:
     return etree.ElementTree(etree.fromstring(data, _PARSER))
 
 
-def local_name(element) -> str:
+def local_name(element: etree._Element) -> str:
     """Tag name without its namespace, or '' for comments and processing instructions."""
     tag = element.tag
     if not isinstance(tag, str):
@@ -128,7 +128,7 @@ def _find_opf(files: dict[str, bytes]) -> str:
     raise ValueError('Could not locate the OPF package document in this EPUB.')
 
 
-def _read_metadata(book: Epub, opf) -> None:
+def _read_metadata(book: Epub, opf: etree._Element) -> None:
     def first(tag: str) -> str:
         for element in opf.iter(f'{{{DC}}}{tag}'):
             if element.text:
@@ -140,7 +140,7 @@ def _read_metadata(book: Epub, opf) -> None:
     book.language = first('language') or 'en'
 
 
-def _read_manifest(opf) -> dict[str, dict[str, str]]:
+def _read_manifest(opf: etree._Element) -> dict[str, dict[str, str]]:
     manifest: dict[str, dict[str, str]] = {}
     for item in opf.iter(f'{{{OPF}}}item'):
         item_id = item.get('id')
@@ -155,7 +155,7 @@ def _read_manifest(opf) -> dict[str, dict[str, str]]:
     return manifest
 
 
-def _read_spine(book: Epub, opf, manifest: dict[str, dict[str, str]]) -> None:
+def _read_spine(book: Epub, opf: etree._Element, manifest: dict[str, dict[str, str]]) -> None:
     for itemref in opf.iter(f'{{{OPF}}}itemref'):
         idref = itemref.get('idref')
         item = manifest.get(idref or '')
@@ -166,7 +166,9 @@ def _read_spine(book: Epub, opf, manifest: dict[str, dict[str, str]]) -> None:
             book.spine.append(SpineDoc(idref=idref or '', path=path, href=item['href']))
 
 
-def _read_toc(book: Epub, opf, manifest: dict[str, dict[str, str]]) -> list[TocEntry]:
+def _read_toc(
+    book: Epub, opf: etree._Element, manifest: dict[str, dict[str, str]]
+) -> list[TocEntry]:
     """Prefers the EPUB 3 navigation document, falling back to the EPUB 2 NCX."""
     for item in manifest.values():
         if 'nav' in item['properties'].split():
@@ -178,9 +180,9 @@ def _read_toc(book: Epub, opf, manifest: dict[str, dict[str, str]]) -> list[TocE
 
     spine = opf.find(f'{{{OPF}}}spine')
     ncx_id = spine.get('toc') if spine is not None else None
-    item = manifest.get(ncx_id or '')
-    if item:
-        path = book.resolve(item['href'], book.opf_dir)
+    ncx_item = manifest.get(ncx_id or '')
+    if ncx_item:
+        path = book.resolve(ncx_item['href'], book.opf_dir)
         if path in book.files:
             return _read_ncx(book, path)
     return []
@@ -201,7 +203,7 @@ def _read_nav(book: Epub, nav_path: str) -> list[TocEntry]:
     return []
 
 
-def _entry_from_anchor(book: Epub, anchor, base: str) -> TocEntry | None:
+def _entry_from_anchor(book: Epub, anchor: etree._Element, base: str) -> TocEntry | None:
     href = anchor.get('href')
     if not href or href.startswith(('http://', 'https://')):
         return None

@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Narrator sync artifact v1",
+  "type": "object",
+  "required": ["version", "book", "epub", "sampleRate", "duration", "parts"],
+  "properties": {
+    "version": {"const": 1},
+    "book": {"type": "object", "required": ["title", "author", "language"]},
+    "epub": {"type": "string"},
+    "sampleRate": {"type": "integer", "minimum": 1},
+    "duration": {"type": "number", "minimum": 0},
+    "parts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "file", "duration", "segments", "cacheKey"],
+        "properties": {
+          "id": {"type": "string"},
+          "file": {"type": "string", "pattern": "^audio/"},
+          "duration": {"type": "number", "minimum": 0},
+          "segments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "start", "end"],
+              "properties": {
+                "id": {"type": "string"},
+                "start": {"type": "number", "minimum": 0},
+                "end": {"type": "number", "minimum": 0}
+              }
+            }
+          },
+          "cacheKey": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+        }
+      }
+    }
+  }
+}

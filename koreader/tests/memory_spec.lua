@@ -23,8 +23,10 @@ do
 
     H.ok(not Memory.is_due({ messages = turns(3) }), "three turns is not yet an update")
     H.ok(Memory.is_due({ messages = turns(4) }), "four is")
-    H.ok(not Memory.is_due({ messages = turns(6), summarized_count = 4 }),
-        "and four already folded leaves two, which is not")
+    H.ok(
+        not Memory.is_due({ messages = turns(6), summarized_count = 4 }),
+        "and four already folded leaves two, which is not"
+    )
     H.ok(Memory.is_due({ messages = turns(8), summarized_count = 4 }))
 end
 
@@ -46,12 +48,19 @@ do
     local window = Memory.window(thread)
 
     local bytes = 0
-    for _, message in ipairs(window) do bytes = bytes + #message.content end
-    H.ok(bytes <= Memory.MAX_TRANSCRIPT_BYTES + big,
-        "the window is bounded rather than sending the whole backlog")
+    for _, message in ipairs(window) do
+        bytes = bytes + #message.content
+    end
+    H.ok(
+        bytes <= Memory.MAX_TRANSCRIPT_BYTES + big,
+        "the window is bounded rather than sending the whole backlog"
+    )
     H.ok(#window < 20, "so older turns are left out")
-    H.equal(window[#window].content, thread.messages[20].content,
-        "and what survives is the end of the conversation, nearest where the reader is")
+    H.equal(
+        window[#window].content,
+        thread.messages[20].content,
+        "and what survives is the end of the conversation, nearest where the reader is"
+    )
 end
 
 -- An update always carries something, even when the newest turns alone are
@@ -61,8 +70,11 @@ do
     local huge = Memory.MAX_TRANSCRIPT_BYTES * 2
     local thread = { messages = turns(6, huge) }
     local window = Memory.window(thread)
-    H.equal(#window, Memory.MESSAGES_PER_UPDATE,
-        "never fewer than the newest few, whatever they weigh")
+    H.equal(
+        #window,
+        Memory.MESSAGES_PER_UPDATE,
+        "never fewer than the newest few, whatever they weigh"
+    )
     H.equal(window[#window].content, thread.messages[6].content)
 end
 
@@ -95,8 +107,11 @@ do
         { role = "user", content = "Why a ship's prow?" },
         { role = "assistant", content = "It makes him go first." },
     })
-    H.equal(transcript, "Reader: Why a ship's prow?\n\nCompanion: It makes him go first.",
-        "the roles are named as the web app names them")
+    H.equal(
+        transcript,
+        "Reader: Why a ship's prow?\n\nCompanion: It makes him go first.",
+        "the roles are named as the web app names them"
+    )
 
     H.equal(Memory.transcript({}), "")
     H.equal(Memory.transcript(nil), "")

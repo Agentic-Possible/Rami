@@ -20,7 +20,9 @@ function upstreamResponse(status: number, body: unknown): Response {
 
 /** The model each recorded call asked for, in order. */
 function requestedModels(fetchMock: ReturnType<typeof vi.fn>): string[] {
-  return fetchMock.mock.calls.map(([, init]) => JSON.parse((init as RequestInit).body as string).model)
+  return fetchMock.mock.calls.map(
+    ([, init]) => JSON.parse((init as RequestInit).body as string).model,
+  )
 }
 
 async function errorMessage(response: Response): Promise<string> {
@@ -58,8 +60,17 @@ describe('request policy', () => {
     const keyless = await handleRelayRequest(chatRequest(), { apiKey: '' }, { ip: '' })
     expect(keyless.status).toBe(503)
 
+    const blank = await handleRelayRequest(chatRequest(), { apiKey: ' \n' }, { ip: '' })
+    expect(blank.status).toBe(503)
+
     const empty = await handleRelayRequest(chatRequest({ messages: [] }), OPTIONS, { ip: '' })
     expect(empty.status).toBe(400)
+    const disabled = await handleRelayRequest(
+      chatRequest(),
+      { ...OPTIONS, enabled: false },
+      { ip: '' },
+    )
+    expect(disabled.status).toBe(503)
 
     expect(fetchMock).not.toHaveBeenCalled()
   })
@@ -68,7 +79,10 @@ describe('request policy', () => {
 describe('upstream routing', () => {
   it('streams the answer back untouched, from the one pinned route', async () => {
     fetchMock.mockResolvedValue(
-      new Response('data: {}\n\n', { status: 200, headers: { 'Content-Type': 'text/event-stream' } }),
+      new Response('data: {}\n\n', {
+        status: 200,
+        headers: { 'Content-Type': 'text/event-stream' },
+      }),
     )
 
     const response = await handleRelayRequest(chatRequest(), OPTIONS, { ip: '' })
@@ -77,6 +91,15 @@ describe('upstream routing', () => {
     expect(response.headers.get('Content-Type')).toBe('text/event-stream')
     expect(await response.text()).toBe('data: {}\n\n')
     expect(requestedModels(fetchMock)).toEqual(['google/gemma-4-26b-a4b-it'])
+  })
+
+  it('trims whitespace around a pasted key', async () => {
+    fetchMock.mockResolvedValue(upstreamResponse(200, { choices: [] }))
+
+    await handleRelayRequest(chatRequest(), { apiKey: ' test-key\n' }, { ip: '' })
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    expect(new Headers(init.headers).get('authorization')).toBe('Bearer test-key')
   })
 
   it('ignores a model and provider the caller tries to choose', async () => {

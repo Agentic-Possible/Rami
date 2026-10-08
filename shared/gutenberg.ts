@@ -1,8 +1,7 @@
 /**
  * Same-origin relay for Gutenberg discovery and one-at-a-time EPUB downloads,
- * shared by the Netlify edge function, the Cloudflare Worker and the Vite dev
- * middleware. Written against Web APIs only so all three runtimes can use it
- * unchanged.
+ * shared by the Cloudflare Worker and the Vite dev middleware. Written against
+ * Web APIs only so both runtimes can use it unchanged.
  *
  * Gutenberg's ebook responses do not consistently expose CORS headers, so the
  * browser cannot reliably read them directly. Keep this endpoint deliberately
@@ -14,8 +13,8 @@
 
 import { createRateLimiter, isCrossOrigin } from './http-guards.ts'
 
-const GUTENDEX_URL = 'https://gutendex.com/books'
 const GUTENBERG_URL = 'https://www.gutenberg.org/ebooks'
+const USER_AGENT = 'Marginalia/1.0 (+https://github.com/critesjosh/marginalia)'
 
 /**
  * Best-effort per-IP throttle, separate from the chat relay's so that searching
@@ -57,35 +56,27 @@ export async function handleGutenbergRequest(
   if (search) {
     if (search.length > 200) return json({ error: 'Search is too long.' }, 400)
 
-    // Deliberately no `mime_type` filter. Gutendex matches that against each
-    // book's formats blob rather than an index, and paying for it on top of a
-    // full-text search is slow enough to push some queries past the budget
-    // below — while excluding almost nothing, since nearly every Gutenberg
-    // book has an EPUB. The client drops the few results that lack one.
-    const upstream = new URL(GUTENDEX_URL)
-    upstream.searchParams.set('search', search)
+    // Gutenberg's own OPDS search, not Gutendex: it answers in a few hundred
+    // milliseconds where Gutendex ranges from seconds to well past the budget
+    // below, and it is the host the download already depends on.
+    const upstream = new URL(`${GUTENBERG_URL}/search.opds/`)
+    upstream.searchParams.set('query', search)
 
     const response = await fetchUpstream(fetcher, upstream, {
-      headers: { Accept: 'application/json' },
+      headers: { Accept: 'application/atom+xml', 'User-Agent': USER_AGENT },
     })
     // Distinct from the 502 below: a reader who timed out should retry, and a
     // reader whose upstream refused should not be told to wait it out.
     if (!response) return json({ error: 'Project Gutenberg took too long to answer.' }, 504)
-    if (!response.ok) return json({ error: 'Project Gutenberg search is unavailable.' }, 502)
+    const feed = response.ok ? await response.text().catch(() => undefined) : undefined
+    if (feed === undefined) return json({ error: 'Project Gutenberg search is unavailable.' }, 502)
 
-    return new Response(response.body, {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Cache-Control': 'public, max-age=300',
-        // The browser directive above only spares the reader who repeats their
-        // own search. Gutendex is slow enough that nobody should reach it for a
-        // query someone already ran, and the catalog barely moves, so the CDN
-        // holds answers for an hour and serves stale ones for a day while it
-        // refreshes. Netlify reads this header; other platforms ignore it.
-        'Netlify-CDN-Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
-      },
-    })
+    return Response.json(
+      { results: parseSearchFeed(feed) },
+      // Browsers reuse an answer for five minutes; the Worker's edge cache keeps
+      // it for an hour, since the catalog barely moves.
+      { headers: { 'Cache-Control': 'public, max-age=300, s-maxage=3600' } },
+    )
   }
 
   if (book) {
@@ -96,7 +87,7 @@ export async function handleGutenbergRequest(
     const response = await fetchUpstream(fetcher, `${GUTENBERG_URL}/${book}.epub3.images`, {
       headers: {
         Accept: 'application/epub+zip, application/octet-stream;q=0.9',
-        'User-Agent': 'Marginalia/1.0 (+https://github.com/critesjosh/marginalia)',
+        'User-Agent': USER_AGENT,
       },
       redirect: 'follow',
     })
@@ -116,6 +107,52 @@ export async function handleGutenbergRequest(
   }
 
   return json({ error: 'Provide either search or book.' }, 400)
+}
+
+export interface CatalogResult {
+  id: number
+  title: string
+  /** Absent for anthologies, where Gutenberg shows a download count instead. */
+  author?: string
+}
+
+/**
+ * Pulls book entries out of a Gutenberg OPDS search feed. Workers have no XML
+ * parser, but this feed is machine-generated and flat: book entries are the
+ * ones whose id names `/ebooks/<n>.opds`, and the rest (author and subject
+ * links) are skipped.
+ */
+export function parseSearchFeed(feed: string): CatalogResult[] {
+  const results: CatalogResult[] = []
+  for (const [, entry] of feed.matchAll(/<entry>([\s\S]*?)<\/entry>/g)) {
+    const id = entry.match(/<id>[^<]*\/ebooks\/(\d{1,8})\.opds<\/id>/)?.[1]
+    const title = decodeXml(entry.match(/<title>([\s\S]*?)<\/title>/)?.[1] ?? '')
+    if (!id || !title) continue
+
+    const content = decodeXml(entry.match(/<content[^>]*>([\s\S]*?)<\/content>/)?.[1] ?? '')
+    const author = content && !/^\d[\d,]* downloads?$/.test(content) ? content : undefined
+    results.push({ id: Number(id), title, ...(author && { author }) })
+  }
+  return results
+}
+
+const XML_ENTITIES: Record<string, string> = {
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+}
+
+function decodeXml(text: string): string {
+  return text
+    .replace(/&(?:#(\d+)|#x([\da-f]+)|(\w+));/gi, (match, dec, hex, name) => {
+      if (!dec && !hex) return XML_ENTITIES[name] ?? match
+      const code = dec ? Number(dec) : parseInt(hex, 16)
+      return code <= 0x10ffff ? String.fromCodePoint(code) : match
+    })
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 /**

@@ -5,19 +5,29 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { Readable } from 'node:stream'
 import { handleRelayRequest } from './shared/relay.ts'
 import { handleGutenbergRequest } from './shared/gutenberg.ts'
+import { visualizer } from 'rollup-plugin-visualizer'
 
 /**
- * Serves /api/chat in dev with the same handler the Netlify edge function uses,
+ * Serves /api/chat in dev with the same handler the Cloudflare Worker uses,
  * so local runs exercise the real relay instead of a stand-in. Reads
- * OPENROUTER_API_KEY from .env.local; the deployed site gets it from Netlify.
+ * OPENROUTER_API_KEY from .env.local; the deployed Worker has it as a secret.
  */
-function chatRelay(apiKey: string): Plugin {
+function chatRelay(apiKey: string, enabled: boolean): Plugin {
   return {
     name: 'marginalia-chat-relay',
     configureServer(server) {
       server.middlewares.use('/api/chat', async (req, res) => {
         const chunks: Buffer[] = []
-        for await (const chunk of req) chunks.push(chunk as Buffer)
+        let bytes = 0
+        for await (const chunk of req) {
+          bytes += (chunk as Buffer).length
+          if (bytes > 600_000) {
+            res.statusCode = 413
+            res.end('Request body too large.')
+            return
+          }
+          chunks.push(chunk as Buffer)
+        }
 
         const headers = new Headers()
         for (const [name, value] of Object.entries(req.headers)) {
@@ -33,7 +43,7 @@ function chatRelay(apiKey: string): Plugin {
 
         const response = await handleRelayRequest(
           request,
-          { apiKey, siteUrl: origin },
+          { apiKey, siteUrl: origin, enabled },
           { ip: req.socket.remoteAddress ?? '' },
         )
 
@@ -80,13 +90,22 @@ function gutenbergRelay(): Plugin {
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
+  const remoteRelay = env.CHAT_RELAY_URL?.trim()
 
   return {
     plugins: [
       react(),
       tailwindcss(),
-      chatRelay(env.OPENROUTER_API_KEY ?? ''),
+      ...(remoteRelay
+        ? []
+        : [chatRelay(env.OPENROUTER_API_KEY ?? '', env.CHAT_ENABLED !== 'false')]),
       gutenbergRelay(),
+      visualizer({
+        filename: 'reports/bundle.html',
+        gzipSize: true,
+        brotliSize: true,
+        open: false,
+      }),
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: ['favicon.svg'],
@@ -94,8 +113,8 @@ export default defineConfig(({ mode }) => {
           name: 'Marginalia — EPUB Reader + AI Chat',
           short_name: 'Marginalia',
           description: 'Read EPUBs and chat with AI about what you highlight.',
-          theme_color: '#1c1917',
-          background_color: '#1c1917',
+          theme_color: '#f3f1e9',
+          background_color: '#f3f1e9',
           display: 'standalone',
           start_url: '/',
           // Lets the reader share a Gutenberg book page straight out of their
@@ -124,6 +143,22 @@ export default defineConfig(({ mode }) => {
     ],
     // epub.js references `global` in a few places.
     define: { global: 'globalThis' },
-    server: { host: true },
+    build: { chunkSizeWarningLimit: 450 },
+    server: {
+      host: '127.0.0.1',
+      // Forward chat to a deployed relay instead of using a local key. The relay
+      // rejects cross-origin browsers, so drop Origin like a non-browser client.
+      proxy: remoteRelay
+        ? {
+            '/api/chat': {
+              target: remoteRelay,
+              changeOrigin: true,
+              configure: (proxy) => {
+                proxy.on('proxyReq', (proxyReq) => proxyReq.removeHeader('origin'))
+              },
+            },
+          }
+        : undefined,
+    },
   }
 })

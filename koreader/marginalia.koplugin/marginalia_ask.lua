@@ -33,10 +33,7 @@ local Relay = require("marginalia_relay")
 local Store = require("marginalia_store")
 local View = require("marginalia_view")
 local Util = require("marginalia_util")
-
---- How many words either side of the passage to send as context. The web app
---- budgets about 1200 characters each way; eighty words is the same order.
-local CONTEXT_WORDS = 80
+local Context = require("marginalia_context")
 
 local Ask = {}
 
@@ -52,10 +49,14 @@ Captures everything about the current selection, before the popup closes.
 --]]
 function Ask:snapshot(highlight)
     local selection = highlight.selected_text
-    if not (selection and selection.pos0 and selection.pos1) then return nil end
+    if not (selection and selection.pos0 and selection.pos1) then
+        return nil
+    end
 
     local text = util.cleanupSelectedText(selection.text or "")
-    if text == "" then return nil end
+    if text == "" then
+        return nil
+    end
 
     -- Only meaningful for reflowable documents; a paging document's pos0 is a
     -- table of page and coordinates, which the export carries but nothing reads.
@@ -65,21 +66,27 @@ function Ask:snapshot(highlight)
     local ok, title = pcall(function()
         return self.ui.toc:getTocTitleByPage(page_anchor)
     end)
-    if ok then chapter = title end
+    if ok then
+        chapter = title
+    end
 
     local pageno
     if self.ui.rolling then
         local page_ok, page = pcall(function()
             return self.ui.document:getPageFromXPointer(selection.pos0)
         end)
-        if page_ok then pageno = page end
+        if page_ok then
+            pageno = page
+        end
     else
         pageno = selection.pos0.page
     end
 
     local pages = self.ui.doc_settings and self.ui.doc_settings:readSetting("doc_pages")
     local progress
-    if pageno and pages and pages > 0 then progress = pageno / pages end
+    if pageno and pages and pages > 0 then
+        progress = pageno / pages
+    end
 
     return {
         text = text,
@@ -93,27 +100,8 @@ function Ask:snapshot(highlight)
     }
 end
 
---[[--
-Prose either side of the selection, as one passage.
-
-`getSelectedWordContext` is KOReader's own, already `pcall`-wrapped, and it
-handles the crengine quirk that reading text back clears the drawn selection.
---]]
 function Ask:context(text)
-    local ok, before, after = pcall(function()
-        return self.ui.highlight:getSelectedWordContext(CONTEXT_WORDS)
-    end)
-    if not ok then return nil end
-
-    local parts = {}
-    for _, part in ipairs({ before, text, after }) do
-        if type(part) == "string" then
-            local clean = part:gsub("%s+", " "):gsub("^ ", ""):gsub(" $", "")
-            if clean ~= "" then table.insert(parts, clean) end
-        end
-    end
-    if #parts <= 1 then return nil end
-    return table.concat(parts, " ")
+    return Context.around(self.ui.highlight, text)
 end
 
 --[[--
@@ -125,8 +113,12 @@ whether they are the same object rather than the same place — which they are n
 since KOReader hands the highlight menu a deep copy of the annotation.
 --]]
 local function same_position(a, b)
-    if a == b then return true end
-    if type(a) ~= "table" or type(b) ~= "table" then return false end
+    if a == b then
+        return true
+    end
+    if type(a) ~= "table" or type(b) ~= "table" then
+        return false
+    end
     return a.page == b.page and a.x == b.x and a.y == b.y
 end
 
@@ -143,7 +135,9 @@ function Ask:existing_annotation(snapshot, index)
 
     if type(index) == "number" then
         local annotation = annotations[index]
-        if annotation and annotation.text == snapshot.text then return annotation end
+        if annotation and annotation.text == snapshot.text then
+            return annotation
+        end
     end
 
     for _, annotation in ipairs(annotations) do
@@ -162,7 +156,9 @@ back into `ReaderHighlight.selected_text`, which by now has been cleared.
 --]]
 function Ask:ensure_annotation(snapshot, index)
     local existing = self:existing_annotation(snapshot, index)
-    if existing then return existing end
+    if existing then
+        return existing
+    end
 
     local item = {
         page = snapshot.page_anchor,
@@ -176,8 +172,9 @@ function Ask:ensure_annotation(snapshot, index)
 
     local index = self.ui.annotation:addItem(item)
     self.ui.view.footer:maybeUpdateFooter()
-    self.ui:handleEvent(Event:new("AnnotationsModified",
-        { item, nb_highlights_added = 1, index_modified = index }))
+    self.ui:handleEvent(
+        Event:new("AnnotationsModified", { item, nb_highlights_added = 1, index_modified = index })
+    )
     return item
 end
 
@@ -208,13 +205,21 @@ is only ever adopted when its own highlight has gone.
 local SIMILAR_ENOUGH = 0.4
 
 local function looks_like(annotation_text, seed_text)
-    if type(annotation_text) ~= "string" or type(seed_text) ~= "string" then return false end
-    if annotation_text == "" or seed_text == "" then return false end
-    if annotation_text == seed_text then return true end
+    if type(annotation_text) ~= "string" or type(seed_text) ~= "string" then
+        return false
+    end
+    if annotation_text == "" or seed_text == "" then
+        return false
+    end
+    if annotation_text == seed_text then
+        return true
+    end
 
     local contained = annotation_text:find(seed_text, 1, true) ~= nil
         or seed_text:find(annotation_text, 1, true) ~= nil
-    if not contained then return false end
+    if not contained then
+        return false
+    end
 
     local shorter = math.min(#annotation_text, #seed_text)
     local longer = math.max(#annotation_text, #seed_text)
@@ -230,12 +235,16 @@ that set belongs to a different conversation and is not available to this one.
 function Ask:annotation_like(seed_text, claimed)
     local found
     for _, annotation in ipairs(self.ui.annotation.annotations or {}) do
-        local id = annotation.text and annotation.text ~= ""
-            and Payload.external_id(annotation, Util.sha256_hex) or nil
+        local id = annotation.text
+                and annotation.text ~= ""
+                and Payload.external_id(annotation, Util.sha256_hex)
+            or nil
         if id and not (claimed and claimed[id]) and looks_like(annotation.text, seed_text) then
             -- Two candidates is no answer: adopting either would be a guess at
             -- which highlight the conversation belongs to.
-            if found then return nil end
+            if found then
+                return nil
+            end
             found = annotation
         end
     end
@@ -267,8 +276,12 @@ after the fact keeps its conversation.
 --]]
 function Ask:find_annotation(highlight_ref, thread)
     for _, annotation in ipairs(self.ui.annotation.annotations or {}) do
-        if annotation.text and annotation.text ~= "" and highlight_ref
-            and Payload.external_id(annotation, Util.sha256_hex) == highlight_ref then
+        if
+            annotation.text
+            and annotation.text ~= ""
+            and highlight_ref
+            and Payload.external_id(annotation, Util.sha256_hex) == highlight_ref
+        then
             return annotation
         end
     end
@@ -322,7 +335,9 @@ end
 The conversation hanging off one annotation, if it has one with anything in it.
 --]]
 function Ask:thread_for_annotation(annotation)
-    if not annotation or not annotation.text or annotation.text == "" then return nil end
+    if not annotation or not annotation.text or annotation.text == "" then
+        return nil
+    end
     local data = Store.read(self.ui.doc_settings)
 
     local id = Payload.external_id(annotation, Util.sha256_hex)
@@ -344,10 +359,14 @@ function Ask:thread_for_annotation(annotation)
 
         local found
         for _, candidate in ipairs(data.threads or {}) do
-            if #(candidate.messages or {}) > 0
+            if
+                #(candidate.messages or {}) > 0
                 and not present[candidate.highlight_ref]
-                and looks_like(annotation.text, candidate.seed_text) then
-                if found then return nil end
+                and looks_like(annotation.text, candidate.seed_text)
+            then
+                if found then
+                    return nil
+                end
                 found = candidate
             end
         end
@@ -358,7 +377,9 @@ function Ask:thread_for_annotation(annotation)
         return nil
     end
 
-    if #(thread.messages or {}) > 0 then return thread end
+    if #(thread.messages or {}) > 0 then
+        return thread
+    end
     return nil
 end
 
@@ -398,7 +419,9 @@ annotation, so a fresh selection has nothing for a thread to be attached to yet.
 function Ask:existing_thread(snapshot, index)
     local annotation = self:existing_annotation(snapshot, index)
     local thread = self:thread_for_annotation(annotation)
-    if thread then return thread, annotation end
+    if thread then
+        return thread, annotation
+    end
     return nil
 end
 
@@ -413,7 +436,7 @@ thread was in the sidecar with nothing to read it.
 function Ask:from_selection(highlight, index)
     local snapshot = self:snapshot(highlight)
     if not snapshot then
-        UIManager:show(InfoMessage:new{ text = _("Select some text first.") })
+        UIManager:show(InfoMessage:new({ text = _("Select some text first.") }))
         return
     end
 
@@ -433,31 +456,49 @@ Asks for the question, then runs the exchange.
 --]]
 function Ask:prompt_for_question(snapshot, thread, index)
     local dialog
-    dialog = InputDialog:new{
+    dialog = InputDialog:new({
         title = thread and _("Ask a follow-up") or _("Ask Marginalia"),
-        description = snapshot.text,
+        -- Quoted back so it is clear what the question will be about, but only
+        -- as much of it as leaves somewhere to type: the passage sits in the
+        -- title bar, and the box below is sized from whatever the title bar and
+        -- the keyboard have left over.
+        description = View.excerpt(snapshot.text),
         description_face = nil,
         input = "",
         input_hint = _("What do you want to know about this passage?"),
         allow_newline = false,
-        buttons = {{
+        -- A question long enough to wrap is not unusual, and a one-line box
+        -- shows only the end of it while it is being written. This grows the
+        -- box into the space between the passage and the keyboard, and regrows
+        -- it when the keyboard is dismissed, so the whole question stays in
+        -- view. Enter still asks: `allow_newline` stays off.
+        use_available_height = true,
+        buttons = {
             {
-                text = _("Cancel"),
-                id = "close",
-                callback = function() UIManager:close(dialog) end,
+                {
+                    text = _("Cancel"),
+                    id = "close",
+                    callback = function()
+                        UIManager:close(dialog)
+                    end,
+                },
+                {
+                    text = _("Ask"),
+                    is_enter_default = true,
+                    callback = function()
+                        local question = (dialog:getInputText() or "")
+                            :gsub("^%s+", "")
+                            :gsub("%s+$", "")
+                        if question == "" then
+                            return
+                        end
+                        UIManager:close(dialog)
+                        self:run(snapshot, thread, question, index)
+                    end,
+                },
             },
-            {
-                text = _("Ask"),
-                is_enter_default = true,
-                callback = function()
-                    local question = (dialog:getInputText() or ""):gsub("^%s+", ""):gsub("%s+$", "")
-                    if question == "" then return end
-                    UIManager:close(dialog)
-                    self:run(snapshot, thread, question, index)
-                end,
-            },
-        }},
-    }
+        },
+    })
     UIManager:show(dialog)
     dialog:onShowKeyboard()
 end
@@ -490,7 +531,9 @@ function Ask:run(snapshot, thread, question, index)
             -- would restore the thread's old `summarized_count` with it, so the
             -- same turns would be folded again on the next question.
             local pending_id = thread and thread.id
-            if pending_id then self.memory:fold(pending_id) end
+            if pending_id then
+                self.memory:fold(pending_id)
+            end
 
             local data = Store.read(self.ui.doc_settings)
 
@@ -498,14 +541,14 @@ function Ask:run(snapshot, thread, question, index)
             -- follow-up came from the viewer and predates the fold.
             thread = (pending_id and Store.find_thread_by_id(data, pending_id))
                 or Store.find_thread(data, highlight_ref)
-                or Store.new_thread{
+                or Store.new_thread({
                     highlight_ref = highlight_ref,
                     title = Prompt.title_from_seed(snapshot.text),
                     seed_text = snapshot.text,
                     context = snapshot.context,
                     chapter = snapshot.chapter,
                     progress = snapshot.progress,
-                }
+                })
 
             local history = Store.history(thread)
             table.insert(history, { role = "user", content = question })
@@ -517,11 +560,15 @@ function Ask:run(snapshot, thread, question, index)
             -- the fenced bodies: unlike a passage, it persists into every later
             -- prompt, so a delimiter that got into it would keep getting a turn.
             local fence, fence_error = Prompt.fence_for({
-                snapshot.text, snapshot.context, memory,
-                book.title, book.authors, book.description,
+                snapshot.text,
+                snapshot.context,
+                memory,
+                book.title,
+                book.authors,
+                book.description,
             }, Util.random_hex)
             if not fence then
-                UIManager:show(InfoMessage:new{ text = fence_error })
+                UIManager:show(InfoMessage:new({ text = fence_error }))
                 return
             end
 
@@ -552,7 +599,7 @@ function Ask:run(snapshot, thread, question, index)
             if type(result) ~= "table" or not result.ok then
                 local message = type(result) == "table" and result.error
                     or _("Marginalia could not answer that.")
-                UIManager:show(InfoMessage:new{ text = message, timeout = 8 })
+                UIManager:show(InfoMessage:new({ text = message, timeout = 8 }))
                 return
             end
 
@@ -570,13 +617,7 @@ function Ask:run(snapshot, thread, question, index)
 end
 
 function Ask:book_metadata()
-    local props = self.ui.doc_props or {}
-    return {
-        title = props.display_title or props.title,
-        authors = props.authors,
-        language = props.language,
-        description = props.description,
-    }
+    return Context.metadata(self.ui.doc_props)
 end
 
 --[[--
@@ -588,37 +629,42 @@ half of it.
 --]]
 function Ask:show_thread(snapshot, thread, annotation, index)
     local viewer
-    viewer = TextViewer:new{
+    viewer = TextViewer:new({
         title = thread.title,
         text = View.thread_document(thread),
         text_type = "lookup",
-        buttons_table = {{
+        buttons_table = {
             {
-                text = _("Ask a follow-up"),
-                callback = function()
-                    UIManager:close(viewer)
-                    self:prompt_for_question(snapshot, thread, index)
-                end,
+                {
+                    text = _("Ask a follow-up"),
+                    callback = function()
+                        UIManager:close(viewer)
+                        self:prompt_for_question(snapshot, thread, index)
+                    end,
+                },
+                {
+                    text = _("Save to note"),
+                    -- A conversation outlives its highlight; there may be no note
+                    -- left to write into.
+                    enabled = annotation ~= nil,
+                    callback = function()
+                        -- Closed first: saving now folds, and its spinner should
+                        -- not be drawn over a viewer that is on its way out.
+                        UIManager:close(viewer)
+                        self:save_to_note(annotation, thread)
+                    end,
+                },
             },
             {
-                text = _("Save to note"),
-                -- A conversation outlives its highlight; there may be no note
-                -- left to write into.
-                enabled = annotation ~= nil,
-                callback = function()
-                    -- Closed first: saving now folds, and its spinner should
-                    -- not be drawn over a viewer that is on its way out.
-                    UIManager:close(viewer)
-                    self:save_to_note(annotation, thread)
-                end,
+                {
+                    text = _("Close"),
+                    callback = function()
+                        UIManager:close(viewer)
+                    end,
+                },
             },
-        }, {
-            {
-                text = _("Close"),
-                callback = function() UIManager:close(viewer) end,
-            },
-        }},
-    }
+        },
+    })
     UIManager:show(viewer)
 end
 
@@ -671,12 +717,14 @@ the thing that was asked for — was written and confirmed either way, and the
 turns stay pending, so the next follow-up or **Update notes now** picks them up.
 --]]
 function Ask:remember(thread)
-    UIManager:show(InfoMessage:new{
+    UIManager:show(InfoMessage:new({
         text = _("Saved to this highlight's note."),
         timeout = 2,
-    })
+    }))
 
-    if Memory.pending_count(thread) == 0 then return end
+    if Memory.pending_count(thread) == 0 then
+        return
+    end
 
     NetworkMgr:runWhenOnline(function()
         Trapper:wrap(function()
@@ -686,10 +734,10 @@ function Ask:remember(thread)
                 return
             end
 
-            UIManager:show(InfoMessage:new{
+            UIManager:show(InfoMessage:new({
                 text = _("Added to the notes on this book."),
                 timeout = 2,
-            })
+            }))
         end)
     end)
 end

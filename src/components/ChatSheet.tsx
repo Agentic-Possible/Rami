@@ -8,8 +8,8 @@ import { InferenceError, streamChat, targetFor } from '../lib/inference'
 import { buildMessages } from '../lib/prompt'
 import { getBookMemory, updateBookMemory } from '../lib/memory'
 import { THEMES } from '../lib/themes'
-import { useModal } from '../lib/useModal'
-import { CloseIcon, SendIcon } from './Icons'
+import ReaderPanel from './ReaderPanel'
+import { SendIcon } from './Icons'
 
 /** Breathing room left above the pinned question, in pixels. */
 const ANCHOR_GAP = 12
@@ -40,14 +40,8 @@ export default function ChatSheet({
   // apart from the reader scrolling away.
   const setTopRef = useRef<number | null>(null)
   const openedRef = useRef(false)
-  // Land on the composer: opening a chat to ask something and having to tab
-  // past the close button first is the wrong default.
-  const sheetRef = useModal<HTMLElement>(onClose, 'textarea')
 
-  const conversation = useLiveQuery(
-    () => db.conversations.get(conversationId),
-    [conversationId],
-  )
+  const conversation = useLiveQuery(() => db.conversations.get(conversationId), [conversationId])
   const messages = useLiveQuery(
     () => db.messages.where('conversationId').equals(conversationId).sortBy('createdAt'),
     [conversationId],
@@ -199,147 +193,129 @@ export default function ChatSheet({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden />
+    <ReaderPanel
+      theme={theme}
+      label={conversation?.title ?? 'Conversation'}
+      eyebrow={conversation?.chapter}
+      title="Marginalia"
+      closeLabel="Close chat"
+      // Land on the composer: opening a chat to ask something and having to tab
+      // past the close button first is the wrong default.
+      initialFocus="textarea"
+      zIndex="z-50"
+      onClose={onClose}
+    >
+      {conversation?.seedText && (
+        <blockquote
+          className="mx-5 mt-5 shrink-0 border-l-2 bg-[#b79671]/10 p-4"
+          style={{ borderColor: '#b8866f' }}
+        >
+          <p className="line-clamp-4 font-serif text-sm leading-relaxed italic">
+            “{conversation.seedText}”
+          </p>
+          {conversation.progress !== undefined && (
+            <span className="mt-2 block text-[10px] opacity-55">
+              Highlight · {Math.round(conversation.progress * 100)}% through
+            </span>
+          )}
+        </blockquote>
+      )}
 
-      <section
-        ref={sheetRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label={conversation?.title ?? 'Conversation'}
-        className={`relative flex h-[85%] flex-col rounded-t-2xl border-t ${palette.chrome} ${palette.chromeText} ${palette.border} shadow-2xl`}
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        // Browser scroll anchoring would compete with the pin above, moving
+        // the view on its own as the reply grows.
+        style={{ overflowAnchor: 'none' }}
+        className="flex-1 space-y-4 overflow-y-auto overscroll-contain p-5"
       >
-        <header className={`flex items-start gap-2 border-b px-4 py-3 ${palette.border}`}>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold">
-              {conversation?.title ?? 'Conversation'}
-            </p>
-            {conversation?.chapter && (
-              <p className="truncate text-xs opacity-55">{conversation.chapter}</p>
-            )}
-          </div>
-          <button
-            onClick={onClose}
-            aria-label="Close chat"
-            className="-m-2 flex h-11 w-11 shrink-0 items-center justify-center opacity-70"
-          >
-            <CloseIcon />
-          </button>
-        </header>
-
-        {conversation?.seedText && (
-          <blockquote
-            className={`mx-4 mt-3 shrink-0 border-l-2 py-1 pl-3 text-xs leading-relaxed opacity-70`}
-            style={{ borderColor: palette.link }}
-          >
-            <span className="line-clamp-3">{conversation.seedText}</span>
-          </blockquote>
+        {messages?.length === 0 && !streaming && (
+          <p className="mt-6 text-center text-sm opacity-50">
+            Ask about this passage, or just say what you think.
+          </p>
         )}
 
-        <div
-          ref={scrollRef}
-          onScroll={handleScroll}
-          // Browser scroll anchoring would compete with the pin above, moving
-          // the view on its own as the reply grows.
-          style={{ overflowAnchor: 'none' }}
-          className="flex-1 space-y-3 overflow-y-auto overscroll-contain p-4"
-        >
-          {messages?.length === 0 && !streaming && (
-            <p className="mt-6 text-center text-sm opacity-50">
-              Ask about this passage, or just say what you think.
-            </p>
-          )}
+        {messages?.map((message) => (
+          <Bubble key={message.id} id={message.id} role={message.role}>
+            {message.content}
+          </Bubble>
+        ))}
 
-          {messages?.map((message) => (
-            <Bubble key={message.id} id={message.id} role={message.role} theme={theme}>
-              {message.content}
-            </Bubble>
-          ))}
+        {streaming && <Bubble role="assistant">{streaming}</Bubble>}
 
-          {streaming && (
-            <Bubble role="assistant" theme={theme}>
-              {streaming}
-            </Bubble>
-          )}
+        {busy && !streaming && <p className="text-sm opacity-50">Thinking…</p>}
 
-          {busy && !streaming && <p className="text-sm opacity-50">Thinking…</p>}
+        {error && (
+          <div className="rounded-xl border border-[#b4483a]/30 bg-[#b4483a]/8 p-3 text-sm">
+            {error}
+            {error.includes('Settings') && (
+              <>
+                {' '}
+                <Link to="/settings" className="underline">
+                  Open settings
+                </Link>
+              </>
+            )}
+          </div>
+        )}
+      </div>
 
-          {error && (
-            <div className="rounded-lg border border-red-800 bg-red-950/40 p-3 text-sm text-red-200">
-              {error}
-              {error.includes('Settings') && (
-                <>
-                  {' '}
-                  <Link to="/settings" className="underline">
-                    Open settings
-                  </Link>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-
-        <form
-          className={`pb-safe flex shrink-0 items-end gap-2 border-t px-3 pt-3 ${palette.border}`}
-          onSubmit={(e) => {
-            e.preventDefault()
-            void send(draft)
+      <form
+        className={`mx-4 mb-[max(1rem,env(safe-area-inset-bottom))] flex shrink-0 items-end gap-2 rounded-2xl border bg-white/25 p-2 pl-3 ${palette.border}`}
+        onSubmit={(e) => {
+          e.preventDefault()
+          void send(draft)
+        }}
+      >
+        <textarea
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault()
+              void send(draft)
+            }
           }}
+          rows={1}
+          placeholder="Ask about this passage…"
+          aria-label="Ask about this passage"
+          className="max-h-32 min-h-11 flex-1 resize-none bg-transparent py-2.5 text-sm outline-none placeholder:opacity-55"
+        />
+        <button
+          type="submit"
+          disabled={!draft.trim() || busy}
+          aria-label="Send"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-olive text-white transition disabled:opacity-35"
         >
-          <textarea
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault()
-                void send(draft)
-              }
-            }}
-            rows={1}
-            placeholder="Ask about this passage…"
-            className={`max-h-32 min-h-11 flex-1 resize-none rounded-xl border bg-transparent px-3 py-2.5 text-sm outline-none ${palette.border}`}
-          />
-          <button
-            type="submit"
-            disabled={!draft.trim() || busy}
-            aria-label="Send"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-stone-950 disabled:opacity-40"
-          >
-            <SendIcon className="h-4.5 w-4.5" />
-          </button>
-        </form>
-      </section>
-    </div>
+          <SendIcon className="h-4.5 w-4.5" />
+        </button>
+      </form>
+    </ReaderPanel>
   )
 }
 
-function Bubble({
-  id,
-  role,
-  theme,
-  children,
-}: {
-  id?: string
-  role: string
-  theme: ReaderTheme
-  children: React.ReactNode
-}) {
-  const palette = THEMES[theme]
+function Bubble({ id, role, children }: { id?: string; role: string; children: React.ReactNode }) {
   const isUser = role === 'user'
 
-  return (
-    <div
-      data-message={id}
-      className={isUser ? 'flex justify-end' : 'flex justify-start'}
-    >
-      <div
-        className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
-          isUser ? 'text-stone-950' : `border ${palette.border}`
-        }`}
-        style={isUser ? { background: palette.link } : undefined}
-      >
-        {children}
+  if (isUser) {
+    return (
+      <div data-message={id} className="flex justify-end">
+        <p className="max-w-[85%] rounded-[13px_13px_3px_13px] bg-olive px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap text-white">
+          {children}
+        </p>
       </div>
+    )
+  }
+
+  return (
+    <div data-message={id} className="flex items-start gap-2.5">
+      <span
+        aria-hidden
+        className="grid h-6 w-6 shrink-0 place-items-center rounded-[50%_50%_50%_7px] bg-rust font-serif text-[11px] text-white"
+      >
+        M
+      </span>
+      <p className="min-w-0 flex-1 text-sm leading-[1.7] whitespace-pre-wrap">{children}</p>
     </div>
   )
 }

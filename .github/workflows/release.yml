@@ -1,0 +1,27 @@
+name: draft-release
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing immutable release tag (vX.Y.Z)
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with: { fetch-depth: 0 }
+      - name: Draft notes for an existing tag, never deploy or publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          printf '%s' "$TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'
+          git rev-parse --verify "refs/tags/$TAG"
+          gh release create "$TAG" --verify-tag --draft --generate-notes

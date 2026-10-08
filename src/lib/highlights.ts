@@ -23,10 +23,7 @@ export interface SelectionRect {
  * scrolls `.epub-container` across it, so rects from inside the iframe are
  * offset by that scroll position.
  */
-export function selectionRect(
-  contents: Contents,
-  cfiRange: string,
-): SelectionRect | undefined {
+export function selectionRect(contents: Contents, cfiRange: string): SelectionRect | undefined {
   try {
     const range = contents.range(cfiRange)
     if (!range) return undefined
@@ -65,11 +62,7 @@ export function selectionText(contents: Contents, cfiRange: string): string {
  * rather than reading the whole document: single-file books put the entire text
  * in one body, which would be megabytes.
  */
-export function contextAround(
-  contents: Contents,
-  cfiRange: string,
-  charsEachSide = 1200,
-): string {
+export function contextAround(contents: Contents, cfiRange: string, charsEachSide = 1200): string {
   try {
     const range = contents.range(cfiRange)
     if (!range) return ''
@@ -128,20 +121,13 @@ export function paintHighlight(
   onClick: () => void,
 ) {
   try {
-    rendition.annotations.add(
-      'highlight',
-      cfiRange,
-      { id },
-      onClick,
-      `hl-${id}`,
-      {
-        fill: HIGHLIGHT_COLORS[color],
-        'fill-opacity': isDark ? '0.32' : '0.28',
-        // Multiply keeps dark text legible on light pages; on a dark page it
-        // would erase the highlight, so leave the fill to composite normally.
-        ...(isDark ? {} : { 'mix-blend-mode': 'multiply' }),
-      },
-    )
+    rendition.annotations.add('highlight', cfiRange, { id }, onClick, `hl-${id}`, {
+      fill: HIGHLIGHT_COLORS[color],
+      'fill-opacity': isDark ? '0.32' : '0.28',
+      // Multiply keeps dark text legible on light pages; on a dark page it
+      // would erase the highlight, so leave the fill to composite normally.
+      ...(isDark ? {} : { 'mix-blend-mode': 'multiply' }),
+    })
   } catch {
     // A CFI that no longer resolves simply renders nothing.
   }

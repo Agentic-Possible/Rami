@@ -22,10 +22,67 @@ local View = {}
 local PREFIX = { user = "Q: ", assistant = "A: " }
 
 local function trimmed(value)
-    if type(value) ~= "string" then return nil end
+    if type(value) ~= "string" then
+        return nil
+    end
     local clean = value:gsub("^%s+", ""):gsub("%s+$", "")
-    if clean == "" then return nil end
+    if clean == "" then
+        return nil
+    end
     return clean
+end
+
+--- Byte offset of the start of every UTF-8 character in `s`, plus an end sentinel.
+-- A byte begins a character iff it is not a continuation byte (0x80..0xBF).
+local function char_offsets(s)
+    local offsets = {}
+    for position in s:gmatch("()[^\128-\191]") do
+        offsets[#offsets + 1] = position
+    end
+    offsets[#offsets + 1] = #s + 1
+    return offsets
+end
+
+--[[--
+How much of a passage a dialog quotes back before it starts eating the screen.
+
+Generous enough that an ordinary highlight — a sentence, a short paragraph — is
+shown whole, and only a selection of several paragraphs is shortened.
+--]]
+View.EXCERPT_CHARS = 320
+
+--[[--
+A passage cut down to something that can sit above an input box.
+
+The point is the room *below* it: the question box is sized from what is left of
+the screen once the quoted passage and the keyboard have taken theirs, so an
+unbounded quote is an unusably small place to type. Cutting at the last space
+keeps the excerpt to whole words, and measuring in characters rather than bytes
+keeps it from severing a codepoint in accented or CJK prose.
+
+@param text the passage
+@param limit characters to keep, defaulting to `View.EXCERPT_CHARS`
+@treturn string
+--]]
+function View.excerpt(text, limit)
+    if type(text) ~= "string" then
+        return ""
+    end
+    limit = limit or View.EXCERPT_CHARS
+
+    local offsets = char_offsets(text)
+    if #offsets - 1 <= limit then
+        return text
+    end
+
+    local head = text:sub(1, offsets[limit + 1] - 1)
+    -- Back off to the last space, unless the whole excerpt is one long word, in
+    -- which case the character boundary above is the best cut there is.
+    local words = head:match("^(.*)%s")
+    if words and words:match("%S") then
+        head = words
+    end
+    return (head:gsub("%s+$", "")) .. "…"
 end
 
 --[[--
@@ -69,7 +126,9 @@ function View.last_activity(thread)
     local latest = (thread and thread.created_at) or ""
     for _, message in ipairs(thread and thread.messages or {}) do
         local at = message.created_at
-        if type(at) == "string" and at > latest then latest = at end
+        if type(at) == "string" and at > latest then
+            latest = at
+        end
     end
     return latest
 end
@@ -84,12 +143,16 @@ conversation is most of the screen.
 function View.heading(thread)
     local parts = {}
     local chapter = trimmed(thread and thread.chapter)
-    if chapter then table.insert(parts, chapter) end
+    if chapter then
+        table.insert(parts, chapter)
+    end
     if type(thread and thread.progress) == "number" then
         table.insert(parts, string.format("%d%%", math.floor(thread.progress * 100 + 0.5)))
     end
     local created = trimmed(thread and thread.created_at)
-    if created then table.insert(parts, created) end
+    if created then
+        table.insert(parts, created)
+    end
     return table.concat(parts, " · ")
 end
 
@@ -99,8 +162,12 @@ One thread, ready for a text viewer: heading, then the exchange.
 function View.thread_document(thread)
     local heading = View.heading(thread)
     local body = View.transcript(thread)
-    if heading == "" then return body end
-    if body == "" then return heading end
+    if heading == "" then
+        return body
+    end
+    if body == "" then
+        return heading
+    end
     return heading .. "\n\n" .. body
 end
 
@@ -121,7 +188,9 @@ again this morning therefore comes first, which is the point.
 --]]
 function View.book_document(threads, empty_text)
     threads = threads or {}
-    if #threads == 0 then return empty_text or "" end
+    if #threads == 0 then
+        return empty_text or ""
+    end
 
     -- Sorted on a copy: this is the live table out of the sidecar, and
     -- reordering it in place would change what the next export writes.
@@ -135,7 +204,9 @@ function View.book_document(threads, empty_text)
         -- Sidecar timestamps sort correctly as strings, being fixed-width and
         -- most-significant-first. Ties fall back to the order they were stored
         -- in, so the sort stays stable rather than depending on the algorithm.
-        if left ~= right then return left > right end
+        if left ~= right then
+            return left > right
+        end
         return a.index > b.index
     end)
 
@@ -146,13 +217,23 @@ function View.book_document(threads, empty_text)
         local body = View.transcript(entry.thread)
 
         local block = {}
-        if title then table.insert(block, title) end
-        if heading ~= "" then table.insert(block, heading) end
-        if body ~= "" then table.insert(block, body) end
-        if #block > 0 then table.insert(blocks, table.concat(block, "\n\n")) end
+        if title then
+            table.insert(block, title)
+        end
+        if heading ~= "" then
+            table.insert(block, heading)
+        end
+        if body ~= "" then
+            table.insert(block, body)
+        end
+        if #block > 0 then
+            table.insert(blocks, table.concat(block, "\n\n"))
+        end
     end
 
-    if #blocks == 0 then return empty_text or "" end
+    if #blocks == 0 then
+        return empty_text or ""
+    end
     return table.concat(blocks, RULE)
 end
 

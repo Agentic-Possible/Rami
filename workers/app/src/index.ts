@@ -1,5 +1,7 @@
 import { handleGutenbergRequest } from '../../../shared/gutenberg.ts'
+import { isCrossOrigin } from '../../../shared/http-guards.ts'
 import { handleRelayRequest } from '../../../shared/relay.ts'
+import { operationMetric } from '../../../shared/telemetry.ts'
 
 const CONTENT_SECURITY_POLICY =
   "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' blob:; " +
@@ -23,29 +25,60 @@ function withSecurityHeaders(response: Response): Response {
 }
 
 function apiError(status: number, message: string): Response {
-  return Response.json(
-    { error: { message } },
-    { status, headers: { 'Cache-Control': 'no-store' } },
-  )
+  return Response.json({ error: { message } }, { status, headers: { 'Cache-Control': 'no-store' } })
 }
 
-export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+/**
+ * Serves repeat Gutenberg searches from the edge cache, so a query anyone ran
+ * recently never waits on upstream. Downloads are left alone: they are large
+ * and rarely repeat. Cross-origin requests skip the cache so the relay's own
+ * check still turns them away.
+ */
+async function gutenbergWithCache(request: Request, ctx: ExecutionContext): Promise<Response> {
+  const relay = () =>
+    handleGutenbergRequest(request, { ip: request.headers.get('CF-Connecting-IP') ?? '' })
+  const url = new URL(request.url)
+  const search = url.searchParams.get('search')?.trim().toLowerCase()
+  if (request.method !== 'GET' || !search || isCrossOrigin(request)) return relay()
+
+  const key = new Request(`${url.origin}/api/gutenberg?search=${encodeURIComponent(search)}`)
+  const cache = await caches.open('gutenberg-search')
+  const cached = await cache.match(key)
+  if (cached) return cached
+
+  const response = await relay()
+  if (response.ok) ctx.waitUntil(cache.put(key, response.clone()))
+  return response
+}
+
+const worker = {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url)
+    const started = performance.now()
 
     try {
+      if (url.pathname === '/health') {
+        return Response.json(
+          { status: 'ok', service: 'app' },
+          {
+            headers: { 'Cache-Control': 'no-store' },
+          },
+        )
+      }
       if (url.pathname === '/api/chat') {
         return await handleRelayRequest(
           request,
-          { apiKey: env.OPENROUTER_API_KEY, siteUrl: url.origin },
+          {
+            apiKey: env.OPENROUTER_API_KEY,
+            siteUrl: url.origin,
+            enabled: env.CHAT_ENABLED !== 'false',
+          },
           { ip: request.headers.get('CF-Connecting-IP') ?? '' },
         )
       }
 
       if (url.pathname === '/api/gutenberg') {
-        return await handleGutenbergRequest(request, {
-          ip: request.headers.get('CF-Connecting-IP') ?? '',
-        })
+        return await gutenbergWithCache(request, ctx)
       }
 
       if (url.pathname.startsWith('/api/')) {
@@ -53,15 +86,8 @@ export default {
       }
 
       return withSecurityHeaders(await env.ASSETS.fetch(request))
-    } catch (error) {
-      console.error(
-        JSON.stringify({
-          message: 'Unhandled application Worker error',
-          error: error instanceof Error ? error.message : String(error),
-          method: request.method,
-          path: url.pathname,
-        }),
-      )
+    } catch {
+      console.error(JSON.stringify(operationMetric('app', 500, performance.now() - started)))
 
       return url.pathname.startsWith('/api/')
         ? apiError(500, 'Internal server error.')
@@ -69,3 +95,5 @@ export default {
     }
   },
 } satisfies ExportedHandler<Env>
+
+export default worker

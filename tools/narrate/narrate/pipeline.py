@@ -8,6 +8,8 @@ import re
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
+from collections.abc import Callable
+from typing import cast
 
 from lxml import etree
 
@@ -15,6 +17,7 @@ from . import audio as audio_io
 from . import book as book_io
 from .segment import Segment, SegmentOptions, segment_document
 from .synth import CHARS_PER_SECOND, Backend
+from .types import CacheContext, PartRecord
 
 
 @dataclass
@@ -71,7 +74,12 @@ def plan(source: book_io.Epub, options: SegmentOptions) -> tuple[list[Part], dic
     return parts, rewritten
 
 
-def _split_into_parts(doc, entries, positions, segments: list[Segment]) -> list[Part]:
+def _split_into_parts(
+    doc: book_io.SpineDoc,
+    entries: list[book_io.TocEntry],
+    positions: dict[str, int],
+    segments: list[Segment],
+) -> list[Part]:
     """Cuts a document's segments at its table-of-contents anchors.
 
     Gutenberg puts dozens of chapters in one XHTML file and separates them with
@@ -100,6 +108,7 @@ def _split_into_parts(doc, entries, positions, segments: list[Segment]) -> list[
         parts.append(part)
         return part
 
+    current: Part | None = None
     if not anchors:
         current = new_part(Path(doc.path).stem, None)
         current.segments = list(segments)
@@ -118,6 +127,7 @@ def _split_into_parts(doc, entries, positions, segments: list[Segment]) -> list[
         current = new_part(entry.label, entry.fragment)
 
     while index < len(segments):
+        assert current is not None
         current.segments.append(segments[index])
         index += 1
 
@@ -139,9 +149,9 @@ def synthesize(
     bitrate: str,
     gap: float,
     resume: bool,
-    cache_context: dict | None = None,
-    log=print,
-) -> list[dict]:
+    cache_context: CacheContext | None = None,
+    log: Callable[[str], None] = print,
+) -> list[PartRecord]:
     """Renders each part to an audio file, returning its sync record.
 
     Completed parts are appended to `parts.jsonl` as they finish. A full book is
@@ -153,7 +163,7 @@ def synthesize(
     progress_path = out_dir / 'parts.jsonl'
 
     done = _load_progress(progress_path) if resume else {}
-    records: list[dict] = []
+    records: list[PartRecord] = []
     total_segments = sum(len(part.segments) for part in parts)
     spoken = 0
     started = time.monotonic()
@@ -195,7 +205,7 @@ def synthesize(
         else:
             final_path = wav_path
 
-        record = {
+        record: PartRecord = {
             'id': part.id,
             'label': part.label,
             'file': f'audio/{final_path.name}',
@@ -207,7 +217,7 @@ def synthesize(
             'cacheKey': cache_key,
             'segments': [
                 {'id': segment.id, 'start': round(start, 3), 'end': round(end, 3)}
-                for segment, (start, end) in zip(part.segments, bounds)
+                for segment, (start, end) in zip(part.segments, bounds, strict=True)
             ],
         }
         records.append(record)
@@ -217,13 +227,13 @@ def synthesize(
     return records
 
 
-def _load_progress(path: Path) -> dict[str, dict]:
+def _load_progress(path: Path) -> dict[str, PartRecord]:
     if not path.exists():
         return {}
-    done: dict[str, dict] = {}
+    done: dict[str, PartRecord] = {}
     for line in path.read_text(encoding='utf-8').splitlines():
         if line.strip():
-            record = json.loads(line)
+            record = cast(PartRecord, json.loads(line))
             done[record['id']] = record
     return done
 
@@ -236,7 +246,7 @@ def _cache_key(
     fmt: str,
     bitrate: str,
     gap: float,
-    context: dict,
+    context: CacheContext,
 ) -> str:
     """Content-addresses everything that can change a part's rendered audio."""
     payload = {
@@ -258,7 +268,7 @@ def _cache_key(
     return hashlib.sha256(encoded).hexdigest()
 
 
-def _still_valid(record: dict, out_dir: Path, cache_key: str) -> bool:
+def _still_valid(record: PartRecord, out_dir: Path, cache_key: str) -> bool:
     """A cached part is reusable only if its complete file and inputs survive."""
     file_value = record.get('file')
     if not isinstance(file_value, str):
@@ -273,7 +283,7 @@ def _still_valid(record: dict, out_dir: Path, cache_key: str) -> bool:
 
 def write_sync(
     source: book_io.Epub,
-    records: list[dict],
+    records: list[PartRecord],
     out_dir: Path,
     *,
     backend_name: str,

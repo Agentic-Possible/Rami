@@ -30,9 +30,7 @@ export function useModal<T extends HTMLElement>(
     const previouslyFocused = document.activeElement as HTMLElement | null
     const focusable = () => [...container.querySelectorAll<HTMLElement>(FOCUSABLE)]
 
-    const preferred = initialFocus
-      ? container.querySelector<HTMLElement>(initialFocus)
-      : undefined
+    const preferred = initialFocus ? container.querySelector<HTMLElement>(initialFocus) : undefined
     const first = preferred ?? focusable()[0]
     if (first) {
       first.focus()

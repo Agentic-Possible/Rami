@@ -14,54 +14,41 @@ import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-// @ts-expect-error fengari ships no types
-import { lauxlib, lua, lualib, to_luastring } from 'fengari'
+import { withLua } from './harness.ts'
 
 const here = dirname(fileURLToPath(import.meta.url))
-const pluginDir = join(here, '..', 'marginalia.koplugin')
-
-function runLua(script: string): string {
-  const L = lauxlib.luaL_newstate()
-  lualib.luaL_openlibs(L)
-
-  const check = (status: number, what: string) => {
-    if (status !== lua.LUA_OK) throw new Error(`${what}: ${lua.lua_tojsstring(L, -1)}`)
-  }
-
-  const bootstrap = readFileSync(join(here, 'fake_koreader.lua'))
-  check(lauxlib.luaL_loadbuffer(L, bootstrap, null, to_luastring('@fake_koreader')), 'stubs')
-  check(lua.lua_pcall(L, 0, 0, 0), 'stubs')
-
-  // The plugin's own modules, loaded from source in dependency order.
-  for (const name of [
-    'marginalia_prompt', 'marginalia_digest', 'marginalia_payload',
-    'marginalia_util', 'marginalia_store', 'marginalia_view',
-    'marginalia_tls', 'marginalia_relay', 'marginalia_memory', 'marginalia_ask',
-    'marginalia_conversations', 'marginalia_handoff', 'main',
-  ]) {
-    const source = readFileSync(join(pluginDir, `${name}.lua`))
-    check(lauxlib.luaL_loadbuffer(L, source, null, to_luastring(`@${name}.lua`)), `load ${name}`)
-    check(lua.lua_pcall(L, 0, 1, 0), `run ${name}`)
-    lua.lua_getglobal(L, to_luastring('package'))
-    lua.lua_getfield(L, -1, to_luastring('loaded'))
-    lua.lua_pushvalue(L, -3)
-    lua.lua_setfield(L, -2, to_luastring(name))
-    lua.lua_pop(L, 3)
-  }
-
-  // The relay is replaced only once its module is loaded, since the fake
-  // overwrites a function on the real one rather than standing in for it.
-  check(lauxlib.luaL_loadbuffer(L, to_luastring('INSTALL_FAKE_RELAY()'), null, to_luastring('@relay')), 'relay')
-  check(lua.lua_pcall(L, 0, 0, 0), 'relay')
-
-  check(lauxlib.luaL_loadbuffer(L, to_luastring(script), null, to_luastring('@scenario')), 'scenario')
-  check(lua.lua_pcall(L, 0, 1, 0), 'scenario')
-  return lua.lua_tojsstring(L, -1)
+async function runLua(script: string): Promise<string> {
+  const bootstrap = readFileSync(join(here, 'fake_koreader.lua'), 'utf8')
+  return withLua(
+    bootstrap,
+    [
+      'marginalia_prompt',
+      'marginalia_digest',
+      'marginalia_payload',
+      'marginalia_util',
+      'marginalia_store',
+      'marginalia_view',
+      'marginalia_tls',
+      'marginalia_relay',
+      'marginalia_memory',
+      'marginalia_context',
+      'marginalia_ask',
+      'marginalia_conversations',
+      'marginalia_handoff',
+      'main',
+    ],
+    (evaluate) => {
+      evaluate('INSTALL_FAKE_RELAY()')
+      const report = evaluate(script)
+      if (typeof report !== 'string') throw new Error('Lua scenario did not return a report')
+      return report
+    },
+  )
 }
 
 describe('the plugin driven end to end', () => {
-  it('asks, stores the exchange, and shows it back', () => {
-    const report = runLua(`
+  it('asks, stores the exchange, and shows it back', async () => {
+    const report = await runLua(`
       local Ask = require("marginalia_ask")
       local Store = require("marginalia_store")
       local View = require("marginalia_view")
@@ -102,8 +89,41 @@ describe('the plugin driven end to end', () => {
     expect(report).toContain('transcript_has_q=true')
   })
 
-  it('reopens an existing conversation instead of asking again', () => {
-    const report = runLua(`
+  it('leaves room to type a question longer than one line', async () => {
+    const report = await runLua(`
+      local Ask = require("marginalia_ask")
+      local ui = FakeUI()
+      local ask = Ask:new{ ui = ui, settings = FakeSettings(), memory = FakeMemory(),
+                           plugin_version = "test", cafile = "/ca" }
+
+      -- A passage of several paragraphs, which is what crowds the box: it is
+      -- quoted above the input, and the input gets what is left.
+      local passage = string.rep("Call me Ishmael. ", 60)
+      ui.highlight.selected_text = FakeSelection(passage, "/xp/1.0", "/xp/1.20")
+      ask:from_selection(ui.highlight)
+
+      local dialog = INPUT_DIALOGS[1]
+      return table.concat({
+        "grows=" .. tostring(dialog.use_available_height == true),
+        "fixed_height=" .. tostring(dialog.text_height ~= nil),
+        "quote_bounded=" .. tostring(#dialog.description < #passage),
+        "quote_kept=" .. tostring(dialog.description:find("Call me Ishmael.", 1, true) ~= nil),
+        "enter_asks=" .. tostring(dialog.allow_newline ~= true),
+      }, "\\n")
+    `)
+
+    // The box sizes itself from what the passage and keyboard leave over
+    // rather than from a fixed height, and the quote is bounded so that there
+    // is something left to size.
+    expect(report).toContain('grows=true')
+    expect(report).toContain('fixed_height=false')
+    expect(report).toContain('quote_bounded=true')
+    expect(report).toContain('quote_kept=true')
+    expect(report).toContain('enter_asks=true')
+  })
+
+  it('reopens an existing conversation instead of asking again', async () => {
+    const report = await runLua(`
       local Ask = require("marginalia_ask")
       local ui = FakeUI()
       local ask = Ask:new{ ui = ui, settings = FakeSettings(), memory = FakeMemory(),
@@ -134,8 +154,8 @@ describe('the plugin driven end to end', () => {
     expect(report).toContain('viewer_shows_answer=true')
   })
 
-  it('folds a conversation into the notes and asks with them', () => {
-    const report = runLua(`
+  it('folds a conversation into the notes and asks with them', async () => {
+    const report = await runLua(`
       local Ask = require("marginalia_ask")
       local Memory = require("marginalia_memory")
       local Store = require("marginalia_store")
@@ -195,8 +215,8 @@ describe('the plugin driven end to end', () => {
     expect(report).toContain('asked_with_notes=true')
   })
 
-  it('folds a one-turn conversation in when it is saved to a note', () => {
-    const report = runLua(`
+  it('folds a one-turn conversation in when it is saved to a note', async () => {
+    const report = await runLua(`
       local Ask = require("marginalia_ask")
       local Memory = require("marginalia_memory")
       local Store = require("marginalia_store")
@@ -246,8 +266,8 @@ describe('the plugin driven end to end', () => {
     expect(report).toContain('last_message=Added to the notes on this book.')
   })
 
-  it('still confirms the note when the reader turns down the network', () => {
-    const report = runLua(`
+  it('still confirms the note when the reader turns down the network', async () => {
+    const report = await runLua(`
       local Ask = require("marginalia_ask")
       local Memory = require("marginalia_memory")
       local Store = require("marginalia_store")
@@ -290,8 +310,8 @@ describe('the plugin driven end to end', () => {
     expect(report).toContain('pending=2')
   })
 
-  it('saves the note without a fold when there is nothing pending', () => {
-    const report = runLua(`
+  it('saves the note without a fold when there is nothing pending', async () => {
+    const report = await runLua(`
       local Ask = require("marginalia_ask")
       local ui = FakeUI()
       local ask = Ask:new{ ui = ui, settings = FakeSettings(), memory = FakeMemory(),
@@ -326,11 +346,11 @@ describe('the plugin driven end to end', () => {
     expect(report).toContain("message=Saved to this highlight's note.")
   })
 
-  it('keeps the digest through the write that follows it', () => {
+  it('keeps the digest through the write that follows it', async () => {
     // The regression this guards: Ask:run reads the whole sidecar blob and
     // writes it back, so a fold that wrote independently used to be undone by
     // that write, taking the thread's counter with it.
-    const report = runLua(`
+    const report = await runLua(`
       local Ask = require("marginalia_ask")
       local Memory = require("marginalia_memory")
       local Store = require("marginalia_store")
@@ -366,8 +386,8 @@ describe('the plugin driven end to end', () => {
     expect(report).toContain('counter=4')
   })
 
-  it('sweeps a one-exchange conversation the automatic path cannot reach', () => {
-    const report = runLua(`
+  it('sweeps a one-exchange conversation the automatic path cannot reach', async () => {
+    const report = await runLua(`
       local Ask = require("marginalia_ask")
       local Memory = require("marginalia_memory")
       local Store = require("marginalia_store")
@@ -406,8 +426,8 @@ describe('the plugin driven end to end', () => {
     expect(report).toContain('counter=2')
   })
 
-  it('leaves the notes and the counter alone when a fold fails', () => {
-    const report = runLua(`
+  it('leaves the notes and the counter alone when a fold fails', async () => {
+    const report = await runLua(`
       local Memory = require("marginalia_memory")
       local Store = require("marginalia_store")
 
@@ -448,8 +468,8 @@ describe('the plugin driven end to end', () => {
     expect(report).toContain('counter=nil')
   })
 
-  it('lists conversations and carries one on from the list', () => {
-    const report = runLua(`
+  it('lists conversations and carries one on from the list', async () => {
+    const report = await runLua(`
       local Ask = require("marginalia_ask")
       local Conversations = require("marginalia_conversations")
 
@@ -514,8 +534,8 @@ describe('the plugin driven end to end', () => {
     expect(report).toContain('annotations_after=2')
   })
 
-  it('knows whether a passage already has a conversation', () => {
-    const report = runLua(`
+  it('knows whether a passage already has a conversation', async () => {
+    const report = await runLua(`
       local Ask = require("marginalia_ask")
       local ui = FakeUI()
       local ask = Ask:new{ ui = ui, settings = FakeSettings(), memory = FakeMemory(),
@@ -552,8 +572,8 @@ describe('the plugin driven end to end', () => {
     expect(report).toContain('by_annotation=true')
   })
 
-  it('carries a conversation on after its highlight is deleted', () => {
-    const report = runLua(`
+  it('carries a conversation on after its highlight is deleted', async () => {
+    const report = await runLua(`
       local Ask = require("marginalia_ask")
       local Store = require("marginalia_store")
 
@@ -600,8 +620,8 @@ describe('the plugin driven end to end', () => {
     expect(report).toContain('annotations=0')
   })
 
-  it('survives a paging document, where a position is a table', () => {
-    const report = runLua(`
+  it('survives a paging document, where a position is a table', async () => {
+    const report = await runLua(`
       local Ask = require("marginalia_ask")
       local ui = FakeUI()
       ui.rolling = false
@@ -630,8 +650,8 @@ describe('the plugin driven end to end', () => {
     expect(report).toContain('thread=nil')
   })
 
-  it('keeps a conversation attached when its highlight is adjusted', () => {
-    const report = runLua(`
+  it('keeps a conversation attached when its highlight is adjusted', async () => {
+    const report = await runLua(`
       local Ask = require("marginalia_ask")
       local Store = require("marginalia_store")
 
@@ -679,8 +699,8 @@ describe('the plugin driven end to end', () => {
     expect(report).toContain('annotations=1')
   })
 
-  it('does not let a new highlight adopt an existing conversation', () => {
-    const report = runLua(`
+  it('does not let a new highlight adopt an existing conversation', async () => {
+    const report = await runLua(`
       local Ask = require("marginalia_ask")
       local Store = require("marginalia_store")
 
@@ -712,8 +732,8 @@ describe('the plugin driven end to end', () => {
     expect(report).toContain('original=true')
   })
 
-  it('will not adopt a conversation about a passage much shorter than the mark', () => {
-    const report = runLua(`
+  it('will not adopt a conversation about a passage much shorter than the mark', async () => {
+    const report = await runLua(`
       local Ask = require("marginalia_ask")
       local Store = require("marginalia_store")
 
@@ -746,8 +766,8 @@ describe('the plugin driven end to end', () => {
     expect(report).toContain('reverse=nil')
   })
 
-  it('keeps one previous digest and can put it back', () => {
-    const report = runLua(`
+  it('keeps one previous digest and can put it back', async () => {
+    const report = await runLua(`
       local Memory = require("marginalia_memory")
       local ui = FakeUI()
       local memory = Memory:new{ ui = ui, settings = FakeSettings(), plugin_version = "t", cafile = "/ca" }
@@ -780,8 +800,8 @@ describe('the plugin driven end to end', () => {
     expect(report).toContain('cleared_previous=First version.')
   })
 
-  it('puts the conversation list where you go back to things in a book', () => {
-    const report = runLua(`
+  it('puts the conversation list where you go back to things in a book', async () => {
+    const report = await runLua(`
       -- main.lua as the plugin loader gets it; only the menu is exercised,
       -- so the plugin table stands in for an initialised instance.
       local Marginalia = require("main")

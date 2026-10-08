@@ -52,7 +52,7 @@ export function createRateLimiter({ windowMs, maxRequests }: RateLimit): (ip: st
     const now = Date.now()
     const recent = (hits.get(ip) ?? []).filter((at) => now - at < windowMs)
     recent.push(now)
-    hits.set(ip, recent)
+    hits.set(ip, recent.slice(-maxRequests - 1))
 
     if (hits.size > 5000) {
       for (const [key, times] of hits) {

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { EpubImportError } from '../lib/epub'
 import { downloadGutenbergBook, parseGutenbergRef } from '../lib/gutenberg'
 import { importEpub } from '../lib/importBook'
 
@@ -16,19 +15,16 @@ export default function AddSharedPage() {
   const navigate = useNavigate()
   const [error, setError] = useState<string>()
 
-  // Share sheets disagree about which field carries a link — Android browsers
-  // commonly put it in `text` even when it is plainly a URL — so try both.
+  // Share sheets disagree about which field carries a link. Android browsers
+  // commonly put it in `text`, often after the page title, so take the first
+  // URL found there.
   const shared = params.get('url') ?? params.get('text') ?? ''
-  const ref = parseGutenbergRef(shared)
+  const ref = parseGutenbergRef(shared.match(/https?:\/\/\S+/i)?.[0] ?? shared)
   const id = ref?.id
 
   useEffect(() => {
     if (id === undefined) {
-      setError(
-        shared
-          ? 'That link is not a Project Gutenberg book page.'
-          : 'No link was shared.',
-      )
+      setError(shared ? 'That link is not a Project Gutenberg book page.' : 'No link was shared.')
       return
     }
 
@@ -46,11 +42,7 @@ export default function AddSharedPage() {
         navigate(`/book/${bookId}`, { replace: true })
       } catch (err) {
         if (controller.signal.aborted) return
-        setError(
-          err instanceof EpubImportError || err instanceof Error
-            ? err.message
-            : 'Could not add that book.',
-        )
+        setError(err instanceof Error ? err.message : 'Could not add that book.')
       }
     })()
 
@@ -58,23 +50,21 @@ export default function AddSharedPage() {
   }, [id, shared, navigate])
 
   return (
-    <div className="flex min-h-full flex-col items-center justify-center gap-4 bg-stone-950 px-6 text-center text-stone-100">
+    <div className="flex min-h-full flex-col items-center justify-center gap-4 bg-paper px-6 text-center text-ink">
       {error ? (
         <>
-          <p className="text-sm text-red-300">{error}</p>
-          <p className="max-w-xs text-xs text-stone-500">
-            Share a book page such as https://www.gutenberg.org/ebooks/2701, or add the book
-            from the library.
+          <p className="text-sm text-rust">{error}</p>
+          <p className="max-w-xs text-xs text-muted">
+            Share a book page such as https://www.gutenberg.org/ebooks/2701, or add the book from
+            the library.
           </p>
         </>
       ) : (
-        <p className="text-sm text-stone-400">
-          Adding book #{id} from Project Gutenberg…
-        </p>
+        <p className="text-sm text-muted">Adding book #{id} from Project Gutenberg…</p>
       )}
       <Link
         to="/"
-        className="rounded-full border border-stone-700 px-4 py-2 text-sm font-medium text-stone-300 hover:bg-stone-800 hover:text-stone-100"
+        className="rounded-full border border-line px-4 py-2 text-sm font-medium text-ink transition hover:bg-ink/5"
       >
         Go to library
       </Link>

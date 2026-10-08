@@ -1,29 +1,10 @@
-import { lazy, Suspense, type ReactNode } from 'react'
 import { createBrowserRouter } from 'react-router-dom'
+import Deferred from './components/Deferred'
 import LibraryPage from './pages/LibraryPage'
+import { AddSharedPage, ChatsPage, ReaderPage, SettingsPage } from './pages/LazyPages'
 
 // epub.js and JSZip account for most of the bundle and are only needed once a
 // book is open, so everything past the library loads on demand.
-const ReaderPage = lazy(() => import('./pages/ReaderPage'))
-const ChatsPage = lazy(() => import('./pages/ChatsPage'))
-const SettingsPage = lazy(() => import('./pages/SettingsPage'))
-// Reached only from a share sheet, so it never needs to be in the first load.
-const AddSharedPage = lazy(() => import('./pages/AddSharedPage'))
-
-function Deferred({ children }: { children: ReactNode }) {
-  return (
-    <Suspense
-      fallback={
-        <div className="flex h-full items-center justify-center bg-stone-950 text-sm text-stone-500">
-          Loading…
-        </div>
-      }
-    >
-      {children}
-    </Suspense>
-  )
-}
-
 export const router = createBrowserRouter([
   { path: '/', element: <LibraryPage /> },
   {

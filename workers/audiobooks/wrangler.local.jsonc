@@ -1,0 +1,18 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "marginalia-audiobooks-local",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-23",
+  "compatibility_flags": ["nodejs_compat"],
+  "r2_buckets": [{ "binding": "AUDIOBOOKS", "bucket_name": "synthetic-audiobooks", "remote": false }],
+  "ratelimits": [{
+    "name": "SESSION_RATE_LIMITER", "namespace_id": "140015",
+    "simple": { "limit": 30, "period": 60 }
+  }],
+  "vars": {
+    "ALLOWED_ORIGINS": "http://127.0.0.1:5173",
+    "SIGNED_URL_TTL_SECONDS": "600",
+    "ACCESS_TOKEN": "synthetic-local-only",
+    "SIGNING_KEY": "synthetic-local-only-signing-key"
+  }
+}

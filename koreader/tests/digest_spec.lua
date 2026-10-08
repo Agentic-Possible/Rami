@@ -10,20 +10,28 @@ local OTHER = "BOOKDATA_FEDCBA9876543210"
 -- every update feeds the stored digest back in to be fenced again, so unstripped
 -- markers stack up a pair per round and crowd out the notes.
 do
-    H.equal(Digest.strip_fence_tokens(TOKEN .. "\nReader thinks it is a joke.\n" .. TOKEN),
-        "Reader thinks it is a joke.", "delimiters at the edges come off")
+    H.equal(
+        Digest.strip_fence_tokens(TOKEN .. "\nReader thinks it is a joke.\n" .. TOKEN),
+        "Reader thinks it is a joke.",
+        "delimiters at the edges come off"
+    )
 
-    H.equal(Digest.strip_fence_tokens("Notes.\n" .. TOKEN .. " " .. OTHER .. "\nMore notes."),
-        "Notes.\nMore notes.", "a line of nothing but delimiters goes entirely")
+    H.equal(
+        Digest.strip_fence_tokens("Notes.\n" .. TOKEN .. " " .. OTHER .. "\nMore notes."),
+        "Notes.\nMore notes.",
+        "a line of nothing but delimiters goes entirely"
+    )
 
     -- The line has to go, not just be blanked: a delimiter echoed mid-digest
     -- would otherwise leave a gap that parts the notes around it.
     local parted = Digest.strip_fence_tokens("First thought.\n" .. TOKEN .. "\nSecond thought.")
     H.equal(parted, "First thought.\nSecond thought.", "no gap left behind")
 
-    H.equal(Digest.strip_fence_tokens("The reader mentioned " .. TOKEN .. " in passing."),
+    H.equal(
+        Digest.strip_fence_tokens("The reader mentioned " .. TOKEN .. " in passing."),
         "The reader mentioned  in passing.",
-        "a delimiter inside a sentence is removed without taking the sentence")
+        "a delimiter inside a sentence is removed without taking the sentence"
+    )
 
     H.equal(Digest.strip_fence_tokens("  padded  "), "padded", "the result is trimmed")
     H.equal(Digest.strip_fence_tokens("a\n\n\n\n\nb"), "a\n\nb", "runs of blank lines collapse")
@@ -32,8 +40,11 @@ do
 
     -- Anything that is not exactly the shape of a token is text.
     H.equal(Digest.strip_fence_tokens("BOOKDATA_SHORT is fine"), "BOOKDATA_SHORT is fine")
-    H.equal(Digest.strip_fence_tokens("BOOKDATA_0123456789abcdef stays"),
-        "BOOKDATA_0123456789abcdef stays", "lowercase is not a token")
+    H.equal(
+        Digest.strip_fence_tokens("BOOKDATA_0123456789abcdef stays"),
+        "BOOKDATA_0123456789abcdef stays",
+        "lowercase is not a token"
+    )
 end
 
 -- Nothing else bounds the digest: each update replaces the previous one with
@@ -53,8 +64,10 @@ do
     -- invent the rest of the thought.
     local sentences = ("The reader considered the whale. "):rep(300)
     local cut = Digest.normalize_summary(sentences)
-    H.ok(cut:find("%. ?…$") ~= nil or cut:find("%.…$") ~= nil,
-        "a sentence end is preferred to a word break")
+    H.ok(
+        cut:find("%. ?…$") ~= nil or cut:find("%.…$") ~= nil,
+        "a sentence end is preferred to a word break"
+    )
 
     local paragraphs = ("Some notes here.\n\n"):rep(400)
     local by_paragraph = Digest.normalize_summary(paragraphs)
@@ -71,9 +84,13 @@ do
     -- Every byte that starts a character must be followed by its continuation:
     -- count characters and check the total length is consistent.
     local characters = 0
-    for _ in capped:gmatch("[^\128-\191]") do characters = characters + 1 end
-    H.ok(characters <= Digest.MAX_SUMMARY_CHARS + 1,
-        "the ceiling is in characters, so this is not cut to 2,000 of them")
+    for _ in capped:gmatch("[^\128-\191]") do
+        characters = characters + 1
+    end
+    H.ok(
+        characters <= Digest.MAX_SUMMARY_CHARS + 1,
+        "the ceiling is in characters, so this is not cut to 2,000 of them"
+    )
     H.ok(characters > Digest.MAX_SUMMARY_CHARS / 2, "and it is not cut far short either")
 
     -- The last byte must not be a lone lead byte of a severed character.

@@ -10,10 +10,7 @@ import { BookAnchors, findInDocument, normalizeQuery } from './anchor'
  */
 
 function documentOf(body: string): Document {
-  return new DOMParser().parseFromString(
-    `<html><body>${body}</body></html>`,
-    'text/html',
-  )
+  return new DOMParser().parseFromString(`<html><body>${body}</body></html>`, 'text/html')
 }
 
 function find(body: string, query: string): string | undefined {
@@ -177,10 +174,7 @@ describe('BookAnchors', () => {
     // the sections that loaded might appear again in the one that did not, so
     // accepting it would be a guess dressed up as a match.
     const anchors = await BookAnchors.build(
-      bookOf([
-        { href: 'a.xhtml', body: '<p>the white whale</p>' },
-        { href: 'b.xhtml' },
-      ]) as never,
+      bookOf([{ href: 'a.xhtml', body: '<p>the white whale</p>' }, { href: 'b.xhtml' }]) as never,
     )
     expect(anchors.unreadableCount).toBe(1)
     expect(await anchors.locate('the white whale')).toEqual({ failure: 'incomplete-book' })

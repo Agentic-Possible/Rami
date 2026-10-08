@@ -11,8 +11,15 @@ end
 
 function H.equal(actual, expected, message)
     if actual ~= expected then
-        error(string.format("%s\n  expected: %s\n  actual:   %s",
-            message or "values differ", tostring(expected), tostring(actual)), 3)
+        error(
+            string.format(
+                "%s\n  expected: %s\n  actual:   %s",
+                message or "values differ",
+                tostring(expected),
+                tostring(actual)
+            ),
+            3
+        )
     end
 end
 
@@ -30,7 +37,10 @@ end
 
 function H.absent(haystack, needle, message)
     if type(haystack) == "string" and haystack:find(needle, 1, true) then
-        error(string.format("%s\n  unexpectedly found: %s", message or "substring present", needle), 3)
+        error(
+            string.format("%s\n  unexpectedly found: %s", message or "substring present", needle),
+            3
+        )
     end
 end
 

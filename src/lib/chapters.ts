@@ -13,11 +13,11 @@ export function normalizeHref(href: string): string {
   return href.split('#')[0].replace(/^\.?\//, '')
 }
 
-export function sameDoc(a: string, b: string): boolean {
+function sameDoc(a: string, b: string): boolean {
   return normalizeHref(a) === normalizeHref(b)
 }
 
-export function flattenToc(toc: NavItem[]): NavItem[] {
+function flattenToc(toc: NavItem[]): NavItem[] {
   const out: NavItem[] = []
   const walk = (items: NavItem[]) => {
     for (const item of items) {
@@ -37,14 +37,8 @@ export function flattenToc(toc: NavItem[]): NavItem[] {
  * document href alone would mark every chapter as current at once. Resolving
  * each anchor to a CFI lets the position be compared properly.
  */
-export function buildAnchors(
-  toc: NavItem[],
-  href: string,
-  contents: Contents,
-): ChapterAnchor[] {
-  const candidates = flattenToc(toc).filter(
-    (item) => item.href && sameDoc(item.href, href),
-  )
+export function buildAnchors(toc: NavItem[], href: string, contents: Contents): ChapterAnchor[] {
+  const candidates = flattenToc(toc).filter((item) => item.href && sameDoc(item.href, href))
 
   return candidates.map((item) => {
     const anchor: ChapterAnchor = {

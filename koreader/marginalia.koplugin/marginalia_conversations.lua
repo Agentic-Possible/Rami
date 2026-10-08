@@ -35,13 +35,17 @@ end
 --- Keeps a row to one line's worth of title on a narrow screen.
 local function shorten(text, limit)
     text = (text or ""):gsub("%s+", " "):gsub("^ ", ""):gsub(" $", "")
-    if text == "" then return _("Untitled") end
+    if text == "" then
+        return _("Untitled")
+    end
 
     local offsets = {}
     for position in text:gmatch("()[^\128-\191]") do
         offsets[#offsets + 1] = position
     end
-    if #offsets <= limit then return text end
+    if #offsets <= limit then
+        return text
+    end
     return text:sub(1, offsets[limit] - 1) .. "…"
 end
 
@@ -58,7 +62,9 @@ function Conversations:rows(threads)
     end
     table.sort(ordered, function(a, b)
         local left, right = View.last_activity(a.thread), View.last_activity(b.thread)
-        if left ~= right then return left > right end
+        if left ~= right then
+            return left > right
+        end
         return a.index > b.index
     end)
 
@@ -93,9 +99,11 @@ function Conversations:show(on_select)
 
     if #threads == 0 then
         local InfoMessage = require("ui/widget/infomessage")
-        UIManager:show(InfoMessage:new{
-            text = _("No conversations in this book yet. Select a passage and choose Ask Marginalia."),
-        })
+        UIManager:show(InfoMessage:new({
+            text = _(
+                "No conversations in this book yet. Select a passage and choose Ask Marginalia."
+            ),
+        }))
         return
     end
 
@@ -109,7 +117,7 @@ function Conversations:show(on_select)
     end
 
     local menu
-    menu = Menu:new{
+    menu = Menu:new({
         title = T(_("Conversations (%1)"), #threads),
         item_table = rows,
         is_borderless = true,
@@ -126,7 +134,7 @@ function Conversations:show(on_select)
             UIManager:close(menu)
             on_select(item.marginalia_thread)
         end,
-    }
+    })
     UIManager:show(menu)
 end
 

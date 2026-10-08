@@ -1,18 +1,29 @@
+import { operationMetric } from '../../../shared/telemetry'
+
 const BOOK_PREFIX = 'twilight-of-the-idols'
 const AUDIO_KEY = `${BOOK_PREFIX}/audiobook.opus`
 const METADATA_KEY = `${BOOK_PREFIX}/metadata.json`
 const PUBLIC_OBJECTS = new Set([AUDIO_KEY, METADATA_KEY])
 const encoder = new TextEncoder()
 
-export default {
+const worker = {
   async fetch(request, env): Promise<Response> {
     const origin = request.headers.get('Origin')
     const cors = corsHeaders(origin, env.ALLOWED_ORIGINS)
+    const started = performance.now()
 
     try {
       const url = new URL(request.url)
 
       if (origin && !cors) return errorResponse('Origin not allowed.', 403)
+      if (url.pathname === '/health') {
+        return Response.json(
+          { status: 'ok', service: 'audiobooks' },
+          {
+            headers: { 'Cache-Control': 'no-store' },
+          },
+        )
+      }
       if (request.method === 'OPTIONS') {
         return new Response(null, { status: 204, headers: cors ?? undefined })
       }
@@ -32,16 +43,15 @@ export default {
 
       return errorResponse('Not found.', 404, cors)
     } catch {
+      console.error(JSON.stringify(operationMetric('audiobooks', 500, performance.now() - started)))
       return errorResponse('Internal server error.', 500, cors)
     }
   },
 } satisfies ExportedHandler<Env>
 
-async function createSession(
-  request: Request,
-  env: Env,
-  cors: Headers | null,
-): Promise<Response> {
+export default worker
+
+async function createSession(request: Request, env: Env, cors: Headers | null): Promise<Response> {
   const rateLimit = await env.SESSION_RATE_LIMITER.limit({ key: 'personal-session' })
   if (!rateLimit.success) return errorResponse('Too many attempts.', 429, cors)
 
@@ -197,7 +207,11 @@ async function sign(key: string, expires: number, secret: string): Promise<strin
     false,
     ['sign'],
   )
-  const signature = await crypto.subtle.sign('HMAC', cryptoKey, encoder.encode(`${key}\n${expires}`))
+  const signature = await crypto.subtle.sign(
+    'HMAC',
+    cryptoKey,
+    encoder.encode(`${key}\n${expires}`),
+  )
   return base64Url(signature)
 }
 

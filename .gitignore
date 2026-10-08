@@ -1,3 +1,12 @@
+# Regenerable quality and browser-test output
+coverage/
+reports/
+playwright-report/
+test-results/
+.quality-venv/
+.coverage*
+.mypy_cache/
+.ruff_cache/
 # Logs
 logs
 *.log
@@ -25,7 +34,14 @@ dist-ssr
 
 # Local test fixtures and secrets
 test-books
-.env*.local
+.env
+.env.*
+!.env.example
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+.wrangler/
+*.tsbuildinfo
 
 # Python bytecode and virtualenvs from tools/
 __pycache__/

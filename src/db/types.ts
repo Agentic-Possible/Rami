@@ -124,6 +124,8 @@ export interface Settings {
   summaryModel: string
   theme: ReaderTheme
   fontSize: number
+  /** One colour for every highlight; the per-highlight `color` is kept for imports. */
+  highlightColor: HighlightColor
   /** Ask the model to avoid spoiling content past the reader's position. */
   spoilerGuard: boolean
   /** Set once every bundled book has been offered, so deleting them sticks. */
@@ -150,7 +152,8 @@ export const DEFAULT_SETTINGS: Settings = {
   provider: 'hosted',
   model: 'gpt-4o-mini',
   summaryModel: 'gpt-4o-mini',
-  theme: 'dark',
+  theme: 'light',
   fontSize: 100,
+  highlightColor: 'yellow',
   spoilerGuard: true,
 }

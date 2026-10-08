@@ -45,22 +45,21 @@ export default function RemoveBookDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1d1e19]/45 p-4 backdrop-blur-[2px]">
       <div
         ref={ref}
         role="dialog"
         aria-modal="true"
         aria-labelledby="remove-book-title"
-        className={`w-full max-w-sm rounded-xl border p-5 ${palette.chrome} ${palette.chromeText} ${palette.border}`}
+        className={`w-full max-w-sm rounded-[20px] border p-6 shadow-[0_24px_60px_rgba(30,30,24,0.25)] ${palette.chrome} ${palette.chromeText} ${palette.border}`}
       >
-        <h2 id="remove-book-title" className="text-base font-medium">
+        <h2 id="remove-book-title" className="font-serif text-xl leading-snug font-medium">
           {archived ? 'Delete' : 'Remove'} “{book.title}”?
         </h2>
 
         {archived ? (
           <p className="mt-1.5 text-sm opacity-70">
-            This deletes its highlights, conversations and memory for good. It cannot be
-            undone.
+            This deletes its highlights, conversations and memory for good. It cannot be undone.
           </p>
         ) : (
           <fieldset className="mt-4">
@@ -86,15 +85,15 @@ export default function RemoveBookDialog({
           <button
             data-cancel
             onClick={onCancel}
-            className="rounded-lg px-3.5 py-2 text-sm font-medium opacity-80"
+            className="rounded-full px-4 py-2 text-sm font-semibold opacity-80"
           >
             Cancel
           </button>
           <button
             onClick={() => void confirm()}
             disabled={working}
-            className={`rounded-lg px-3.5 py-2 text-sm font-medium text-white disabled:opacity-60 ${
-              choice === 'purge' ? 'bg-red-600' : 'bg-stone-600'
+            className={`rounded-full px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 ${
+              choice === 'purge' ? 'bg-[#a33a2c]' : 'bg-olive'
             }`}
           >
             {choice === 'purge' ? 'Delete' : 'Remove'}
@@ -122,7 +121,7 @@ function ChoiceRow({
 
   return (
     <label
-      className={`mb-2 flex cursor-pointer gap-3 rounded-lg border p-3 ${palette.border} ${
+      className={`mb-2 flex cursor-pointer gap-3 rounded-xl border p-3 ${palette.border} ${
         checked ? 'opacity-100' : 'opacity-60'
       }`}
       style={checked ? { borderColor: palette.link } : undefined}
@@ -132,7 +131,7 @@ function ChoiceRow({
         name="remove-book-choice"
         checked={checked}
         onChange={onSelect}
-        className="mt-0.5 accent-amber-500"
+        className="mt-0.5 accent-rust"
       />
       <span className="text-sm">
         <span className="block font-medium">{label}</span>

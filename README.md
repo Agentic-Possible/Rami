@@ -4,7 +4,7 @@ A mobile-friendly EPUB reader that lets you highlight a passage and start an AI 
 
 Built as a PWA: installable on Android, works offline, stores everything locally in IndexedDB.
 
-Chat works for every visitor with no signup and no API key: requests go through a Netlify edge function that holds an OpenRouter key server-side. Three public-domain books ship with the app (Melville's Moby Dick, Marcus Aurelius' Meditations and Nietzsche's The Genealogy of Morals), so a first-time visitor has something to read immediately.
+Chat works for every visitor with no signup and no API key: requests go through a Cloudflare Worker that holds an OpenRouter key server-side. Three public-domain books ship with the app (Melville's Moby Dick, Marcus Aurelius' Meditations and Nietzsche's The Genealogy of Morals), so a first-time visitor has something to read immediately.
 
 ## Status
 
@@ -14,7 +14,7 @@ Milestones M1 to M5 from `epub-chat-reader-plan.md` are implemented and verified
 | --- | --- |
 | M1 Library | EPUB import, OPF metadata + cover extraction, library grid, delete with cascade |
 | M2 Reader | Paginated epub.js rendition, position persistence, TOC, themes, font size |
-| M3 Highlights | Selection action bar, four colours, painted annotations, tap a highlight to reopen its chat, per-book list |
+| M3 Highlights | Selection action bar, one highlight colour set in Settings, painted annotations, tap a highlight to reopen its chat, per-book list |
 | M4 Chat | Hosted relay or own OpenAI key, context assembly, streaming replies, persisted conversations |
 | M5 Memory | Rolling per-book digest injected into every new conversation, readable and editable under the reader's Memory tab |
 
@@ -23,7 +23,7 @@ Not yet done (M6): PWA share-target import, re-anchoring highlights by text when
 ## Running it
 
 ```bash
-npm install
+npm run setup
 npm run dev
 ```
 
@@ -33,13 +33,32 @@ For chat to work locally, put an OpenRouter key in `.env.local` (gitignored):
 OPENROUTER_API_KEY=<a key from openrouter.ai/keys>
 ```
 
-A Vite plugin serves `/api/chat` in dev using the same handler the deployed edge function runs, so `npm run dev` exercises the real relay — no Netlify CLI needed.
+A Vite plugin serves `/api/chat` in dev using the same handler the deployed edge function runs, so `npm run dev` exercises the real relay — no Wrangler needed.
+
+To use the deployed relay and its key instead, set `CHAT_RELAY_URL=https://marginalia.adjacentpossible.dev` in `.env.local`. Dev chat is then billed to the production key.
 
 ```bash
 npm run build     # production build + service worker
 npm run lint      # oxlint
-npx tsc -b        # typecheck
+npm run typecheck # PWA, relay, and test-harness type checks
+npm run test:list # collect Vitest tests without running them
+npm run check     # lint + typecheck + PWA/KOReader unit and integration tests
 ```
+
+See [AGENTS.md](AGENTS.md) for application boundaries, conventions, focused tests,
+and interactive QA. CI runs the documented checks and production build. Python
+narrator setup and its standard-library test runner are documented there and in
+[tools/narrate/README.md](tools/narrate/README.md).
+
+For a containerized environment, follow the
+[devcontainer setup and smoke check](.devcontainer/README.md). A dedicated CI job
+builds it, runs post-create setup, and exercises the reader inside the container.
+
+`npm run quality`, `npm run check:narrate`, and `npm run test:qa` add formatter,
+dead/duplicate code, Python, and desktop/mobile browser gates. Setup uses a
+separate validation environment and installs a pre-commit hook. See
+[architecture](docs/architecture.md), [API contracts](docs/api.openapi.yml), and
+[operations/privacy](docs/operations.md).
 
 ## Personal audiobook streaming
 
@@ -76,7 +95,7 @@ npx wrangler deploy --dry-run
 
 Two providers, chosen in **Settings**:
 
-**Built-in (default).** The browser POSTs to `/api/chat`, a Netlify edge function that adds the OpenRouter key and forwards to OpenRouter. Visitors need no account, and the key never reaches the client.
+**Built-in (default).** The browser POSTs to `/api/chat`, a Cloudflare Worker route that adds the OpenRouter key and forwards to OpenRouter. Visitors need no account, and the key never reaches the client.
 
 | Model | Provider routing |
 | --- | --- |
@@ -88,14 +107,11 @@ One route, so every request is billed. A free-tier route (`:free`, served by Goo
 
 ### Deploying
 
-Set `OPENROUTER_API_KEY` in the Netlify site's environment variables. Nothing else is required — `netlify.toml` declares the edge function, which runs before the SPA redirect so `/api/chat` never falls through to `index.html`.
-
-The same application also deploys to Cloudflare Workers at
-`marginalia.adjacentpossible.dev`. The root `wrangler.jsonc` serves the Vite
-output as Worker static assets, routes `/api/chat` through
-`workers/app/src/index.ts`, and applies the same security headers as Netlify.
-The two deployment targets are independent; keep the OpenRouter key as a
-Cloudflare Worker secret rather than a Wrangler variable:
+The app deploys to Cloudflare Workers at `marginalia.adjacentpossible.dev`.
+The root `wrangler.jsonc` serves the Vite output as Worker static assets, routes
+`/api/chat` through `workers/app/src/index.ts`, and applies the security
+headers. Keep the OpenRouter key as a Worker secret rather than a Wrangler
+variable:
 
 ```bash
 npm run cloudflare:types
@@ -111,7 +127,7 @@ Because the relay is open to anyone who loads the site, `shared/relay.ts` pins t
 
 ### Untrusted book content
 
-Book content is treated as untrusted. EPUB scripts are not allowed to run: epub.js turns `allowScriptedContent` into `sandbox="allow-same-origin allow-scripts"`, and that pair voids the sandbox, so a book's own scripts would run on this origin and could read any stored key and every note out of IndexedDB. The cost is that scripted or interactive EPUBs lose their interactivity; the text still renders. Text drawn from a book is also fenced with a per-request delimiter before it reaches the model, so a passage cannot pose as an instruction. A CSP in `netlify.toml` is the second layer: `connect-src` allows only this origin — which covers `/api/chat`, since the relay is same-origin — `api.openai.com` for readers using their own key, and the exact private-audiobook Worker origin. `media-src` likewise permits only self/blob audio and that Worker.
+Book content is treated as untrusted. EPUB scripts are not allowed to run: epub.js turns `allowScriptedContent` into `sandbox="allow-same-origin allow-scripts"`, and that pair voids the sandbox, so a book's own scripts would run on this origin and could read any stored key and every note out of IndexedDB. The cost is that scripted or interactive EPUBs lose their interactivity; the text still renders. Text drawn from a book is also fenced with a per-request delimiter before it reaches the model, so a passage cannot pose as an instruction. A CSP set in `workers/app/src/index.ts` is the second layer: `connect-src` allows only this origin — which covers `/api/chat`, since the relay is same-origin — `api.openai.com` for readers using their own key, and the exact private-audiobook Worker origin. `media-src` likewise permits only self/blob audio and that Worker.
 
 ## How it works
 
@@ -123,7 +139,7 @@ Library ──> Reader (epub.js) ──> Selection bar ──> Chat sheet
      bookMemory · settings
                                                   │ fetch
                                                   ▼
-                                   /api/chat (Netlify edge function)
+                                   /api/chat (Cloudflare Worker)
                                                   │
                                                   ▼
                                        OpenRouter ──> Gemma 4 26B

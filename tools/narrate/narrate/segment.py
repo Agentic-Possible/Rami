@@ -25,10 +25,39 @@ from .book import EPUB_OPS, XHTML, local_name
 #: "leaf block", the unit this walker segments.
 BLOCK_TAGS = frozenset(
     {
-        'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'dd', 'dt',
-        'blockquote', 'div', 'td', 'th', 'figcaption', 'caption', 'pre',
-        'section', 'article', 'aside', 'header', 'footer', 'main', 'nav',
-        'ol', 'ul', 'dl', 'table', 'tbody', 'thead', 'tr', 'figure', 'body',
+        'p',
+        'h1',
+        'h2',
+        'h3',
+        'h4',
+        'h5',
+        'h6',
+        'li',
+        'dd',
+        'dt',
+        'blockquote',
+        'div',
+        'td',
+        'th',
+        'figcaption',
+        'caption',
+        'pre',
+        'section',
+        'article',
+        'aside',
+        'header',
+        'footer',
+        'main',
+        'nav',
+        'ol',
+        'ul',
+        'dl',
+        'table',
+        'tbody',
+        'thead',
+        'tr',
+        'figure',
+        'body',
     }
 )
 
@@ -46,13 +75,70 @@ SKIP_EPUB_TYPES = frozenset({'toc', 'landmarks', 'page-list', 'loi', 'lot', 'cov
 #: Trailing "words" that end in a period without ending a sentence.
 ABBREVIATIONS = frozenset(
     {
-        'mr', 'mrs', 'ms', 'dr', 'st', 'sta', 'capt', 'capt', 'col', 'gen', 'lt',
-        'sgt', 'maj', 'cmdr', 'adm', 'rev', 'hon', 'prof', 'pres', 'gov', 'sen',
-        'jr', 'sr', 'esq', 'vs', 'etc', 'viz', 'inc', 'ltd', 'co', 'no', 'nos',
-        'fig', 'figs', 'vol', 'vols', 'ch', 'chap', 'pp', 'ed', 'eds', 'al',
-        'ibid', 'cf', 'approx', 'dept', 'univ', 'mt', 'ft', 'ave', 'blvd',
-        'jan', 'feb', 'mar', 'apr', 'jun', 'jul', 'aug', 'sep', 'sept', 'oct',
-        'nov', 'dec', 'i.e', 'e.g',
+        'mr',
+        'mrs',
+        'ms',
+        'dr',
+        'st',
+        'sta',
+        'capt',
+        'col',
+        'gen',
+        'lt',
+        'sgt',
+        'maj',
+        'cmdr',
+        'adm',
+        'rev',
+        'hon',
+        'prof',
+        'pres',
+        'gov',
+        'sen',
+        'jr',
+        'sr',
+        'esq',
+        'vs',
+        'etc',
+        'viz',
+        'inc',
+        'ltd',
+        'co',
+        'no',
+        'nos',
+        'fig',
+        'figs',
+        'vol',
+        'vols',
+        'ch',
+        'chap',
+        'pp',
+        'ed',
+        'eds',
+        'al',
+        'ibid',
+        'cf',
+        'approx',
+        'dept',
+        'univ',
+        'mt',
+        'ft',
+        'ave',
+        'blvd',
+        'jan',
+        'feb',
+        'mar',
+        'apr',
+        'jun',
+        'jul',
+        'aug',
+        'sep',
+        'sept',
+        'oct',
+        'nov',
+        'dec',
+        'i.e',
+        'e.g',
     }
 )
 
@@ -60,6 +146,8 @@ _SENTENCE_END = re.compile(r'[.!?…]+[")\]’”\']*(?=\s|$)')
 _WORD_BEFORE = re.compile(r'([\w.’\']+)$', re.UNICODE)
 _CLAUSE_BREAK = re.compile(r'[;:—](?=\s)')
 _COMMA_BREAK = re.compile(r',(?=\s)')
+Item = tuple[str, str | None, etree._Element | None]
+Group = list[tuple[int, int, int]]
 
 
 @dataclass
@@ -111,7 +199,7 @@ def segment_document(
     root = tree.getroot()
     before = _normalized_text(root)
 
-    taken_ids = {el.get('id') for el in root.iter() if isinstance(el.tag, str) and el.get('id')}
+    taken_ids = {value for el in root.iter() if isinstance(el.tag, str) if (value := el.get('id'))}
     blocks, positions = _scan(root, options, fragments)
 
     segments: list[Segment] = []
@@ -134,7 +222,9 @@ def segment_document(
     return segments, positions
 
 
-def _scan(root, options: SegmentOptions, fragments: set[str]):
+def _scan(
+    root: etree._Element, options: SegmentOptions, fragments: set[str]
+) -> tuple[list[tuple[int, etree._Element]], dict[str, int]]:
     """One pass over the document: leaf blocks to speak, and where the anchors are.
 
     Both come out of a single `iter()` so their indices are directly comparable.
@@ -142,7 +232,7 @@ def _scan(root, options: SegmentOptions, fragments: set[str]):
     hands out throwaway proxy objects for the same underlying node, so a proxy's
     `id()` is reused as soon as it is collected and is useless as a key.
     """
-    blocks: list[tuple[int, object]] = []
+    blocks: list[tuple[int, etree._Element]] = []
     positions: dict[str, int] = {}
     elements = list(root.iter())
     orders = {element: index for index, element in enumerate(elements)}
@@ -153,7 +243,7 @@ def _scan(root, options: SegmentOptions, fragments: set[str]):
 
         for key in ('id', 'name'):
             value = element.get(key)
-            if value in fragments and value not in positions:
+            if value is not None and value in fragments and value not in positions:
                 positions[value] = _anchor_order(element, index, orders, options)
 
         if _is_speakable_block(element, options):
@@ -162,7 +252,12 @@ def _scan(root, options: SegmentOptions, fragments: set[str]):
     return blocks, positions
 
 
-def _anchor_order(element, fallback: int, orders: dict, options: SegmentOptions) -> int:
+def _anchor_order(
+    element: etree._Element,
+    fallback: int,
+    orders: dict[etree._Element, int],
+    options: SegmentOptions,
+) -> int:
     """Returns the order of the leaf block that contains an anchor.
 
     TOC anchors are commonly nested inside their heading. Using the anchor's
@@ -175,7 +270,7 @@ def _anchor_order(element, fallback: int, orders: dict, options: SegmentOptions)
     return fallback
 
 
-def _is_speakable_block(element, options: SegmentOptions) -> bool:
+def _is_speakable_block(element: etree._Element, options: SegmentOptions) -> bool:
     if _skipped(element, options) or _has_skipped_ancestor(element, options):
         return False
     if local_name(element) not in BLOCK_TAGS:
@@ -186,7 +281,7 @@ def _is_speakable_block(element, options: SegmentOptions) -> bool:
     return bool(''.join(element.itertext()).strip())
 
 
-def _has_skipped_ancestor(element, options: SegmentOptions) -> bool:
+def _has_skipped_ancestor(element: etree._Element, options: SegmentOptions) -> bool:
     return any(_skipped(ancestor, options) for ancestor in element.iterancestors())
 
 
@@ -194,11 +289,11 @@ def _span_id(index: int, options: SegmentOptions) -> str:
     return f'{options.id_prefix}{index:06d}'
 
 
-def _normalized_text(root) -> str:
+def _normalized_text(root: etree._Element) -> str:
     return ' '.join(''.join(root.itertext()).split())
 
 
-def _skipped(element, options: SegmentOptions) -> bool:
+def _skipped(element: etree._Element, options: SegmentOptions) -> bool:
     name = local_name(element)
     if not name or name in SKIP_TAGS:
         return True
@@ -221,8 +316,8 @@ def _skipped(element, options: SegmentOptions) -> bool:
 # markup.
 
 
-def _items(block) -> list[tuple[str, str | None, object]]:
-    items: list[tuple[str, str | None, object]] = []
+def _items(block: etree._Element) -> list[Item]:
+    items: list[Item] = []
     if block.text:
         items.append(('text', block.text, None))
     for child in block:
@@ -235,15 +330,16 @@ def _items(block) -> list[tuple[str, str | None, object]]:
     return items
 
 
-def _item_text(kind: str, value: str | None, element) -> str:
+def _item_text(kind: str, value: str | None, element: etree._Element | None) -> str:
     if kind == 'text':
         return value or ''
     if kind == 'node':
         return ''
+    assert element is not None
     return element_text(element)
 
 
-def element_text(element) -> str:
+def element_text(element: etree._Element) -> str:
     """Text of an element, with visual breaks rendered as whitespace.
 
     Used for both sentence detection and the text handed to the model, so the two
@@ -252,7 +348,7 @@ def element_text(element) -> str:
     """
     out: list[str] = []
 
-    def walk(node) -> None:
+    def walk(node: etree._Element) -> None:
         if local_name(node) in BREAK_TAGS:
             out.append(' ')
         if node.text:
@@ -267,7 +363,7 @@ def element_text(element) -> str:
     return ''.join(out)
 
 
-def _plan_block(block, options: SegmentOptions) -> list[list[tuple[int, int, int]]]:
+def _plan_block(block: etree._Element, options: SegmentOptions) -> list[Group]:
     """Groups a block's items into spans, one per sentence.
 
     Each group is a list of `(item_index, start, end)` slices; for element items
@@ -302,7 +398,7 @@ def _plan_block(block, options: SegmentOptions) -> list[list[tuple[int, int, int
 
     boundaries = [0, *snapped, total]
     groups: list[list[tuple[int, int, int]]] = []
-    for start, end in zip(boundaries, boundaries[1:]):
+    for start, end in zip(boundaries, boundaries[1:], strict=False):
         group = _slice_items(items, spans_of_item, start, end)
         if group:
             groups.append(group)
@@ -318,7 +414,7 @@ def _item_at(spans: list[tuple[int, int]], offset: int) -> int:
 
 
 def _slice_items(
-    items, spans: list[tuple[int, int]], start: int, end: int
+    items: list[Item], spans: list[tuple[int, int]], start: int, end: int
 ) -> list[tuple[int, int, int]]:
     group: list[tuple[int, int, int]] = []
     for index, (item_start, item_end) in enumerate(spans):
@@ -340,14 +436,14 @@ def _slice_items(
     return group
 
 
-def _merge_empty(groups, items) -> list[list[tuple[int, int, int]]]:
+def _merge_empty(groups: list[Group], items: list[Item]) -> list[Group]:
     """Folds groups with no speakable text into a neighbour.
 
     A group holding only `<br/>` and whitespace would otherwise become a span
     with an id, no audio, and a gap in the sync map.
     """
 
-    def group_text(group) -> str:
+    def group_text(group: Group) -> str:
         parts = []
         for index, start, end in group:
             kind, value, element = items[index]
@@ -369,7 +465,11 @@ def _merge_empty(groups, items) -> list[list[tuple[int, int, int]]]:
 
 
 def _apply_groups(
-    block, groups, counter: int, taken_ids: set[str], options
+    block: etree._Element,
+    groups: list[Group],
+    counter: int,
+    taken_ids: set[str],
+    options: SegmentOptions,
 ) -> list[tuple[str, str]]:
     """Replaces a block's children with one span per group.
 
@@ -395,6 +495,7 @@ def _apply_groups(
         for index, start, end in group:
             kind, value, element = items[index]
             if kind != 'text':
+                assert element is not None
                 span.append(element)
             else:
                 _append_text(span, (value or '')[start:end])
@@ -411,7 +512,7 @@ def _unique_id(index: int, taken_ids: set[str], options: SegmentOptions) -> str:
     return span_id
 
 
-def _append_text(span, text: str) -> None:
+def _append_text(span: etree._Element, text: str) -> None:
     if not text:
         return
     if len(span):

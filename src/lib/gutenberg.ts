@@ -2,26 +2,12 @@ export interface CatalogBook {
   id: number
   title: string
   author: string
-  languages: string[]
-  coverUrl?: string
-  downloadCount: number
+  coverUrl: string
 }
 
-interface GutendexPerson {
-  name: string
-}
-
-interface GutendexBook {
-  id: number
-  title: string
-  authors?: GutendexPerson[]
-  languages?: string[]
-  formats?: Record<string, string>
-  download_count?: number
-}
-
-interface GutendexResponse {
-  results?: GutendexBook[]
+/** What the relay returns: Gutenberg's OPDS search, already normalized. */
+interface SearchResponse {
+  results?: { id: number; title: string; author?: string }[]
 }
 
 export async function searchGutenberg(
@@ -33,22 +19,17 @@ export async function searchGutenberg(
   if (!trimmed) return []
 
   const response = await fetcher(`/api/gutenberg?search=${encodeURIComponent(trimmed)}`, { signal })
-  if (!response.ok) throw new Error(await relayError(response, 'Could not search Project Gutenberg.'))
+  if (!response.ok)
+    throw new Error(await relayError(response, 'Could not search Project Gutenberg.'))
 
-  const body = (await response.json()) as GutendexResponse
-  return (body.results ?? [])
-    // The relay no longer asks Gutendex to filter by format — that filter is
-    // slow and rules out almost nothing — so the handful of results without an
-    // EPUB are dropped here instead.
-    .filter((book) => book.formats?.['application/epub+zip'])
-    .map((book) => ({
-      id: book.id,
-      title: book.title?.trim() || `Gutenberg #${book.id}`,
-      author: book.authors?.map((author) => author.name).filter(Boolean).join(', ') || 'Unknown author',
-      languages: book.languages ?? [],
-      coverUrl: book.formats?.['image/jpeg'],
-      downloadCount: book.download_count ?? 0,
-    }))
+  const body = (await response.json()) as SearchResponse
+  return (body.results ?? []).map((book) => ({
+    id: book.id,
+    title: book.title.trim() || `Gutenberg #${book.id}`,
+    author: book.author || 'Unknown author',
+    // Not every book has one; the dialog falls back when this fails to load.
+    coverUrl: `https://www.gutenberg.org/cache/epub/${book.id}/pg${book.id}.cover.medium.jpg`,
+  }))
 }
 
 export async function downloadGutenbergBook(
@@ -82,7 +63,11 @@ async function relayError(response: Response, fallback: string): Promise<string>
 }
 
 function safeFilename(title: string): string {
-  const cleaned = title.replace(/[\\/:*?"<>|\u0000-\u001f]/g, '').replace(/\s+/g, ' ').trim()
+  const cleaned = title
+    // oxlint-disable-next-line no-control-regex -- stripping control characters is the point
+    .replace(/[\\/:*?"<>|\u0000-\u001f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
   return cleaned.slice(0, 120) || 'project-gutenberg-book'
 }
 

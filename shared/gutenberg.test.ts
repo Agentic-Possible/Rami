@@ -1,5 +1,28 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { handleGutenbergRequest } from './gutenberg.ts'
+import { handleGutenbergRequest, parseSearchFeed } from './gutenberg.ts'
+
+/** Trimmed from a real `search.opds` response, thumbnails elided. */
+const SEARCH_FEED = `<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+<title>Books: pride prejudice</title>
+<entry>
+<id>https://www.gutenberg.org/ebooks/authors/search.opds/?query=pride+prejudice</id>
+<title>Authors</title>
+<content type="text">One author name matches your search.</content>
+</entry>
+<entry>
+<id>https://www.gutenberg.org/ebooks/1342.opds</id>
+<title>Pride and Prejudice</title>
+<content type="text">Jane Austen</content>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,AAAA"/>
+</entry>
+<entry>
+<id>https://www.gutenberg.org/ebooks/10471.opds</id>
+<title>The World&#8217;s Greatest Books &amp;
+More</title>
+<content type="text">1,190 downloads</content>
+</entry>
+</feed>`
 
 function catalogRequest(query: string, headers?: Record<string, string>): Request {
   return new Request(`https://marginalia.test/api/gutenberg?${query}`, { headers })
@@ -30,8 +53,8 @@ afterEach(() => {
 })
 
 describe('handleGutenbergRequest', () => {
-  it('proxies search through Gutendex without the slow format filter', async () => {
-    fetchMock.mockResolvedValue(Response.json({ results: [] }))
+  it('searches Gutenberg OPDS and answers with normalized JSON', async () => {
+    fetchMock.mockResolvedValue(new Response(SEARCH_FEED, { status: 200 }))
 
     const response = await handleGutenbergRequest(catalogRequest('search=pride%20prejudice'), {
       fetch: fetchMock as unknown as typeof fetch,
@@ -39,21 +62,32 @@ describe('handleGutenbergRequest', () => {
 
     expect(response.status).toBe(200)
     const [url] = fetchMock.mock.calls[0] as [URL]
-    expect(String(url)).toContain('https://gutendex.com/books?')
-    expect(String(url)).toContain('search=pride+prejudice')
-    // Filtering by format here makes Gutendex scan each book's formats blob,
-    // which is what pushed slow queries past the budget. The client filters.
-    expect(String(url)).not.toContain('mime_type')
+    expect(String(url)).toBe('https://www.gutenberg.org/ebooks/search.opds/?query=pride+prejudice')
+    expect(await response.json()).toEqual({
+      results: [
+        { id: 1342, title: 'Pride and Prejudice', author: 'Jane Austen' },
+        { id: 10471, title: 'The World’s Greatest Books & More' },
+      ],
+    })
   })
 
-  it('lets the CDN answer a search someone already ran', async () => {
+  it('reports a failed upstream search as unavailable', async () => {
+    fetchMock.mockResolvedValue(new Response('', { status: 500 }))
+
+    const response = await handleGutenbergRequest(catalogRequest('search=whale'), {
+      fetch: fetchMock as unknown as typeof fetch,
+    })
+
+    expect(response.status).toBe(502)
+  })
+
+  it('lets the browser reuse a search it already ran', async () => {
     fetchMock.mockResolvedValue(Response.json({ results: [] }))
 
     const response = await handleGutenbergRequest(catalogRequest('search=whale'), {
       fetch: fetchMock as unknown as typeof fetch,
     })
 
-    expect(response.headers.get('Netlify-CDN-Cache-Control')).toContain('s-maxage=3600')
     expect(response.headers.get('Cache-Control')).toContain('max-age=300')
   })
 
@@ -84,6 +118,21 @@ describe('handleGutenbergRequest', () => {
   })
 })
 
+describe('parseSearchFeed', () => {
+  it('keeps book entries, decodes text, and skips author and subject links', () => {
+    expect(parseSearchFeed(SEARCH_FEED)).toEqual([
+      { id: 1342, title: 'Pride and Prejudice', author: 'Jane Austen' },
+      { id: 10471, title: 'The World’s Greatest Books & More' },
+    ])
+  })
+
+  it('leaves an out-of-range character reference alone rather than throwing', () => {
+    const feed =
+      '<entry><id>https://www.gutenberg.org/ebooks/1.opds</id><title>A &#99999999; B</title></entry>'
+    expect(parseSearchFeed(feed)).toEqual([{ id: 1, title: 'A &#99999999; B' }])
+  })
+})
+
 describe('request policy', () => {
   it('turns away another site trying to stream EPUBs on this one’s bandwidth', async () => {
     const response = await handleGutenbergRequest(
@@ -106,7 +155,7 @@ describe('request policy', () => {
   })
 
   it('turns away an address that keeps hammering the endpoint', async () => {
-    fetchMock.mockResolvedValue(Response.json({ results: [] }))
+    fetchMock.mockImplementation(async () => new Response(SEARCH_FEED))
     const options = { fetch: fetchMock as unknown as typeof fetch, ip: '203.0.113.7' }
 
     let last = await handleGutenbergRequest(catalogRequest('search=whale'), options)

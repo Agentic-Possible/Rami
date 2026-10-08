@@ -7,21 +7,12 @@ import {
 } from './gutenberg.ts'
 
 describe('searchGutenberg', () => {
-  it('normalizes Gutendex results and URL-encodes the search', async () => {
+  it('maps relay results and URL-encodes the search', async () => {
     const fetcher = vi.fn(async () =>
       Response.json({
         results: [
-          {
-            id: 1342,
-            title: 'Pride and Prejudice',
-            authors: [{ name: 'Austen, Jane' }],
-            languages: ['en'],
-            formats: {
-              'image/jpeg': 'https://example.test/cover.jpg',
-              'application/epub+zip': 'https://example.test/1342.epub',
-            },
-            download_count: 123,
-          },
+          { id: 1342, title: 'Pride and Prejudice', author: 'Jane Austen' },
+          { id: 10471, title: "The World's Greatest Books" },
         ],
       }),
     ) as unknown as typeof fetch
@@ -35,35 +26,16 @@ describe('searchGutenberg', () => {
       {
         id: 1342,
         title: 'Pride and Prejudice',
-        author: 'Austen, Jane',
-        languages: ['en'],
-        coverUrl: 'https://example.test/cover.jpg',
-        downloadCount: 123,
+        author: 'Jane Austen',
+        coverUrl: 'https://www.gutenberg.org/cache/epub/1342/pg1342.cover.medium.jpg',
+      },
+      {
+        id: 10471,
+        title: "The World's Greatest Books",
+        author: 'Unknown author',
+        coverUrl: 'https://www.gutenberg.org/cache/epub/10471/pg10471.cover.medium.jpg',
       },
     ])
-  })
-
-  it('drops results with no EPUB, since the relay no longer filters upstream', async () => {
-    const fetcher = vi.fn(async () =>
-      Response.json({
-        results: [
-          {
-            id: 1,
-            title: 'Audio only',
-            formats: { 'audio/mpeg': 'https://example.test/1.mp3' },
-          },
-          {
-            id: 2,
-            title: 'Has an EPUB',
-            formats: { 'application/epub+zip': 'https://example.test/2.epub' },
-          },
-        ],
-      }),
-    ) as unknown as typeof fetch
-
-    const books = await searchGutenberg('anything', undefined, fetcher)
-
-    expect(books.map((book) => book.id)).toEqual([2])
   })
 
   it('does not fetch an empty query', async () => {
@@ -82,10 +54,11 @@ describe('searchGutenberg', () => {
 
 describe('downloadGutenbergBook', () => {
   it('downloads an EPUB and gives it a safe filename', async () => {
-    const fetcher = vi.fn(async () =>
-      new Response(new Uint8Array([0x50, 0x4b, 0x03, 0x04]), {
-        headers: { 'Content-Type': 'application/epub+zip' },
-      }),
+    const fetcher = vi.fn(
+      async () =>
+        new Response(new Uint8Array([0x50, 0x4b, 0x03, 0x04]), {
+          headers: { 'Content-Type': 'application/epub+zip' },
+        }),
     ) as unknown as typeof fetch
 
     // Typed rather than inline, so this keeps pinning that a whole catalog
@@ -94,8 +67,7 @@ describe('downloadGutenbergBook', () => {
       id: 2701,
       title: 'Moby-Dick: or, The Whale?',
       author: 'Melville, Herman',
-      languages: ['en'],
-      downloadCount: 10,
+      coverUrl: 'https://www.gutenberg.org/cache/epub/2701/pg2701.cover.medium.jpg',
     }
 
     const file = await downloadGutenbergBook(book, undefined, fetcher)

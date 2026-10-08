@@ -35,6 +35,9 @@ is a two-hour download to hear ten minutes.
 
 ## Install
 
+Run these commands from `tools/narrate/`. Use Python 3.12 in a virtual environment
+(`python3 -m venv .venv` then `. .venv/bin/activate` on Linux/macOS).
+
 ```bash
 pip install -r requirements.txt          # lxml + numpy: enough for --dry-run
 pip install kokoro soundfile             # the model; pulls in torch
@@ -43,6 +46,24 @@ sudo apt install espeak-ng ffmpeg        # G2P fallback, and Opus encoding
 
 Install the CUDA build of torch first if you do not already have one, or Kokoro will
 quietly run on the CPU. `--device cuda` pins it.
+
+## Tests
+
+The tests use standard-library `unittest`; no model, GPU, API key, or pytest is
+required. From this directory, after installing `requirements.txt`:
+
+```bash
+python -m unittest discover -s tests -p 'test_*.py'
+```
+
+From the repository root with the same environment active, use
+`npm run test:narrate`. CI runs the same discovery pattern.
+
+For development, root `npm run setup` installs hashed `requirements-dev.txt` in
+`.quality-venv` without touching your model/GPU environment. `npm run check:narrate`
+runs Ruff lint/format, strict mypy, Vulture, branch coverage, and contracts.
+Silence-backend integration tests exercise packaging and resume with synthetic
+books. Model weights are neither installed nor required.
 
 ## Use
 
