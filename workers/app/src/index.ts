@@ -1,3 +1,4 @@
+import { handleCoverRequest } from '../../../shared/covers.ts'
 import { handleGutenbergRequest } from '../../../shared/gutenberg.ts'
 import { isCrossOrigin } from '../../../shared/http-guards.ts'
 import { handleRelayRequest } from '../../../shared/relay.ts'
@@ -51,6 +52,32 @@ async function gutenbergWithCache(request: Request, ctx: ExecutionContext): Prom
   return response
 }
 
+/**
+ * Serves repeat cover searches and images from the edge cache. A cover id
+ * always names the same image, and opening the picker for a book fetches the
+ * same handful of thumbnails every time.
+ */
+async function coversWithCache(request: Request, ctx: ExecutionContext): Promise<Response> {
+  const relay = () =>
+    handleCoverRequest(request, { ip: request.headers.get('CF-Connecting-IP') ?? '' })
+  const url = new URL(request.url)
+  if (request.method !== 'GET' || isCrossOrigin(request)) return relay()
+
+  // Rebuilt from the known parameters only, so junk ones cannot fan out the cache.
+  const key = new URL('/api/covers', url.origin)
+  for (const name of ['title', 'author', 'id', 'size']) {
+    const value = url.searchParams.get(name)?.trim().toLowerCase()
+    if (value) key.searchParams.set(name, value)
+  }
+  const cache = await caches.open('covers')
+  const cached = await cache.match(key)
+  if (cached) return cached
+
+  const response = await relay()
+  if (response.ok) ctx.waitUntil(cache.put(key, response.clone()))
+  return response
+}
+
 const worker = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url)
@@ -79,6 +106,10 @@ const worker = {
 
       if (url.pathname === '/api/gutenberg') {
         return await gutenbergWithCache(request, ctx)
+      }
+
+      if (url.pathname === '/api/covers') {
+        return await coversWithCache(request, ctx)
       }
 
       if (url.pathname.startsWith('/api/')) {

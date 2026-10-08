@@ -7,7 +7,9 @@ import { EpubImportError } from '../lib/epub'
 import { importEpub } from '../lib/importBook'
 import { seedSampleBooks } from '../lib/sampleBook'
 import { useBlobUrl } from '../lib/useBlobUrl'
+import { useModal } from '../lib/useModal'
 import AddBookDialog from '../components/AddBookDialog'
+import CoverPickerDialog from '../components/CoverPickerDialog'
 import RemoveBookDialog from '../components/RemoveBookDialog'
 import { ChatIcon, ChevronIcon, GearIcon, MoreIcon, PlusIcon, TrashIcon } from '../components/Icons'
 
@@ -18,6 +20,7 @@ export default function LibraryPage() {
   const [error, setError] = useState<string>()
   const [confirmRemove, setConfirmRemove] = useState<Book>()
   const [showAddBook, setShowAddBook] = useState(false)
+  const [changeCover, setChangeCover] = useState<Book>()
 
   // Most recently read first, so the book in progress is the one under the
   // thumb. A book that has never been opened falls back to when it arrived,
@@ -166,6 +169,7 @@ export default function LibraryPage() {
                   key={book.id}
                   book={book}
                   chatCount={chatCounts?.[book.id] ?? 0}
+                  onChangeCover={() => setChangeCover(book)}
                   onDelete={() => setConfirmRemove(book)}
                 />
               ))}
@@ -202,6 +206,10 @@ export default function LibraryPage() {
           }}
           onImport={importEpub}
         />
+      )}
+
+      {changeCover && (
+        <CoverPickerDialog book={changeCover} onClose={() => setChangeCover(undefined)} />
       )}
 
       {confirmRemove && (
@@ -352,14 +360,17 @@ function EmptyState({ onPick }: { onPick: () => void }) {
 function BookCard({
   book,
   chatCount,
+  onChangeCover,
   onDelete,
 }: {
   book: Book
   chatCount: number
+  onChangeCover: () => void
   onDelete: () => void
 }) {
   const navigate = useNavigate()
   const progress = Math.round((book.progress ?? 0) * 100)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   return (
     <li className="min-w-0">
@@ -394,17 +405,66 @@ function BookCard({
             {progress}%{book.lastOpenedAt ? ` · ${lastRead(book.lastOpenedAt)}` : ' · Not started'}
           </span>
         </div>
-        <button
-          onClick={onDelete}
-          aria-label={`Remove ${book.title}`}
-          className="-mr-2 grid h-11 w-11 shrink-0 place-items-center rounded-full text-muted transition hover:bg-ink/8"
-        >
-          <MoreIcon className="h-[18px] w-[18px]" />
-        </button>
+        <div className="relative -mr-2 shrink-0">
+          <button
+            onClick={() => setMenuOpen(true)}
+            aria-label={`More for ${book.title}`}
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+            className="grid h-11 w-11 place-items-center rounded-full text-muted transition hover:bg-ink/8"
+          >
+            <MoreIcon className="h-[18px] w-[18px]" />
+          </button>
+          {menuOpen && (
+            <BookMenu
+              onClose={() => setMenuOpen(false)}
+              items={[
+                { label: 'Change cover', action: onChangeCover },
+                { label: 'Remove', action: onDelete },
+              ]}
+            />
+          )}
+        </div>
       </div>
     </li>
   )
 }
+/** The actions behind a book's ⋯ button. Closes on Escape, an outside tap, or a choice. */
+function BookMenu({
+  items,
+  onClose,
+}: {
+  items: { label: string; action: () => void }[]
+  onClose: () => void
+}) {
+  const ref = useModal<HTMLDivElement>(onClose)
+
+  return (
+    <>
+      <div className="fixed inset-0 z-20" onClick={onClose} aria-hidden />
+      <div
+        ref={ref}
+        role="menu"
+        className="absolute right-0 bottom-full z-30 mb-1 min-w-40 overflow-hidden rounded-xl border border-line bg-card py-1 shadow-[0_12px_32px_rgba(30,30,24,0.18)]"
+      >
+        {items.map((item) => (
+          <button
+            key={item.label}
+            role="menuitem"
+            onClick={() => {
+              onClose()
+              item.action()
+            }}
+            className="block w-full px-4 py-2.5 text-left text-sm transition hover:bg-ink/5"
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+    </>
+  )
+}
+
 /**
  * Books the reader removed but chose to keep the notes for.
  *

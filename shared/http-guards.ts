@@ -1,8 +1,8 @@
 /**
- * Request guards shared by the relays in this directory. Both endpoints are
- * open to every visitor and both spend something the site pays for — inference
- * credit for `/api/chat`, bandwidth for `/api/gutenberg` — so both need the
- * same speed bumps. Written against Web APIs only, like the relays themselves.
+ * Request guards shared by the relays in this directory. Every endpoint is
+ * open to every visitor and each spends something the site pays for: inference
+ * credit for `/api/chat`, bandwidth for `/api/gutenberg` and `/api/covers`. So
+ * all of them need the same speed bumps. Written against Web APIs only, like the relays themselves.
  */
 
 /**
@@ -62,4 +62,46 @@ export function createRateLimiter({ windowMs, maxRequests }: RateLimit): (ip: st
 
     return recent.length > maxRequests
   }
+}
+
+/**
+ * How long an upstream attempt may spend waiting for response headers. Cleared
+ * as soon as they land, so this bounds how long upstream may take to start a
+ * download, not how long the download itself may run. Without it a stalled
+ * upstream burns the whole edge-function time budget and the platform answers
+ * with an opaque 502 instead of the JSON error the client knows how to show.
+ */
+const UPSTREAM_BUDGET_MS = 20_000
+
+/**
+ * Fetches upstream under a deadline and never rejects, so an unreachable host
+ * stays a value the relay can turn into a JSON error. An escaping rejection
+ * is what the platform turns into a bare 502, and in dev it leaves the Vite
+ * middleware with no response to write, so the request simply hangs.
+ *
+ * Returns `undefined` when the attempt failed or timed out.
+ */
+export async function fetchUpstream(
+  fetcher: typeof fetch,
+  input: string | URL,
+  init: RequestInit,
+): Promise<Response | undefined> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), UPSTREAM_BUDGET_MS)
+
+  try {
+    return await fetcher(input, { ...init, signal: controller.signal })
+  } catch {
+    return undefined
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+/** A JSON answer, uncached: relay errors must never be served from a cache. */
+export function json(value: unknown, status = 200): Response {
+  return Response.json(value, {
+    status,
+    headers: { 'Cache-Control': 'no-store' },
+  })
 }

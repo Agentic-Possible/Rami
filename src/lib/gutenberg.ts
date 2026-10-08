@@ -53,7 +53,7 @@ export async function downloadGutenbergBook(
  * rejection, an upstream timeout. Show that rather than a generic failure, so a
  * reader who is being rate limited can tell why waiting will help.
  */
-async function relayError(response: Response, fallback: string): Promise<string> {
+export async function relayError(response: Response, fallback: string): Promise<string> {
   try {
     const body = (await response.json()) as { error?: unknown }
     return typeof body.error === 'string' && body.error ? body.error : fallback

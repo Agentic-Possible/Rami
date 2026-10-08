@@ -5,6 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { Readable } from 'node:stream'
 import { handleRelayRequest } from './shared/relay.ts'
 import { handleGutenbergRequest } from './shared/gutenberg.ts'
+import { handleCoverRequest } from './shared/covers.ts'
 import { visualizer } from 'rollup-plugin-visualizer'
 
 /**
@@ -59,25 +60,30 @@ function chatRelay(apiKey: string, enabled: boolean): Plugin {
   }
 }
 
-/** Uses the production Gutenberg handler in dev too, including its URL validation. */
-function gutenbergRelay(): Plugin {
+/**
+ * Serves a GET-only relay in dev with its production handler, URL validation
+ * included. Used for the Gutenberg catalog and the cover search.
+ */
+function getRelay(
+  path: string,
+  handle: (request: Request, options: { ip: string }) => Promise<Response>,
+): Plugin {
   return {
-    name: 'marginalia-gutenberg-relay',
+    name: `marginalia-relay${path.replaceAll('/', '-')}`,
     configureServer(server) {
-      server.middlewares.use('/api/gutenberg', async (req, res) => {
+      server.middlewares.use(path, async (req, res) => {
         const origin = `http://${req.headers.host ?? 'localhost'}`
-        const requestUrl = new URL(req.url ?? '', new URL('/api/gutenberg', origin))
-        requestUrl.pathname = '/api/gutenberg'
+        const requestUrl = new URL(req.url ?? '', new URL(path, origin))
+        requestUrl.pathname = path
 
         const headers = new Headers()
         for (const [name, value] of Object.entries(req.headers)) {
           if (typeof value === 'string') headers.set(name, value)
         }
 
-        const response = await handleGutenbergRequest(
-          new Request(requestUrl, { method: req.method, headers }),
-          { ip: req.socket.remoteAddress ?? '' },
-        )
+        const response = await handle(new Request(requestUrl, { method: req.method, headers }), {
+          ip: req.socket.remoteAddress ?? '',
+        })
 
         res.statusCode = response.status
         response.headers.forEach((value, key) => res.setHeader(key, value))
@@ -99,7 +105,8 @@ export default defineConfig(({ mode }) => {
       ...(remoteRelay
         ? []
         : [chatRelay(env.OPENROUTER_API_KEY ?? '', env.CHAT_ENABLED !== 'false')]),
-      gutenbergRelay(),
+      getRelay('/api/gutenberg', handleGutenbergRequest),
+      getRelay('/api/covers', handleCoverRequest),
       visualizer({
         filename: 'reports/bundle.html',
         gzipSize: true,
