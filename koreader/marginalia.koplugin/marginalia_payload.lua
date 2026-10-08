@@ -32,9 +32,9 @@ Payload.FORMAT = "marginalia-koreader"
 Payload.VERSION = 1
 
 --[[--
-KOReader offers nine highlight colours; Marginalia has four.
+KOReader offers nine highlight colors; Marginalia has four.
 
-`gray` is KOReader's default drawer colour, so it is much the most common value
+`gray` is KOReader's default drawer color, so it is much the most common value
 and has to land somewhere sensible rather than on whatever sorts first.
 --]]
 local COLORS = {

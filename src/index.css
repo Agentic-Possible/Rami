@@ -1,9 +1,8 @@
 @import 'tailwindcss';
 
 /*
- * Rami design system. Tokens follow tokens.css: Paper by day, Lamplight at
- * night, and Sepia for the reader only. The reader sets `data-theme` on its
- * root; everything else follows the system colour scheme.
+ * Rami design system. Tokens follow tokens.css. The app uses Paper; the reader
+ * sets `data-theme` on its root to take on Sepia or Lamplight.
  */
 
 /* Latin only: every bundled subset would land in the offline precache. */
@@ -90,38 +89,7 @@
   color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --paper: #1d1813;
-    --paper-leaf: #27201a;
-    --paper-sunk: #15110d;
-    --rule: #3b3128;
-    --rule-strong: #7d6c55;
-    --ink: #eee2c9;
-    --ink-soft: #c4b497;
-    --ink-faint: #a39275;
-    --moss: #a7b78c;
-    --moss-deep: #bccaa1;
-    --on-moss: #1d1813;
-    --rubric: #e0937a;
-    --gilt: #d6b066;
-    --highlight: rgba(214, 176, 102, 0.26);
-    --danger: #ee8a74;
-    --focus: #a7b78c;
-    --scrim: rgba(8, 6, 4, 0.6);
-    --cloth-moss: #4a5643;
-    --cloth-oxblood: #683127;
-    --cloth-navy: #323d4b;
-    --cloth-umber: #56432f;
-    --cloth-lettering: #e4d3a6;
-    --shadow-leaf: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.3);
-    --shadow-book: -5px 7px 16px rgba(0, 0, 0, 0.5);
-    --shadow-sheet: 0 -10px 36px rgba(0, 0, 0, 0.55);
-    color-scheme: dark;
-  }
-}
-
-/* Repeats the media block so the reader's Lamplight holds under a light system theme. */
+/* Reader only: the app chrome stays on Paper whatever the system scheme. */
 [data-theme='lamplight'] {
   --paper: #1d1813;
   --paper-leaf: #27201a;
@@ -261,9 +229,12 @@ body {
   color: var(--ink);
 }
 
-:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
+/* Layered so a utility like `outline-none` can override it. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
 }
 
 ::selection {
@@ -285,20 +256,23 @@ body {
   -webkit-touch-callout: none;
 }
 
-/* Running head: rubric small caps, as a scribe would letter it. */
-.eyebrow {
-  margin: 0;
-  font-family: var(--font-book);
-  font-size: 14px;
-  line-height: 18px;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  font-variant-caps: all-small-caps;
-  text-transform: lowercase;
-  color: var(--rubric);
+/* Running head: rubric small caps, as a scribe would letter it. Layered so
+   spacing utilities such as `mb-4` apply. */
+@layer components {
+  .eyebrow {
+    margin: 0;
+    font-family: var(--font-book);
+    font-size: 14px;
+    line-height: 18px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    font-variant-caps: all-small-caps;
+    text-transform: lowercase;
+    color: var(--rubric);
+  }
 }
 
-/* A faint fibre grain over the library and settings; never inside the reader. */
+/* A faint fiber grain over the library and settings; never inside the reader. */
 .paper-grain {
   position: relative;
   isolation: isolate;

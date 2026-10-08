@@ -67,7 +67,7 @@ export function checkUploadedCover(file: File): string | undefined {
 
 /**
  * "Moby Dick; Or, The Whale" finds two editions where "Moby Dick" finds
- * dozens: catalogues disagree on subtitles far more than on titles.
+ * dozens: catalogs disagree on subtitles far more than on titles.
  */
 export function mainTitle(title: string): string {
   return title.split(/[;:]|\s[-–—]\s/)[0].trim() || title.trim()

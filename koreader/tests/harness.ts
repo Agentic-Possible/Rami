@@ -30,7 +30,7 @@ const MODULES = [
 /**
  * Stands in for the KOReader modules the pure files touch.
  *
- * `socket.try` is the only one with behaviour that matters: LuaSocket's version
+ * `socket.try` is the only one with behavior that matters: LuaSocket's version
  * raises so that `socket.protect` around `http.request` can turn the failure
  * back into `nil, message`, and the TLS module relies on that.
  */

@@ -7,7 +7,7 @@ move `src/lib/chapters.ts` already makes for table-of-contents anchors.
 
 Anchoring on ids rather than character offsets is not an arbitrary choice. Offsets
 would have to survive this tool's HTML parse and the browser's DOM agreeing on
-whitespace normalisation, entity expansion and implied elements, and they do not.
+whitespace normalization, entity expansion and implied elements, and they do not.
 An id survives reflow, font-size changes and theme switches, which is exactly the
 property EPUB 3 Media Overlays relies on for the same job.
 """
@@ -437,7 +437,7 @@ def _slice_items(
 
 
 def _merge_empty(groups: list[Group], items: list[Item]) -> list[Group]:
-    """Folds groups with no speakable text into a neighbour.
+    """Folds groups with no speakable text into a neighbor.
 
     A group holding only `<br/>` and whitespace would otherwise become a span
     with an id, no audio, and a gap in the sync map.
@@ -457,7 +457,7 @@ def _merge_empty(groups: list[Group], items: list[Item]) -> list[Group]:
         else:
             merged.append(group)
 
-    # A leading empty group has no previous neighbour; fold it forward instead.
+    # A leading empty group has no previous neighbor; fold it forward instead.
     if len(merged) > 1 and not group_text(merged[0]):
         merged[1][:0] = merged[0]
         merged.pop(0)

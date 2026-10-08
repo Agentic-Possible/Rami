@@ -30,7 +30,7 @@ shouting. The mark is the sprig, 🌿.
   pure white or pure black.
 - **Familiar.** Borrow from the printed book: running heads, rubricated labels,
   fleurons, clothbound covers, a ribbon for your place.
-- **Warm.** Every neutral leans brown. Shadows are sepia, never grey or blue.
+- **Warm.** Every neutral leans brown. Shadows are sepia, never gray or blue.
   Motion is slow and settles; nothing bounces.
 
 ## Voice
@@ -50,11 +50,11 @@ shouting. The mark is the sprig, 🌿.
 - The only emoji is the 🌿 sprig, and only as the mark: the wordmark, Rami's
   reply mark and the app icon.
 
-## Colour
+## Color
 
 Two themes: **Paper** (day) and **Lamplight** (night, dark leather and
-candle-lit paper, not grey). Screens outside the reader follow the system colour
-scheme. The reader sets `data-theme` from its page colour (`paper`, `sepia` or
+candle-lit paper, not gray). Screens outside the reader always use Paper,
+whatever the system color scheme. The reader sets `data-theme` from its page color (`paper`, `sepia` or
 `lamplight`), so its header, sheets and dialogs match the page. Sepia is
 reader-only.
 
@@ -80,7 +80,7 @@ theme. The design system specifies only Sepia's ground (`#e9dcc0`) and ink
 (`#3a2e22`); the other Sepia tokens are derived to keep the same contrast.
 
 The epub.js iframe cannot read CSS variables, so `src/lib/themes.ts` keeps raw
-page colours for it, the browser theme colour and the page colour swatches.
+page colors for it, the browser theme color and the page color swatches.
 
 ## Type
 
@@ -110,7 +110,7 @@ Pair a family with a scale step: `text-display` once per screen, `text-title`,
 - Depth: `shadow-leaf` for a card on the page, `shadow-book` for a cover,
   `shadow-sheet` for sheets and floating bars. Most surfaces need no shadow;
   separate with `rule` first.
-- Texture: `paper-grain` adds a faint fibre grain to the library, settings and
+- Texture: `paper-grain` adds a faint fiber grain to the library, settings and
   threads pages. Never inside the reader.
 
 ## Controls
@@ -136,7 +136,7 @@ All controls are at least 44px tall.
   `paper-sunk` wash.
 - Disabled: 45% opacity; never remove the label.
 - Errors read as a sentence in `danger` that says what to do next.
-- 150ms for colour changes; 250 to 300ms ease-out for sheets rising and covers
+- 150ms for color changes; 250 to 300ms ease-out for sheets rising and covers
   lifting (3px with a quarter-degree tilt). Under reduced motion, drop movement
   and keep fades.
 
@@ -153,7 +153,7 @@ mascots or stock photos.
 - **Library:** header with the wordmark and a primary “Add book”; the greeting in
   `text-display`; one continue card; then “All books” over a grid of book cards
   (2 columns on phones, 3 at 640px, 4 at 1024px).
-- **Reader:** the page is the book. Chrome takes the page colour and hides until
+- **Reader:** the page is the book. Chrome takes the page color and hides until
   tapped. Selection raises the selection bar.
 - **Thread:** a sheet on `paper-leaf` with the `Passage` at its head, notes
   below, and the composer at the foot.

@@ -226,7 +226,7 @@ function Marginalia:editNotes(summary)
         -- room the keyboard has taken, so it either wastes space or overflows.
         use_available_height = true,
         description = _(
-            "Later updates merge into whatever is here, so an edit carries forward rather than being summarised away."
+            "Later updates merge into whatever is here, so an edit carries forward rather than being summarized away."
         ),
         buttons = {
             {
@@ -266,7 +266,7 @@ function Marginalia:updateNotes()
         Trapper:wrap(function()
             local folded, failed, reason = self.memory:fold_all()
 
-            if failed > 0 and reason ~= "cancelled" then
+            if failed > 0 and reason ~= "canceled" then
                 -- Reported even when some folds succeeded: the conversations
                 -- that failed are still pending, and "Notes updated" would say
                 -- the opposite of that.

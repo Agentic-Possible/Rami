@@ -63,7 +63,7 @@ end
 --[[--
 The book's SHA-256.
 
-@treturn string lowercase hex, or nil plus a reason ("cancelled" if dismissed)
+@treturn string lowercase hex, or nil plus a reason ("canceled" if dismissed)
 --]]
 function Handoff:file_hash(path)
     if not lfs.attributes(path) then
@@ -76,7 +76,7 @@ function Handoff:file_hash(path)
     end, _("Identifying the book…"))
 
     if not completed then
-        return nil, "cancelled"
+        return nil, "canceled"
     end
     if type(result) ~= "table" or not result.sha256 then
         return nil, (type(result) == "table" and result.error) or "could not hash the book file"
@@ -169,7 +169,7 @@ function Handoff:export()
 
         local hash, hash_error = self:file_hash(path)
         if not hash then
-            if hash_error ~= "cancelled" then
+            if hash_error ~= "canceled" then
                 UIManager:show(InfoMessage:new({
                     text = T(_("Could not identify the book: %1"), hash_error),
                 }))

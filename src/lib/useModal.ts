@@ -4,7 +4,7 @@ const FOCUSABLE =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
 /**
- * Modal behaviour for a sheet, drawer or confirmation.
+ * Modal behavior for a sheet, drawer or confirmation.
  *
  * Escape closes, focus moves inside on open, Tab stays within, and focus returns
  * to whatever opened it. Without this a keyboard or screen-reader user tabs

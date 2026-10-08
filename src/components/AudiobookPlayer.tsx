@@ -80,13 +80,13 @@ export default function AudiobookPlayer({ token, hidden, initialPosition, onHide
       )
       return
     }
-    let cancelled = false
+    let canceled = false
 
     void (async () => {
       try {
         const session = await createAudiobookSession(token)
         const nextMetadata = await loadAudiobookMetadata(session.metadataUrl)
-        if (cancelled) return
+        if (canceled) return
 
         if (!pendingRestore.current) {
           const serializedPosition = window.localStorage.getItem(AUDIOBOOK_POSITION_KEY)
@@ -106,14 +106,14 @@ export default function AudiobookPlayer({ token, hidden, initialPosition, onHide
         setAudioUrl(session.audioUrl)
         setError(undefined)
       } catch (err) {
-        if (!cancelled) {
+        if (!canceled) {
           setError(err instanceof Error ? err.message : 'Could not load the audiobook.')
         }
       }
     })()
 
     return () => {
-      cancelled = true
+      canceled = true
     }
   }, [sessionAttempt, token])
 

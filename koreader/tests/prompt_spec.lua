@@ -33,7 +33,7 @@ local function build(overrides)
     return Prompt.system(ctx)
 end
 
--- The token has to match what the app's digest normaliser strips back out,
+-- The token has to match what the app's digest normalizer strips back out,
 -- `BOOKDATA_[0-9A-Z]{16}` in src/lib/digest.ts.
 do
     local token = Prompt.fence_token(function(n)
@@ -164,7 +164,7 @@ do
     H.equal(messages[31].content, "turn 40", "most recent turn is last")
 end
 
--- The summariser prompt. Everything it quotes is text the reader did not write,
+-- The summarizer prompt. Everything it quotes is text the reader did not write,
 -- and the digest is the worst of the three: it is fed back in on every later
 -- update and rides in the system prompt of every question, so whatever gets
 -- into it stays.

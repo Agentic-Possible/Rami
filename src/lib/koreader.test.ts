@@ -132,7 +132,7 @@ describe('parseHandoff', () => {
     rejects(`{"padding":"${'x'.repeat(33 * 1024 * 1024)}"}`, 'too large')
   })
 
-  it('keeps a colour it does not recognise inside the palette', () => {
+  it('keeps a color it does not recognize inside the palette', () => {
     const handoff = parseHandoff(
       file({ book: { highlights: [{ externalId: 'k:1', text: 'passage', color: 'gray' }] } }),
     )

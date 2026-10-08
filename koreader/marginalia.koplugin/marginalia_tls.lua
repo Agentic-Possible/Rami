@@ -10,7 +10,7 @@ and where they are in a book.
 Two separate things have to be true, and LuaSec gives us neither by default.
 
 **The chain must be trusted.** `socket.http` copies the request table into the
-normalised request and hands it to the scheme's `create` (`common/socket/http.lua`),
+normalized request and hands it to the scheme's `create` (`common/socket/http.lua`),
 and LuaSec's `tcp(params)` fills in only the values the caller left unset. So
 passing `verify = "peer"` and a `cafile` overrides the shipped default. The
 device already carries a bundle at `<datadir>/data/ca-bundle.crt`.
@@ -39,7 +39,7 @@ local TLS = {}
 local SUBJECT_ALT_NAME = "2.5.29.17"
 
 --[[--
-Normalises a host for comparison: lowercase, trailing dot removed.
+Normalizes a host for comparison: lowercase, trailing dot removed.
 
 Only ASCII case folding, which is all DNS names need — and non-ASCII hosts are
 refused outright rather than guessed at, since matching an internationalised
@@ -59,7 +59,7 @@ end
 --[[--
 Matches one certificate name against a host.
 
-Wildcards are honoured only as a complete leftmost label — `*.example.com`
+Wildcards are honored only as a complete leftmost label — `*.example.com`
 matches `a.example.com` but not `example.com`, not `a.b.example.com`, and
 `w*.example.com` is not a wildcard at all.
 --]]

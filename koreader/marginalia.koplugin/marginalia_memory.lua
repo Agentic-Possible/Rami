@@ -9,7 +9,7 @@ scheduling changed because an e-reader has nowhere to put background work.
 **The browser folds a conversation right after it replies, and forgets about
 it.** KOReader has one thread and a UI loop. There is no "afterwards" that is
 not either making the reader wait a second time for one question, or being
-cancelled by their next tap. So the fold happens *lazily, immediately before the
+canceled by their next tap. So the fold happens *lazily, immediately before the
 digest is needed* — at the start of the next question in that thread, where the
 reader is already waiting for a model and where the freshened digest goes
 straight into the prompt being built. A thread never returned to is folded only
@@ -43,11 +43,11 @@ local Memory = {}
 Memory.MESSAGES_PER_UPDATE = 4
 
 --[[--
-Ceiling on the transcript handed to the summariser in one update.
+Ceiling on the transcript handed to the summarizer in one update.
 
 `summarized_count` only advances when an update completes, and every failure is
 swallowed, so without this the turns waiting to be folded grow by two per reply
-for as long as the summariser is down. That is not merely wasteful: once the
+for as long as the summarizer is down. That is not merely wasteful: once the
 backlog passes what the relay accepts, the request fails *on size*, and since
 the backlog only ever grows it can never succeed again. The digest for that
 thread would be dead from then on, silently.
@@ -83,7 +83,7 @@ Walks back from the latest turn, so what survives a backlog is the part of the
 conversation closest to where the reader actually is. Turns older than the
 window are dropped rather than deferred: the counter jumps past them on success
 and they are never folded in. That loses the oldest few exchanges after an
-outage, which beats a summariser that can never run again.
+outage, which beats a summarizer that can never run again.
 
 The newest `MESSAGES_PER_UPDATE` turns go out even when they exceed the budget
 on their own, so an update always carries something. A single enormous turn can
@@ -120,7 +120,7 @@ function Memory.window(thread)
     return window
 end
 
---- The transcript as the summariser sees it.
+--- The transcript as the summarizer sees it.
 function Memory.transcript(messages)
     local lines = {}
     for _, message in ipairs(messages or {}) do
@@ -199,7 +199,7 @@ function Memory:fold(thread_id, minimum)
     end, _("Catching up on your notes…"))
 
     if not completed then
-        return false, "cancelled"
+        return false, "canceled"
     end
     if type(result) ~= "table" or not result.ok then
         local reason = type(result) == "table" and result.error or "the summary failed"
@@ -207,7 +207,7 @@ function Memory:fold(thread_id, minimum)
         return false, reason
     end
 
-    -- A reply that is nothing but echoed delimiters normalises to empty, and
+    -- A reply that is nothing but echoed delimiters normalizes to empty, and
     -- storing that would wipe notes the reader may have written by hand.
     local summary = Digest.normalize_summary(result.text)
     if summary == "" then
@@ -273,9 +273,9 @@ function Memory:fold_all()
         else
             failed = failed + 1
             last_reason = reason
-            -- A cancelled fold means the reader wants out of this altogether,
+            -- A canceled fold means the reader wants out of this altogether,
             -- not just out of this one conversation.
-            if reason == "cancelled" then
+            if reason == "canceled" then
                 break
             end
         end

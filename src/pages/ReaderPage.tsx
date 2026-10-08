@@ -128,7 +128,7 @@ export default function ReaderPage() {
   /**
    * Tapping a highlight reopens the conversation it started, if there is one.
    * Highlights with no conversation fall back to the selection bar, which is
-   * also where recolouring and deleting live.
+   * also where recoloring and deleting live.
    */
   function openHighlight(highlight: Highlight) {
     reader.suppressTap()
@@ -339,7 +339,7 @@ export default function ReaderPage() {
       <div ref={setViewer} className="mx-auto h-full w-full max-w-[760px]" />
 
       {/* Wide screens leave gutters beside the capped column; they turn pages
-          like the edges of the book itself. The footer has the labelled controls. */}
+          like the edges of the book itself. The footer has the labeled controls. */}
       {(['prev', 'next'] as const).map((side) => (
         <button
           key={side}

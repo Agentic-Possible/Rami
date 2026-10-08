@@ -30,8 +30,8 @@ export default function AddSharedPage() {
     }
 
     // The abort is what keeps StrictMode's double-invoke from importing the
-    // book twice: the first run is cancelled before it can finish, and the
-    // checks below stop a cancelled run from storing or navigating anyway.
+    // book twice: the first run is canceled before it can finish, and the
+    // checks below stop a canceled run from storing or navigating anyway.
     const controller = new AbortController()
     void (async () => {
       try {
