@@ -22,6 +22,8 @@ const MODELS = [
 ]
 
 const ISSUES_URL = 'https://github.com/critesjosh/marginalia/issues'
+const DISCUSSIONS_URL = 'https://github.com/critesjosh/marginalia/discussions'
+const CONTACT_EMAIL = 'rami@agenticpossible.com'
 
 export default function SettingsPage() {
   const stored = useLiveQuery(() => getSettings(), [])
@@ -311,18 +313,22 @@ export default function SettingsPage() {
         <KoreaderImport />
 
         <section className={card}>
-          <h2 className="font-book text-heading font-medium">Feedback</h2>
+          <h2 className="font-book text-heading font-medium">Feedback and community</h2>
           <p className="mt-1 font-book text-body text-ink-soft">
-            Something broken, or an idea worth following? Open an issue on GitHub.
+            Share an idea or wander through other readers’ questions in the discussions. Something
+            broken? Open an issue. Anything else, write to {CONTACT_EMAIL}.
           </p>
-          <a
-            href={ISSUES_URL}
-            target="_blank"
-            rel="noreferrer"
-            className={`${button.secondary} mt-3`}
-          >
-            Send feedback on GitHub ↗
-          </a>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <a href={DISCUSSIONS_URL} target="_blank" rel="noreferrer" className={button.secondary}>
+              Join the discussion ↗
+            </a>
+            <a href={ISSUES_URL} target="_blank" rel="noreferrer" className={button.secondary}>
+              Report an issue ↗
+            </a>
+            <a href={`mailto:${CONTACT_EMAIL}`} className={button.secondary}>
+              Email Rami
+            </a>
+          </div>
         </section>
       </main>
     </div>
