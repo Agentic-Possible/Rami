@@ -6,13 +6,15 @@ flowchart LR
   PWA --> Relay[Vite / App Worker]
   KO[KOReader plugin] --> Relay
   Relay --> OR[OpenRouter, billed]
+  Relay --> PG[gutenberg.org]
   PWA --> OA[Optional own-key OpenAI, billed]
   PWA --> Audio[Audiobook Worker]
   Audio --> R2[(Private R2)]
   Narrator[Offline narrator] --> Artifacts[Derived EPUB + sync.json + audio]
 ```
 
-Deploy adapters share `shared/relay.ts`; they must not import browser modules.
+Deploy adapters share `shared/relay.ts` and `shared/gutenberg.ts`; they must not
+import browser modules.
 The independently deployed audiobook Worker authenticates before reading R2.
 Its production config uses remote R2. Only `wrangler.local.jsonc` and in-memory
 Miniflare fixtures are safe for ordinary validation.

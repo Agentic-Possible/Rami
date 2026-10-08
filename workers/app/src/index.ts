@@ -1,9 +1,12 @@
+import { handleGutenbergRequest } from '../../../shared/gutenberg.ts'
+import { isCrossOrigin } from '../../../shared/http-guards.ts'
 import { handleRelayRequest } from '../../../shared/relay.ts'
 import { operationMetric } from '../../../shared/telemetry.ts'
 
 const CONTENT_SECURITY_POLICY =
   "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' blob:; " +
-  "img-src 'self' data: blob:; font-src 'self' data: blob:; connect-src 'self' " +
+  "img-src 'self' data: blob: https://www.gutenberg.org; font-src 'self' data: blob:; " +
+  "connect-src 'self' " +
   'https://api.openai.com https://marginalia-audiobooks.cloudflare-cdd.workers.dev; ' +
   "media-src 'self' blob: https://marginalia-audiobooks.cloudflare-cdd.workers.dev; " +
   "frame-src 'self' blob: data:; object-src 'none'; base-uri 'self'; form-action 'self'"
@@ -25,8 +28,31 @@ function apiError(status: number, message: string): Response {
   return Response.json({ error: { message } }, { status, headers: { 'Cache-Control': 'no-store' } })
 }
 
+/**
+ * Serves repeat Gutenberg searches from the edge cache, so a query anyone ran
+ * recently never waits on upstream. Downloads are left alone: they are large
+ * and rarely repeat. Cross-origin requests skip the cache so the relay's own
+ * check still turns them away.
+ */
+async function gutenbergWithCache(request: Request, ctx: ExecutionContext): Promise<Response> {
+  const relay = () =>
+    handleGutenbergRequest(request, { ip: request.headers.get('CF-Connecting-IP') ?? '' })
+  const url = new URL(request.url)
+  const search = url.searchParams.get('search')?.trim().toLowerCase()
+  if (request.method !== 'GET' || !search || isCrossOrigin(request)) return relay()
+
+  const key = new Request(`${url.origin}/api/gutenberg?search=${encodeURIComponent(search)}`)
+  const cache = await caches.open('gutenberg-search')
+  const cached = await cache.match(key)
+  if (cached) return cached
+
+  const response = await relay()
+  if (response.ok) ctx.waitUntil(cache.put(key, response.clone()))
+  return response
+}
+
 const worker = {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url)
     const started = performance.now()
 
@@ -49,6 +75,10 @@ const worker = {
           },
           { ip: request.headers.get('CF-Connecting-IP') ?? '' },
         )
+      }
+
+      if (url.pathname === '/api/gutenberg') {
+        return await gutenbergWithCache(request, ctx)
       }
 
       if (url.pathname.startsWith('/api/')) {
