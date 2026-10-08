@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { saveSettings } from '../db/db'
-import type { ReaderTheme } from '../db/types'
 import {
   AUDIOBOOK_POSITION_KEY,
   absoluteChapterTime,
@@ -12,12 +11,11 @@ import {
   parseStoredAudiobookPosition,
   type AudiobookMetadata,
 } from '../lib/audiobooks'
-import { THEMES } from '../lib/themes'
 import { CloseIcon } from './Icons'
+import { field, iconButton } from './ui'
 
 interface Props {
   token?: string
-  theme: ReaderTheme
   hidden: boolean
   initialPosition: number
   onHide: () => void
@@ -51,7 +49,7 @@ function formatSpokenTime(totalSeconds: number): string {
   return parts.join(' ')
 }
 
-export default function AudiobookPlayer({ token, theme, hidden, initialPosition, onHide }: Props) {
+export default function AudiobookPlayer({ token, hidden, initialPosition, onHide }: Props) {
   const audioRef = useRef<HTMLAudioElement>(null)
   const [audioUrl, setAudioUrl] = useState<string>()
   const [metadata, setMetadata] = useState<AudiobookMetadata>()
@@ -67,7 +65,6 @@ export default function AudiobookPlayer({ token, theme, hidden, initialPosition,
   const restorePending = useRef(true)
   const lastSavedPosition = useRef(initialPosition)
   const retriedPlayback = useRef(false)
-  const palette = THEMES[theme]
 
   // Read through a ref, never an effect dependency: `initialPosition` comes from
   // the live settings query, and persisting a position feeds straight back into
@@ -328,37 +325,38 @@ export default function AudiobookPlayer({ token, theme, hidden, initialPosition,
     setIsScrubbing(false)
   }
 
-  const controlClass = `flex h-11 min-w-11 items-center justify-center rounded-lg border px-3 ${palette.border} disabled:opacity-35`
+  const controlClass =
+    'flex h-11 min-w-11 items-center justify-center rounded-md border border-rule-strong px-3 font-ui text-label text-ink transition-colors duration-150 hover:bg-paper-sunk disabled:opacity-45'
 
   return (
     <section
       aria-label="Audiobook player"
-      className={`no-select absolute inset-x-3 bottom-16 z-40 mx-auto max-w-xl rounded-2xl border p-3 shadow-[0_16px_44px_rgba(30,30,24,0.18)] ${palette.chrome} ${palette.chromeText} ${palette.border} ${hidden ? 'hidden' : ''}`}
+      className={`no-select absolute inset-x-3 bottom-16 z-40 mx-auto max-w-xl rounded-lg border border-rule bg-paper-leaf p-3 text-ink shadow-sheet ${hidden ? 'hidden' : ''}`}
     >
       <div className="mb-3 flex items-start gap-2">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium">
+          <p className="truncate font-book text-book-title font-medium">
             {metadata?.title ?? 'Twilight of the Idols'}
           </p>
-          <p className="truncate text-xs opacity-60">
+          <p className="truncate font-ui text-meta text-ink-soft">
             {activeChapter?.title ?? 'Personal audiobook · starts at the Introduction'}
           </p>
         </div>
         <button
           onClick={onHide}
           aria-label="Hide audiobook controls"
-          className="-m-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg opacity-70"
+          className={`${iconButton} -m-2`}
         >
           <CloseIcon />
         </button>
       </div>
 
       {!token ? (
-        <p className="text-sm opacity-75">
+        <p className="font-book text-body text-ink-soft">
           Add your personal audiobook token in Settings, then reopen the player.
         </p>
       ) : error ? (
-        <p className="text-sm text-[#b4483a]">{error}</p>
+        <p className="font-ui text-meta text-danger">{error}</p>
       ) : audioUrl && metadata && activeChapter ? (
         <>
           <audio
@@ -413,17 +411,17 @@ export default function AudiobookPlayer({ token, theme, hidden, initialPosition,
             Your browser does not support Opus audio.
           </audio>
 
-          <label className="mb-1 block text-xs opacity-65" htmlFor="audiobook-chapter">
+          <label className="mb-1 block font-ui text-meta text-ink-soft" htmlFor="audiobook-chapter">
             Chapter {activeChapterIndex + 1} of {metadata.chapters.length}
           </label>
           <select
             id="audiobook-chapter"
-            className={`mb-3 h-11 w-full rounded-lg border bg-transparent px-3 text-sm ${palette.border}`}
+            className={`${field} mb-3`}
             value={activeChapterIndex}
             onChange={(event) => selectChapter(Number(event.target.value))}
           >
             {metadata.chapters.map((chapter, index) => (
-              <option key={chapter.id} value={index} className={palette.chrome}>
+              <option key={chapter.id} value={index} className="bg-paper-leaf">
                 {chapter.title}
               </option>
             ))}
@@ -434,7 +432,7 @@ export default function AudiobookPlayer({ token, theme, hidden, initialPosition,
           </label>
           <input
             id="audiobook-progress"
-            className="h-7 w-full accent-rust"
+            className="h-7 w-full accent-moss"
             type="range"
             min="0"
             max={chapterDuration}
@@ -457,7 +455,7 @@ export default function AudiobookPlayer({ token, theme, hidden, initialPosition,
               if (isScrubbing) commitScrub()
             }}
           />
-          <div className="mb-2 flex justify-between text-xs tabular-nums opacity-65">
+          <div className="mb-2 flex justify-between font-ui text-caption text-ink-faint tabular-nums">
             <span>{formatTime(displayedChapterTime)}</span>
             <span>{formatTime(chapterDuration)}</span>
           </div>
@@ -482,7 +480,7 @@ export default function AudiobookPlayer({ token, theme, hidden, initialPosition,
             </button>
             <button
               type="button"
-              className={`${controlClass} rounded-full border-transparent bg-olive text-lg text-white`}
+              className={`${controlClass} rounded-full border-transparent bg-moss text-lg text-on-moss hover:bg-moss-deep`}
               aria-label={isPlaying ? 'Pause audiobook' : 'Play audiobook'}
               onClick={togglePlayback}
             >
@@ -507,12 +505,15 @@ export default function AudiobookPlayer({ token, theme, hidden, initialPosition,
             </button>
           </div>
 
-          <p aria-live="polite" className="mt-2 min-h-4 text-center text-xs opacity-65">
+          <p
+            aria-live="polite"
+            className="mt-2 min-h-4 text-center font-ui text-caption text-ink-faint"
+          >
             {notice}
           </p>
         </>
       ) : (
-        <p className="text-sm opacity-65">Unlocking audiobook…</p>
+        <p className="font-ui text-meta text-ink-soft">Unlocking audiobook…</p>
       )}
     </section>
   )

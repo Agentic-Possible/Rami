@@ -3,10 +3,11 @@ import { Link, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, deleteConversation, getSettings } from '../db/db'
 import { DEFAULT_SETTINGS } from '../db/types'
-import { HIGHLIGHT_COLORS } from '../lib/highlights'
 import ChatSheet from '../components/ChatSheet'
 import MemoryPanel from '../components/MemoryPanel'
+import Passage from '../components/Passage'
 import { BackIcon, TrashIcon } from '../components/Icons'
+import { iconButton } from '../components/ui'
 
 type Tab = 'chats' | 'highlights' | 'memory'
 
@@ -30,25 +31,25 @@ export default function ChatsPage() {
   const settings = useLiveQuery(() => getSettings(), []) ?? DEFAULT_SETTINGS
 
   return (
-    <div className="min-h-full bg-paper text-ink">
-      <header className="pt-safe sticky top-0 z-10 border-b border-ink/10 bg-paper/90 backdrop-blur">
+    <div className="paper-grain min-h-full bg-paper text-ink">
+      <header className="pt-safe sticky top-0 z-10 border-b border-rule bg-paper/90 backdrop-blur">
         <div className="mx-auto flex max-w-2xl items-center gap-2 px-2 pt-2 pb-1">
           <Link
             to={bookId ? `/book/${bookId}` : '/'}
             aria-label="Back to reader"
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-muted transition hover:bg-ink/8"
+            className={iconButton}
           >
             <BackIcon />
           </Link>
           <div className="min-w-0 flex-1">
-            <p className="eyebrow text-rust">Marginalia</p>
-            <h1 className="truncate font-serif text-xl font-medium">{book?.title ?? 'Book'}</h1>
+            <p className="eyebrow">Threads from this book</p>
+            <h1 className="truncate font-book text-heading font-medium">{book?.title ?? 'Book'}</h1>
           </div>
         </div>
 
-        <div className="mx-auto flex max-w-2xl gap-1 overflow-x-auto px-3 pt-2 pb-3">
+        <div role="tablist" className="mx-auto flex max-w-2xl gap-1 overflow-x-auto px-3">
           <TabButton active={tab === 'chats'} onClick={() => setTab('chats')}>
-            Conversations {conversations?.length ? `(${conversations.length})` : ''}
+            Threads {conversations?.length ? `(${conversations.length})` : ''}
           </TabButton>
           <TabButton active={tab === 'highlights'} onClick={() => setTab('highlights')}>
             Highlights {highlights?.length ? `(${highlights.length})` : ''}
@@ -64,24 +65,25 @@ export default function ChatsPage() {
           <>
             {conversations?.length === 0 && (
               <Empty>
-                Highlight a passage while reading and tap “Chat about this” to start a conversation.
+                Select a line while reading and choose “Ask about this” to start a thread.
               </Empty>
             )}
 
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {conversations?.map((conversation) => (
                 <li
                   key={conversation.id}
-                  className="flex items-start gap-2 rounded-2xl border border-ink/10 bg-card/80 p-4 shadow-[0_6px_24px_rgba(50,52,43,0.04)]"
+                  className="flex items-start gap-2 rounded-md border border-rule bg-paper-leaf p-4"
                 >
                   <button
                     onClick={() => setChatId(conversation.id)}
-                    className="min-w-0 flex-1 text-left"
+                    aria-label={`Follow this thread: ${conversation.title}`}
+                    className="min-w-0 flex-1 rounded-md text-left"
                   >
-                    <p className="line-clamp-2 font-serif text-base font-medium">
+                    <p className="line-clamp-2 font-book text-book-title font-medium">
                       {conversation.title}
                     </p>
-                    <p className="mt-0.5 text-xs text-muted">
+                    <p className="mt-1 font-ui text-meta text-ink-faint">
                       {conversation.chapter ? `${conversation.chapter} · ` : ''}
                       {new Date(conversation.updatedAt).toLocaleDateString()}
                     </p>
@@ -89,9 +91,9 @@ export default function ChatsPage() {
                   <button
                     onClick={() => void deleteConversation(conversation.id)}
                     aria-label={`Delete ${conversation.title}`}
-                    className="rounded-lg p-2 text-muted"
+                    className={`${iconButton} -mt-2 -mr-2`}
                   >
-                    <TrashIcon className="h-4 w-4" />
+                    <TrashIcon />
                   </button>
                 </li>
               ))}
@@ -102,33 +104,23 @@ export default function ChatsPage() {
         {tab === 'highlights' && (
           <>
             {highlights?.length === 0 && <Empty>No highlights yet.</Empty>}
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {highlights?.map((highlight) => (
-                <li
-                  key={highlight.id}
-                  className="flex items-start gap-3 rounded-2xl border border-ink/10 bg-card/80 p-4 shadow-[0_6px_24px_rgba(50,52,43,0.04)]"
-                >
-                  <span
-                    className="mt-1 h-3 w-3 shrink-0 rounded-full"
-                    style={{ background: HIGHLIGHT_COLORS[settings.highlightColor] }}
-                  />
+                <li key={highlight.id} className="flex items-start gap-1">
                   <Link
                     to={`/book/${bookId}?cfi=${encodeURIComponent(highlight.cfiRange)}`}
-                    className="min-w-0 flex-1"
+                    className="min-w-0 flex-1 rounded-md"
                   >
-                    <p className="line-clamp-4 font-serif text-[15px] leading-relaxed">
+                    <Passage clamp cite={highlight.chapter}>
                       {highlight.text}
-                    </p>
-                    {highlight.chapter && (
-                      <p className="mt-1 text-xs text-muted">{highlight.chapter}</p>
-                    )}
+                    </Passage>
                   </Link>
                   <button
                     onClick={() => void db.highlights.delete(highlight.id)}
                     aria-label="Delete highlight"
-                    className="rounded-lg p-2 text-muted"
+                    className={iconButton}
                   >
-                    <TrashIcon className="h-4 w-4" />
+                    <TrashIcon />
                   </button>
                 </li>
               ))}
@@ -150,9 +142,7 @@ export default function ChatsPage() {
         )}
       </main>
 
-      {chatId && (
-        <ChatSheet conversationId={chatId} theme="light" onClose={() => setChatId(undefined)} />
-      )}
+      {chatId && <ChatSheet conversationId={chatId} onClose={() => setChatId(undefined)} />}
     </div>
   )
 }
@@ -168,9 +158,11 @@ function TabButton({
 }) {
   return (
     <button
+      role="tab"
+      aria-selected={active}
       onClick={onClick}
-      className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
-        active ? 'bg-olive text-white' : 'text-muted hover:bg-ink/5'
+      className={`min-h-tap shrink-0 border-b-2 px-3 font-ui text-label font-medium transition-colors duration-150 ${
+        active ? 'border-moss text-ink' : 'border-transparent text-ink-soft hover:text-ink'
       }`}
     >
       {children}
@@ -179,5 +171,9 @@ function TabButton({
 }
 
 function Empty({ children }: { children: React.ReactNode }) {
-  return <p className="mt-16 text-center font-serif text-[15px] text-muted">{children}</p>
+  return (
+    <p className="mx-auto mt-16 max-w-xs text-center font-book text-body text-ink-soft">
+      {children}
+    </p>
+  )
 }

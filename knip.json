@@ -12,5 +12,5 @@
     "scripts/**/*.mjs",
     "tests/**/*.ts"
   ],
-  "ignoreDependencies": ["@fontsource-variable/dm-sans", "@fontsource-variable/source-serif-4"]
+  "ignoreDependencies": ["@fontsource/alegreya-sans"]
 }

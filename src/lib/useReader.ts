@@ -522,8 +522,11 @@ async function waitForIdleLayout(rendition: Rendition) {
   // with it the document and rendition, long after the reader has navigated
   // away. Settling late is better than never settling.
   await Promise.race([
-    Promise.all(
-      pending.map(
+    Promise.all([
+      // The reader's own font loads into each chapter's document; pagination
+      // measured before it arrives reflows once it does.
+      doc.fonts.ready,
+      ...pending.map(
         (img) =>
           new Promise<void>((resolve) => {
             const done = () => {
@@ -535,7 +538,7 @@ async function waitForIdleLayout(rendition: Rendition) {
             img.addEventListener('error', done, { once: true })
           }),
       ),
-    ),
+    ]),
     new Promise((resolve) => setTimeout(resolve, LAYOUT_SETTLE_TIMEOUT_MS)),
   ])
 

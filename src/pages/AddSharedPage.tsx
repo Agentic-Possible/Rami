@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { downloadGutenbergBook, parseGutenbergRef } from '../lib/gutenberg'
 import { importEpub } from '../lib/importBook'
+import { button } from '../components/ui'
 
 /**
  * Where a shared link lands. The manifest registers this route as a share
@@ -53,19 +54,16 @@ export default function AddSharedPage() {
     <div className="flex min-h-full flex-col items-center justify-center gap-4 bg-paper px-6 text-center text-ink">
       {error ? (
         <>
-          <p className="text-sm text-rust">{error}</p>
-          <p className="max-w-xs text-xs text-muted">
+          <p className="font-ui text-meta text-danger">{error}</p>
+          <p className="max-w-xs font-ui text-meta text-ink-soft">
             Share a book page such as https://www.gutenberg.org/ebooks/2701, or add the book from
             the library.
           </p>
         </>
       ) : (
-        <p className="text-sm text-muted">Adding book #{id} from Project Gutenberg…</p>
+        <p className="font-ui text-meta text-ink-soft">Adding book #{id} from Project Gutenberg…</p>
       )}
-      <Link
-        to="/"
-        className="rounded-full border border-line px-4 py-2 text-sm font-medium text-ink transition hover:bg-ink/5"
-      >
+      <Link to="/" className={button.secondary}>
         Go to library
       </Link>
     </div>

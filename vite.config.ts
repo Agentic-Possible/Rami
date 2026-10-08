@@ -117,15 +117,16 @@ export default defineConfig(({ mode }) => {
         registerType: 'autoUpdate',
         includeAssets: ['favicon.svg'],
         manifest: {
-          name: 'Marginalia — EPUB Reader + AI Chat',
-          short_name: 'Marginalia',
-          description: 'Read EPUBs and chat with AI about what you highlight.',
-          theme_color: '#f3f1e9',
-          background_color: '#f3f1e9',
+          name: 'Rami',
+          short_name: 'Rami',
+          description:
+            'Follow a book beyond the page: select a passage and see where your questions lead.',
+          theme_color: '#f4ecda',
+          background_color: '#f4ecda',
           display: 'standalone',
           start_url: '/',
           // Lets the reader share a Gutenberg book page straight out of their
-          // browser into Marginalia instead of copying the link across. Android
+          // browser into Rami instead of copying the link across. Android
           // share sheets vary in which field they fill, so /add reads them all.
           share_target: {
             action: '/add',
