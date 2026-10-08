@@ -5,6 +5,7 @@ import type { Contents } from 'epubjs'
 import { archiveBook, db, deleteBook, getSettings, saveSettings } from '../db/db'
 import { DEFAULT_SETTINGS, type Conversation, type Highlight, type ReaderTheme } from '../db/types'
 import { useReader } from '../lib/useReader'
+import { useThemeColor } from '../lib/useThemeColor'
 import { THEMES } from '../lib/themes'
 import { newId } from '../lib/id'
 import {
@@ -74,6 +75,7 @@ export default function ReaderPage() {
   })
 
   const palette = THEMES[settings.theme]
+  useThemeColor(palette.bg)
   const percent = Math.round((reader.location?.progress ?? book?.progress ?? 0) * 100)
   const isDark = settings.theme === 'dark'
   const highlightColor = settings.highlightColor
