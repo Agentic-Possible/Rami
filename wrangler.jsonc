@@ -12,6 +12,10 @@
   },
   "routes": [
     {
+      "pattern": "rami.agenticpossible.com",
+      "custom_domain": true
+    },
+    {
       "pattern": "marginalia.adjacentpossible.dev",
       "custom_domain": true
     }
