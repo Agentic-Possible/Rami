@@ -8,6 +8,7 @@ import { buildMessages } from '../lib/prompt'
 import { getBookMemory, updateBookMemory } from '../lib/memory'
 import ReaderPanel from './ReaderPanel'
 import Passage from './Passage'
+import Mark from './Mark'
 import { SendIcon } from './Icons'
 
 /** Breathing room left above the pinned question, in pixels. */
@@ -300,14 +301,14 @@ function Bubble({ id, role, children }: { id?: string; role: string; children: R
     )
   }
 
-  // Set like the book's own prose, not in a bubble: a marginal note beside the sprig.
+  // Set like the book's own prose, not in a bubble: a marginal note beside the mark.
   return (
     <div data-message={id} className="flex max-w-reading items-start gap-3">
       <span
         aria-hidden
-        className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-paper-sunk text-[15px] leading-none"
+        className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-paper-sunk"
       >
-        🌿
+        <Mark size={18} decorative />
       </span>
       <p className="mt-0.5 min-w-0 flex-1 font-book text-body whitespace-pre-wrap">{children}</p>
     </div>
