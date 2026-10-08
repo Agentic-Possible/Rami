@@ -16,7 +16,7 @@ export interface Book {
   /**
    * SHA-256 of the EPUB bytes, kept after the file itself is dropped.
    *
-   * This is what an archived book is recognised by when its EPUB is imported
+   * This is what an archived book is recognized by when its EPUB is imported
    * again, so its highlights and reading position are only ever handed back to
    * the edition they were recorded against.
    */
@@ -124,7 +124,7 @@ export interface Settings {
   summaryModel: string
   theme: ReaderTheme
   fontSize: number
-  /** One colour for every highlight; the per-highlight `color` is kept for imports. */
+  /** One color for every highlight; the per-highlight `color` is kept for imports. */
   highlightColor: HighlightColor
   /** Ask the model to avoid spoiling content past the reader's position. */
   spoilerGuard: boolean

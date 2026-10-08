@@ -14,7 +14,7 @@ Milestones M1 to M5 from `epub-chat-reader-plan.md` are implemented and verified
 | --- | --- |
 | M1 Library | EPUB import, OPF metadata + cover extraction, library grid, delete with cascade |
 | M2 Reader | Paginated epub.js rendition, position persistence, TOC, themes, font size |
-| M3 Highlights | Selection action bar, one highlight colour set in Settings, painted annotations, tap a highlight to reopen its chat, per-book list |
+| M3 Highlights | Selection action bar, one highlight color set in Settings, painted annotations, tap a highlight to reopen its chat, per-book list |
 | M4 Chat | Hosted relay or own OpenAI key, context assembly, streaming replies, persisted conversations |
 | M5 Memory | Rolling per-book digest injected into every new conversation, readable and editable under the reader's Memory tab |
 
@@ -147,9 +147,9 @@ Library ──> Reader (epub.js) ──> Selection bar ──> Chat sheet
 
 Each conversation's system prompt carries the book metadata, the current chapter and percentage, the highlighted passage, roughly 2,400 characters of surrounding prose, the book's memory digest, and an optional spoiler guard.
 
-After every few messages, a cheap background call folds the exchange into that book's digest (capped around 250 words), which is then injected into every future conversation for the book. Failures there are swallowed so the summariser can never break the chat.
+After every few messages, a cheap background call folds the exchange into that book's digest (capped around 250 words), which is then injected into every future conversation for the book. Failures there are swallowed so the summarizer can never break the chat.
 
-The digest is the only thing carried between conversations, so it is also the only thing a reader cannot reconstruct from the transcripts. The Memory tab on a book's chats screen shows it verbatim, lets the reader rewrite or clear it, and renders the whole system message it ends up inside. Later automatic updates merge into whatever is stored, so an edit carries forward rather than being summarised away.
+The digest is the only thing carried between conversations, so it is also the only thing a reader cannot reconstruct from the transcripts. The Memory tab on a book's chats screen shows it verbatim, lets the reader rewrite or clear it, and renders the whole system message it ends up inside. Later automatic updates merge into whatever is stored, so an edit carries forward rather than being summarized away.
 
 ## Notes on the tricky parts
 

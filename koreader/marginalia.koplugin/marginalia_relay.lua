@@ -13,7 +13,7 @@ KOReader's turbo-based async client is unusable because `DUSE_TURBO_LIB` is
 false in `defaults.lua`, which leaves `UIManager.looper` nil. So the caller runs
 `post` inside `Trapper:dismissableRunInSubprocess`, which forks it, keeps the UI
 painting and lets the reader tap to give up. Everything this returns therefore
-has to survive being serialised across that fork: plain tables, strings and
+has to survive being serialized across that fork: plain tables, strings and
 numbers only.
 
 @module marginalia.relay

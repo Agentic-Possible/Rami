@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { BookAnchors, findInDocument, normalizeQuery } from './anchor'
 
 /**
- * The map from normalised text back to DOM positions is the part of the import
+ * The map from normalized text back to DOM positions is the part of the import
  * that can be wrong without looking wrong: a range one character off still
  * produces a plausible CFI and paints a highlight in roughly the right place.
  * So these assert on the exact text a produced range covers.

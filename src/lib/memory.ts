@@ -8,11 +8,11 @@ import { buildSummaryMessages } from './prompt'
 const MESSAGES_PER_UPDATE = 4
 
 /**
- * Ceiling on the transcript handed to the summariser in one update.
+ * Ceiling on the transcript handed to the summarizer in one update.
  *
  * `summarizedCount` only advances when an update completes, and every failure
  * is swallowed, so without this the messages waiting to be folded in grow by
- * two per reply for as long as the summariser is down. That is not merely
+ * two per reply for as long as the summarizer is down. That is not merely
  * wasteful: once the accumulated transcript passes what the relay accepts, the
  * request fails *on size*, and since the backlog only ever grows it can never
  * succeed again. The digest for that conversation would be dead from then on,
@@ -33,7 +33,7 @@ export async function getBookMemory(bookId: string): Promise<string | undefined>
  * Replaces the digest with the reader's own wording.
  *
  * Later automatic updates merge into whatever is stored here rather than
- * starting over, so an edit carries forward instead of being summarised away.
+ * starting over, so an edit carries forward instead of being summarized away.
  * Saving an empty digest deletes it, which is how the screen's clear works.
  */
 export async function saveBookMemory(bookId: string, summary: string): Promise<void> {
@@ -52,7 +52,7 @@ const inFlight = new Map<string, Promise<void>>()
  * Merges recent conversation turns into the book's rolling digest.
  *
  * Runs in the background after an assistant reply; failures are swallowed so a
- * summariser problem never breaks the chat itself. Updates for one book are
+ * summarizer problem never breaks the chat itself. Updates for one book are
  * queued rather than run in parallel: each one reads the existing summary and
  * writes a replacement, so overlapping calls would drop whichever finished first.
  */
@@ -95,7 +95,7 @@ async function runUpdate(bookId: string, conversationId: string): Promise<void> 
     }),
   })
 
-  // A reply that is nothing but echoed delimiters normalises to empty, and
+  // A reply that is nothing but echoed delimiters normalizes to empty, and
   // storing that would wipe a digest the reader may have written by hand.
   const summary = normalizeSummary(generated)
   if (!summary) return
@@ -121,7 +121,7 @@ async function runUpdate(bookId: string, conversationId: string): Promise<void> 
  * of the conversation closest to where the reader actually is. Turns older
  * than the window are dropped rather than deferred: `summarizedCount` jumps
  * past them on success, and they are never folded in. That loses the oldest
- * few exchanges after an outage, which beats the alternative of a summariser
+ * few exchanges after an outage, which beats the alternative of a summarizer
  * that can never run again.
  *
  * The newest `MESSAGES_PER_UPDATE` turns go out even when they exceed the

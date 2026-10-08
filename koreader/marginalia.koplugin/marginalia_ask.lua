@@ -270,7 +270,7 @@ one is found again — including from the conversation list, where there is no
 selection to work from. The highlight may have been deleted since; a
 conversation outlives its mark, and continuing one is still worth doing.
 
-When the id no longer matches anything, one attempt is made to recognise the
+When the id no longer matches anything, one attempt is made to recognize the
 highlight by its text and re-point the thread at it, so a highlight adjusted
 after the fact keeps its conversation.
 --]]

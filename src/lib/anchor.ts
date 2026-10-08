@@ -13,7 +13,7 @@ import { EpubCFI, type Book as EpubBook } from 'epubjs'
  * raw `textContent`. A KOReader highlight has been through a different
  * renderer: it joins across line breaks, carries soft hyphens from justified
  * text, and may hold typographic quotes where the file has straight ones. Raw
- * matching misses those, so this normalises both sides and keeps a map back to
+ * matching misses those, so this normalizes both sides and keeps a map back to
  * the DOM.
  *
  * Two rules make the result trustworthy rather than merely likely:
@@ -51,7 +51,7 @@ export function isMatch(result: AnchorResult): result is AnchorMatch {
  * may produce more than one character (a ligature, or a locale-uppercase
  * letter), and those simply share a source span.
  *
- * Unicode normalisation is *not* applied. NFC can merge a base letter and a
+ * Unicode normalization is *not* applied. NFC can merge a base letter and a
  * combining mark into one character, which would break the correspondence this
  * relies on, and both sides of the comparison come from the same EPUB file, so
  * they are already in whatever form that file uses.
@@ -135,7 +135,7 @@ const BLOCK_TAGS = new Set([
 const SKIPPED_TAGS = new Set(['script', 'style', 'head', 'title', 'noscript'])
 
 /**
- * Where one normalised character came from.
+ * Where one normalized character came from.
  *
  * `start` and `end` are separate because a fold is not one-to-one: two output
  * characters can share one source character, and one output character can
@@ -149,7 +149,7 @@ interface CharSource {
 }
 
 interface SectionText {
-  /** Normalised, whitespace-collapsed, lowercased prose. */
+  /** Normalized, whitespace-collapsed, lowercased prose. */
   text: string
   /** Parallel to `text`; absent when only the text was wanted. */
   sources?: CharSource[]
@@ -166,7 +166,7 @@ function isHidden(element: Element): boolean {
 }
 
 /**
- * Normalises a section document, optionally recording where each character came from.
+ * Normalizes a section document, optionally recording where each character came from.
  *
  * The same routine serves both passes so the index built for searching and the
  * map built for resolving can never drift apart.
@@ -249,7 +249,7 @@ function normalizeDocument(doc: Document, withSources: boolean): SectionText {
   return { text: out.join(''), sources }
 }
 
-/** Normalises a query the same way the book is normalised. */
+/** Normalizes a query the same way the book is normalized. */
 export function normalizeQuery(query: string): string {
   const out: string[] = []
   let atBoundary = true
@@ -271,9 +271,9 @@ export function normalizeQuery(query: string): string {
 }
 
 /**
- * Builds a DOM range covering `length` normalised characters from `offset`.
+ * Builds a DOM range covering `length` normalized characters from `offset`.
  *
- * `expected`, when given, is the normalised text the caller indexed earlier;
+ * `expected`, when given, is the normalized text the caller indexed earlier;
  * a mismatch means this document is not the one those offsets were measured
  * against, and no range from it can be trusted.
  */
@@ -302,7 +302,7 @@ function rangeAt(
  *
  * The whole-book locator judges uniqueness across the spine and uses `rangeAt`
  * directly; this is the same machinery over a single document, which is what
- * makes the normalisation and the character map testable on their own.
+ * makes the normalization and the character map testable on their own.
  */
 export function findInDocument(doc: Document, query: string): Range | undefined {
   const needle = normalizeQuery(query)
@@ -348,7 +348,7 @@ interface IndexedSection {
 }
 
 /**
- * A book's prose, normalised once, so many passages can be located against it.
+ * A book's prose, normalized once, so many passages can be located against it.
  *
  * Only the text is kept: the character map for a section is rebuilt on demand
  * when a match actually needs turning into a range. Keeping every map would

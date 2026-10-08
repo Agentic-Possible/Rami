@@ -1,5 +1,5 @@
 --- Specs for the arithmetic in marginalia_memory.lua: what gets folded, and
---- which turns the summariser is actually shown.
+--- which turns the summarizer is actually shown.
 
 local H = require("spec_helper")
 local Memory = require("marginalia_memory")
@@ -39,7 +39,7 @@ do
     H.equal(window[4].content, string.rep("x", 10) .. "10")
 end
 
--- A backlog is bounded. Without this, a summariser that is down accumulates
+-- A backlog is bounded. Without this, a summarizer that is down accumulates
 -- turns until the request fails on size — and since the backlog only grows, it
 -- can then never succeed again, killing the digest silently.
 do
@@ -101,7 +101,7 @@ do
     H.equal(#window, 2, "and the window offers both turns")
 end
 
--- What the summariser reads.
+-- What the summarizer reads.
 do
     local transcript = Memory.transcript({
         { role = "user", content = "Why a ship's prow?" },

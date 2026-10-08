@@ -98,17 +98,17 @@ do
     H.nil_(Payload.to_iso(nil, "-0500"), "missing input yields nothing")
 end
 
--- KOReader has nine highlight colours and Marginalia has four. Every one has to
+-- KOReader has nine highlight colors and Marginalia has four. Every one has to
 -- land somewhere valid, and `gray` — KOReader's default — must not fall through.
 do
-    H.equal(Payload.color("gray"), "yellow", "the default colour lands on yellow")
+    H.equal(Payload.color("gray"), "yellow", "the default color lands on yellow")
     H.equal(Payload.color("yellow"), "yellow")
     H.equal(Payload.color("olive"), "green", "olive is a green")
     H.equal(Payload.color("cyan"), "blue", "cyan is a blue")
     H.equal(Payload.color("purple"), "pink")
     H.equal(Payload.color("red"), "pink")
-    H.equal(Payload.color(nil), "yellow", "a colourless highlight still gets a valid colour")
-    H.equal(Payload.color("chartreuse"), "yellow", "an unknown colour does not escape the palette")
+    H.equal(Payload.color(nil), "yellow", "a colorless highlight still gets a valid color")
+    H.equal(Payload.color("chartreuse"), "yellow", "an unknown color does not escape the palette")
 end
 
 -- A paging document stores a position as a table of page and coordinates, not

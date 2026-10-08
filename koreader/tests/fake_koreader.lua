@@ -206,7 +206,7 @@ package.loaded["ui/widget/container/widgetcontainer"] = {
 
 --[[--
 `runWhenOnline` does not call back when the reader turns down the Wi-Fi prompt,
-which is a path with its own behaviour rather than an absence of one. Set
+which is a path with its own behavior rather than an absence of one. Set
 `NETWORK_DECLINED` to be on it.
 --]]
 NETWORK_DECLINED = false
@@ -365,7 +365,7 @@ end
 Stands in for a memory object where a scenario does not want folding.
 
 Records what it was asked to fold, since the threshold a caller passes is part
-of the behaviour under test, then declines — a scenario that wants a real fold
+of the behavior under test, then declines — a scenario that wants a real fold
 uses the real module against the fake relay.
 --]]
 function FakeMemory()

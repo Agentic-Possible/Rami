@@ -205,7 +205,7 @@ describe('the plugin driven end to end', () => {
     `)
 
     expect(report).toContain('due_before=true')
-    // Three questions and one summariser call.
+    // Three questions and one summarizer call.
     expect(report).toContain('requests=4')
     expect(report).toContain('summary=NOTES: prow imagery.')
     // The counter advanced to the four turns present when the fold was asked
@@ -803,7 +803,7 @@ describe('the plugin driven end to end', () => {
   it('puts the conversation list where you go back to things in a book', async () => {
     const report = await runLua(`
       -- main.lua as the plugin loader gets it; only the menu is exercised,
-      -- so the plugin table stands in for an initialised instance.
+      -- so the plugin table stands in for an initialized instance.
       local Marginalia = require("main")
       local plugin = setmetatable({
         showConversations = function(self) self.opened = true end,

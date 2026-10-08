@@ -152,7 +152,7 @@ Interaction bugs here hide behind plausible-looking screenshots, so assert on nu
 // scrollLeft before/after, in screen coordinates
 await page.mouse.click(80, 300);   // left third  -> back one page
 await page.mouse.click(700, 300);  // right third -> forward one page
-await page.mouse.click(390, 300);  // centre      -> toggles chrome, must not move
+await page.mouse.click(390, 300);  // center      -> toggles chrome, must not move
 ```
 
 A tap that should not move the page and a tap that should are different assertions;
@@ -204,7 +204,7 @@ CDP coordinates are screen coordinates and the browser routes them into the ifra
 itself, so the strip offset described above does not apply on the way in — only when you
 read a rect back out.
 
-## Testing touch behaviour
+## Testing touch behavior
 
 Selection inside the book is touch-specific: `src/lib/touchSelect.ts` only arms on
 `(pointer: coarse)` and is a no-op with a mouse, so the desktop browser proves nothing
@@ -229,7 +229,7 @@ every ordinary tap is still selecting, which was the original bug.
 The book frame is sandboxed without `allow-scripts`. Timers scheduled on its window never
 fire, so a handler that looks correct will simply never run — schedule on the host window.
 And a programmatic selection is collapsed again by the mouse events the browser
-synthesises at `touchend` unless that event is cancelled, which reads as "the selection
+synthesises at `touchend` unless that event is canceled, which reads as "the selection
 never happened" a full second after it did.
 
 ## Testing chat
@@ -260,7 +260,7 @@ on `gpt-4o-mini` when testing it, since every exchange also triggers a backgroun
 call.
 
 Memory digests fire every 4 messages (`MESSAGES_PER_UPDATE` in `src/lib/memory.ts`) and
-all summariser failures are swallowed by design, so a broken digest is invisible in the
+all summarizer failures are swallowed by design, so a broken digest is invisible in the
 UI. Check `db.bookMemory` directly when testing that path.
 
 ## Before committing

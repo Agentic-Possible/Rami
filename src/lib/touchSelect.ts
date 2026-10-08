@@ -31,7 +31,7 @@ interface Caret {
  * reaches the app through exactly the path a native one does.
  *
  * Coarse pointers only. Dragging a mouse to select is unambiguous, so on desktop
- * the native behaviour is left alone.
+ * the native behavior is left alone.
  */
 export function longPressToSelect(contents: Contents): () => void {
   const doc = contents.document

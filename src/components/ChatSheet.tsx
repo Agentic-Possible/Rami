@@ -161,7 +161,7 @@ export default function ChatSheet({
         void updateBookMemory(conversation.bookId, conversationId)
       }
     } catch (err) {
-      // A cancelled request keeps its question: the reader chose to stop, and
+      // A canceled request keeps its question: the reader chose to stop, and
       // deleting what they typed would read as data loss. Any other failure
       // rolls the turn back so the transcript never shows a question that was
       // never actually asked, and hands the text back to the composer.
@@ -256,7 +256,7 @@ export default function ChatSheet({
       </div>
 
       <form
-        className="mx-4 mb-[max(1rem,env(safe-area-inset-bottom))] flex shrink-0 items-end gap-2 rounded-lg border border-rule-strong bg-paper-leaf py-1.5 pr-1.5 pl-3.5 shadow-leaf focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus"
+        className="mx-4 mb-[max(1rem,env(safe-area-inset-bottom))] flex shrink-0 items-end gap-2 rounded-lg border border-rule-strong bg-paper-leaf py-1.5 pr-1.5 pl-3.5 shadow-leaf focus-within:border-focus focus-within:ring-1 focus-within:ring-focus"
         onSubmit={(e) => {
           e.preventDefault()
           void send(draft)
@@ -274,7 +274,7 @@ export default function ChatSheet({
           rows={1}
           placeholder={messages?.length ? 'Keep going…' : 'What caught your eye?'}
           aria-label="Your note"
-          className="max-h-32 min-h-8 flex-1 resize-none bg-transparent py-2 font-ui text-control text-ink outline-none placeholder:text-ink-faint focus-visible:outline-none"
+          className="max-h-32 min-h-8 flex-1 resize-none bg-transparent py-2 font-ui text-control text-ink outline-none placeholder:text-ink-faint"
         />
         <button
           type="submit"

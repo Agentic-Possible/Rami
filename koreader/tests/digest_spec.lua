@@ -6,7 +6,7 @@ local Digest = require("marginalia_digest")
 local TOKEN = "BOOKDATA_0123456789ABCDEF"
 local OTHER = "BOOKDATA_FEDCBA9876543210"
 
--- Summarisers copy the fence lines out of their prompt into their output, and
+-- Summarizers copy the fence lines out of their prompt into their output, and
 -- every update feeds the stored digest back in to be fenced again, so unstripped
 -- markers stack up a pair per round and crowd out the notes.
 do
@@ -60,7 +60,7 @@ do
     H.contains(capped, "…", "and marked as cut")
 
     -- Cutting at a boundary matters beyond tidiness: the result is fed back to
-    -- the summariser as prior context, and a severed clause invites it to
+    -- the summarizer as prior context, and a severed clause invites it to
     -- invent the rest of the thought.
     local sentences = ("The reader considered the whale. "):rep(300)
     local cut = Digest.normalize_summary(sentences)
@@ -76,7 +76,7 @@ end
 
 -- Truncation counts characters, not bytes. Slicing 4,000 bytes out of accented
 -- or CJK prose severs a codepoint, and the broken character is then fed back to
--- the summariser as context.
+-- the summarizer as context.
 do
     local accented = ("é"):rep(5000)
     local capped = Digest.normalize_summary(accented)

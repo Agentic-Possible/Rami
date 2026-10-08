@@ -18,7 +18,7 @@ const FENCE_LINE = new RegExp(`^\\s*(?:${FENCE_PREFIX}[0-9A-Z]{16}\\s*)+$`)
 /**
  * Hard ceiling on a stored digest.
  *
- * The summariser is asked for 250 words, which lands around 1,800 characters,
+ * The summarizer is asked for 250 words, which lands around 1,800 characters,
  * so this is roughly double what a well-behaved update produces and should
  * never fire on one. It exists because nothing else bounds the digest: each
  * update feeds the previous one back in and replaces it with whatever comes
@@ -32,7 +32,7 @@ export const MAX_SUMMARY_CHARS = 4000
 /**
  * Removes delimiters a model copied out of its own prompt.
  *
- * Summarisers routinely echo the fence lines wrapping their input into their
+ * Summarizers routinely echo the fence lines wrapping their input into their
  * output, and the digest that gets stored then carries them. Because each
  * update feeds the stored digest back in to be re-fenced, the markers stack up
  * a pair per round and never come off. They are inert -- a fence from a past
@@ -69,7 +69,7 @@ const BOUNDARIES = [
  * Truncation prefers the latest structural boundary that still uses most of
  * the allowance, so a clipped digest reads as notes rather than stopping
  * mid-word. That matters beyond tidiness: the result is fed back to the
- * summariser as prior context, and a severed clause invites it to invent the
+ * summarizer as prior context, and a severed clause invites it to invent the
  * rest of the thought.
  */
 export function normalizeSummary(text: string): string {

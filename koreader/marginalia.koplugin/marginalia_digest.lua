@@ -5,7 +5,7 @@ A port of `src/lib/digest.ts`. Both ends of Marginalia keep a rolling summary of
 what a reader and the model have worked out about a book, and both need the same
 two guards on it, for the same two reasons.
 
-**Echoed delimiters have to come off.** Summarisers routinely copy the fence
+**Echoed delimiters have to come off.** Summarizers routinely copy the fence
 lines wrapping their input into their output. Because every update feeds the
 stored digest back in to be fenced again, those markers stack up a pair per
 round and never come off. They are inert — a fence from a past request cannot
@@ -34,7 +34,7 @@ local TOKEN = Digest.FENCE_PREFIX .. ("[%dA-Z]"):rep(16)
 --[[--
 Hard ceiling on a stored digest.
 
-The summariser is asked for 250 words, which lands around 1,800 characters, so
+The summarizer is asked for 250 words, which lands around 1,800 characters, so
 this is roughly double what a well-behaved update produces and should never fire
 on one.
 --]]
@@ -97,7 +97,7 @@ The latest structural boundary in `head`, past `minimum`.
 
 Paragraph break, then line break, then sentence end, then word break — so a
 clipped digest reads as notes rather than stopping mid-word. That matters beyond
-tidiness: the result is fed back to the summariser as prior context, and a
+tidiness: the result is fed back to the summarizer as prior context, and a
 severed clause invites it to invent the rest of the thought.
 
 @param head the text being cut down
@@ -129,7 +129,7 @@ What actually gets stored: no echoed delimiters, never over the ceiling.
 
 Truncation is by character, not by byte. Slicing 4,000 bytes out of accented or
 CJK prose severs a codepoint and leaves the digest ending in a broken character
-— which is then fed back to the summariser as context.
+— which is then fed back to the summarizer as context.
 --]]
 function Digest.normalize_summary(text)
     local clean = Digest.strip_fence_tokens(text)

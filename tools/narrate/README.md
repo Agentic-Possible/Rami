@@ -25,7 +25,7 @@ audio drives `rendition.next()`, and the `relocated` handler in `src/lib/useRead
 persists `lastCfi` exactly as it does when you turn a page by hand.
 
 Anchoring on ids rather than character offsets is not fussiness. Offsets would need
-this tool's HTML parse and the browser's DOM to agree on whitespace normalisation,
+this tool's HTML parse and the browser's DOM to agree on whitespace normalization,
 entity expansion and implied elements, and they do not. An id survives reflow, font
 changes and theme switches, which is why EPUB 3 Media Overlays anchors the same way.
 
@@ -122,7 +122,7 @@ python -m narrate book.epub -o /tmp/out --backend silence --format wav --parts 3
 | `--gap` | `0.35` | Seconds of silence after each utterance. |
 | `--max-chars` | `320` | Melville writes 1,000-character sentences; left whole they make segments too coarse to resume from. |
 | `--min-chars` | `40` | Merges fragments into the previous utterance. |
-| `--skip-class` | `pg-boilerplate,toc` | Left unspoken. These two are Gutenberg's licence header/footer and its inline contents list. |
+| `--skip-class` | `pg-boilerplate,toc` | Left unspoken. These two are Gutenberg's license header/footer and its inline contents list. |
 
 ## Choosing a model
 

@@ -88,8 +88,8 @@ question, so the companion is not meeting the book fresh each time.
 They are folded in as you go — after a conversation has four turns in it, the
 next question you ask in that conversation updates the notes first, then goes out
 with them. That is a deliberate choice about *when*: KOReader is single-threaded,
-so summarising after an answer either makes you wait twice for one question or is
-cancelled by your next tap. Doing it just before the notes are needed puts the
+so summarizing after an answer either makes you wait twice for one question or is
+canceled by your next tap. Doing it just before the notes are needed puts the
 wait where you had already accepted one, and dismissing it simply asks with the
 notes as they were.
 
@@ -144,7 +144,7 @@ the id it had on the device.
 ## What travels, and what does not
 
 Exported: the book's title, author and fingerprint, every highlight with its
-note, chapter, colour, time and the prose around it, and every thread you asked
+note, chapter, color, time and the prose around it, and every thread you asked
 on the device. The crengine xpointers ride along as provenance; nothing in the
 web app reads them.
 

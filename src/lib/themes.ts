@@ -8,8 +8,8 @@ export interface ThemePalette {
   /** The Rami token set the reader chrome takes on, via `data-theme`. */
   dataTheme: 'paper' | 'sepia' | 'lamplight'
   /**
-   * Raw page colours for places CSS variables cannot reach: the epub.js
-   * iframe, the browser's theme colour and the theme swatches.
+   * Raw page colors for places CSS variables cannot reach: the epub.js
+   * iframe, the browser's theme color and the theme swatches.
    */
   bg: string
   fg: string

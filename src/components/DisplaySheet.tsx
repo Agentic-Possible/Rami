@@ -69,9 +69,9 @@ export default function DisplaySheet({
           </div>
         </Group>
 
-        <Group label="Page colour">
-          {/* Each swatch shows the page itself, not a colour name. */}
-          <div className="flex gap-3" role="group" aria-label="Page colour">
+        <Group label="Page color">
+          {/* Each swatch shows the page itself, not a color name. */}
+          <div className="flex gap-3" role="group" aria-label="Page color">
             {THEME_OPTIONS.map((option) => {
               const palette = THEMES[option]
               const selected = option === theme

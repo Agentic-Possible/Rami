@@ -103,7 +103,7 @@ export function useReader(
     // render after the page first paints, and the effect must re-run when it does.
     if (!bookId || !container) return
 
-    let cancelled = false
+    let canceled = false
     let epubBook: EpubBook | undefined
     let rend: Rendition | undefined
     let releaseHold = 0
@@ -117,7 +117,7 @@ export function useReader(
     const start = async () => {
       try {
         const stored = await db.books.get(bookId)
-        if (cancelled) return
+        if (canceled) return
         if (!stored) {
           setError('That book is no longer in your library.')
           return
@@ -133,14 +133,14 @@ export function useReader(
         anchorCfi.current = stored.lastCfi || undefined
 
         const buffer = await stored.file.arrayBuffer()
-        if (cancelled) return
+        if (canceled) return
 
         epubBook = ePub(buffer)
         await epubBook.ready
-        if (cancelled) return
+        if (canceled) return
 
         const nav = await epubBook.loaded.navigation
-        if (cancelled) return
+        if (canceled) return
         setToc(nav.toc ?? [])
 
         rend = epubBook.renderTo(container, {
@@ -169,7 +169,7 @@ export function useReader(
         rend.themes.fontSize(`${opts.fontSize}%`)
 
         await rend.display(stored.lastCfi || undefined)
-        if (cancelled) return
+        if (canceled) return
 
         setEpub(epubBook)
         setRendition(rend)
@@ -184,7 +184,7 @@ export function useReader(
           holds.current += 1
           void waitForIdleLayout(rend)
             .then(() =>
-              cancelled || navEpoch.current !== epoch ? undefined : rend?.display(target),
+              canceled || navEpoch.current !== epoch ? undefined : rend?.display(target),
             )
             .finally(() => {
               // Released on a timer for the same reason as after a resize: the
@@ -192,16 +192,16 @@ export function useReader(
               // at or before the saved position, and saving that would cost a
               // page every time the book is opened.
               releaseHold = window.setTimeout(() => {
-                if (!cancelled) holds.current = Math.max(0, holds.current - 1)
+                if (!canceled) holds.current = Math.max(0, holds.current - 1)
               }, REANCHOR_RELEASE_MS)
             })
         }
 
         // Locations power the progress percentage. Generating them walks the
         // whole book, so reuse the cached copy whenever we have one.
-        void loadLocations(epubBook, bookId, stored.locations, () => cancelled)
+        void loadLocations(epubBook, bookId, stored.locations, () => canceled)
       } catch (err) {
-        if (cancelled) return
+        if (canceled) return
         setError(err instanceof Error ? err.message : 'Could not open this book.')
       }
     }
@@ -209,7 +209,7 @@ export function useReader(
     void start()
 
     return () => {
-      cancelled = true
+      canceled = true
       window.clearTimeout(releaseHold)
       setRendition(undefined)
       setEpub(undefined)
@@ -271,7 +271,7 @@ export function useReader(
       // answer different questions: the position is where the reader is and has
       // to survive a reflow that has not settled, while the label names what is
       // on the screen, and the report is the only thing that describes that. The
-      // anchor is a page *start*, so labelling from it breaks the rule above and
+      // anchor is a page *start*, so labeling from it breaks the rule above and
       // names the previous chapter — and it sticks, because once the hold
       // releases nothing relocates again until the reader turns a page.
       const chapter = chapterAt(anchors, loc.end?.cfi ?? cfi)
@@ -550,7 +550,7 @@ async function loadLocations(
   epubBook: EpubBook,
   bookId: string,
   cached: string | undefined,
-  isCancelled: () => boolean,
+  isCanceled: () => boolean,
 ) {
   try {
     if (cached) {
@@ -558,7 +558,7 @@ async function loadLocations(
       return
     }
     await epubBook.locations.generate(1024)
-    if (isCancelled()) return
+    if (isCanceled()) return
     await db.books.update(bookId, { locations: epubBook.locations.save() })
   } catch {
     // Progress falls back to the per-section percentage.
