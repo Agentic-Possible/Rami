@@ -1,14 +1,24 @@
-/** The name: the sprig, then “Rami” in Garamond italic. Once per screen. */
-export default function Wordmark({ size = 24 }: { size?: number }) {
+import { LOGO } from './logoPaths'
+import { MarkPaths } from './Mark'
+
+/** The lowercase wordmark: moss r, ink “ami”. Follows the theme. Once per screen. */
+export default function Wordmark({ size = 28, mono }: { size?: number; mono?: boolean }) {
   return (
-    <span
-      style={{ fontSize: size }}
-      className="inline-flex items-baseline gap-[0.18em] font-book leading-none font-medium tracking-[-0.005em] text-ink italic"
+    <svg
+      viewBox={LOGO.wordViewBox}
+      className="flex-none"
+      style={{ height: size, width: 'auto', display: 'block' }}
+      role="img"
+      aria-label="rami"
     >
-      <span aria-hidden className="-translate-y-[0.04em] text-[0.82em] not-italic">
-        🌿
-      </span>
-      Rami
-    </span>
+      <g transform="scale(1,-1)">
+        <MarkPaths color={mono ? 'var(--ink)' : 'var(--moss)'} />
+        <g fill="var(--ink)">
+          {LOGO.ami.map((glyph) => (
+            <path key={glyph.x} transform={`translate(${glyph.x} 0)`} d={glyph.d} />
+          ))}
+        </g>
+      </g>
+    </svg>
   )
 }

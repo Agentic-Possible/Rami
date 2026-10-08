@@ -91,7 +91,7 @@ export default function LibraryPage() {
       <header className="pt-safe sticky top-0 z-10 border-b border-rule bg-paper/90 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-page items-center justify-between px-4 sm:h-[72px] sm:px-8">
           <Link to="/" aria-label="Rami, your library" className="rounded-md">
-            <Wordmark size={24} />
+            <Wordmark size={28} />
           </Link>
           <div className="flex items-center gap-2">
             <Link to="/settings" aria-label="Settings" className={iconButton}>
