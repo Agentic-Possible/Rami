@@ -256,7 +256,7 @@ export default function ChatSheet({
       </div>
 
       <form
-        className="mx-4 mb-[max(1rem,env(safe-area-inset-bottom))] flex shrink-0 items-end gap-2 rounded-lg border border-rule-strong bg-paper-leaf py-1.5 pr-1.5 pl-3.5 shadow-leaf focus-within:border-focus"
+        className="mx-4 mb-[max(1rem,env(safe-area-inset-bottom))] flex shrink-0 items-end gap-2 rounded-lg border border-rule-strong bg-paper-leaf py-1.5 pr-1.5 pl-3.5 shadow-leaf focus-within:border-focus focus-within:ring-1 focus-within:ring-focus"
         onSubmit={(e) => {
           e.preventDefault()
           void send(draft)

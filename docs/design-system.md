@@ -130,8 +130,8 @@ All controls are at least 44px tall.
 ## States and motion
 
 - Focus: 2px solid `focus` with a 2px offset on every interactive element, set
-  globally in `index.css`. A wrapper that draws its own ring (the composer)
-  suppresses the inner one.
+  globally in `index.css`. The composer instead turns its own edge into a 2px
+  `focus` border and suppresses the textarea's ring, so focus shows once.
 - Hover: fills deepen (`moss` to `moss-deep`); outlines and quiet buttons gain a
   `paper-sunk` wash.
 - Disabled: 45% opacity; never remove the label.
