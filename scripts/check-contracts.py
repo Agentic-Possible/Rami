@@ -16,6 +16,7 @@ assert api['openapi'] == '3.1.0'
 assert set(api['paths']) == {
     '/api/chat',
     '/api/gutenberg',
+    '/api/covers',
     '/health',
     '/session',
     '/objects/{key}',

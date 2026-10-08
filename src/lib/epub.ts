@@ -82,6 +82,23 @@ export async function parseEpubFile(file: File | Blob, filename?: string): Promi
   }
 }
 
+/** The cover the EPUB itself ships, so a replaced cover can be put back. */
+export async function readEpubCover(file: Blob): Promise<Blob | undefined> {
+  const buffer = await file.arrayBuffer()
+  if (!looksLikeZip(buffer)) return undefined
+
+  const ePub = await loadEpubJs()
+  const book = ePub(buffer)
+  try {
+    await book.opened
+    return await extractCover(book)
+  } catch {
+    return undefined
+  } finally {
+    book.destroy()
+  }
+}
+
 /** EPUBs are ZIPs; check the local file header before handing it to epub.js. */
 function looksLikeZip(buffer: ArrayBuffer): boolean {
   if (buffer.byteLength < 4) return false

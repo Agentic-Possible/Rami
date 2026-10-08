@@ -164,7 +164,16 @@ export async function findArchivedMatch(book: Book): Promise<Book | undefined> {
  */
 export async function restoreBook(bookId: string, imported: Book): Promise<void> {
   const { id: _id, addedAt: _addedAt, ...metadata } = imported
-  await db.books.update(bookId, { ...metadata, archivedAt: undefined })
+  await db.transaction('rw', db.books, async () => {
+    // The shelved cover is the EPUB's own unless the reader replaced it, and a
+    // replacement is the one they chose to keep.
+    const stored = await db.books.get(bookId)
+    await db.books.update(bookId, {
+      ...metadata,
+      cover: stored?.cover ?? metadata.cover,
+      archivedAt: undefined,
+    })
+  })
 }
 
 /** Removes a conversation and its messages. */

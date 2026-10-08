@@ -11,7 +11,7 @@
  * the chat relay next door.
  */
 
-import { createRateLimiter, isCrossOrigin } from './http-guards.ts'
+import { createRateLimiter, fetchUpstream, isCrossOrigin, json } from './http-guards.ts'
 
 const GUTENBERG_URL = 'https://www.gutenberg.org/ebooks'
 const USER_AGENT = 'Marginalia/1.0 (+https://github.com/critesjosh/marginalia)'
@@ -22,15 +22,6 @@ const USER_AGENT = 'Marginalia/1.0 (+https://github.com/critesjosh/marginalia)'
  * client-side, so a reader browsing normally stays far below this.
  */
 const rateLimited = createRateLimiter({ windowMs: 5 * 60_000, maxRequests: 60 })
-
-/**
- * How long an upstream attempt may spend waiting for response headers. Cleared
- * as soon as they land, so this bounds how long Gutenberg may take to start a
- * download, not how long the download itself may run. Without it a stalled
- * upstream burns the whole edge-function time budget and the platform answers
- * with an opaque 502 instead of the JSON error the client knows how to show.
- */
-const UPSTREAM_BUDGET_MS = 20_000
 
 export interface GutenbergRelayOptions {
   fetch?: typeof fetch
@@ -57,8 +48,8 @@ export async function handleGutenbergRequest(
     if (search.length > 200) return json({ error: 'Search is too long.' }, 400)
 
     // Gutenberg's own OPDS search, not Gutendex: it answers in a few hundred
-    // milliseconds where Gutendex ranges from seconds to well past the budget
-    // below, and it is the host the download already depends on.
+    // milliseconds where Gutendex ranges from seconds to well past the upstream
+    // budget, and it is the host the download already depends on.
     const upstream = new URL(`${GUTENBERG_URL}/search.opds/`)
     upstream.searchParams.set('query', search)
 
@@ -153,36 +144,4 @@ function decodeXml(text: string): string {
     })
     .replace(/\s+/g, ' ')
     .trim()
-}
-
-/**
- * Fetches upstream under a deadline and never rejects, so an unreachable host
- * stays a value this handler can turn into a JSON error. An escaping rejection
- * is what the platform turns into a bare 502 — and in dev it leaves the Vite
- * middleware with no response to write, so the request simply hangs.
- *
- * Returns `undefined` when the attempt failed or timed out.
- */
-async function fetchUpstream(
-  fetcher: typeof fetch,
-  input: string | URL,
-  init: RequestInit,
-): Promise<Response | undefined> {
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), UPSTREAM_BUDGET_MS)
-
-  try {
-    return await fetcher(input, { ...init, signal: controller.signal })
-  } catch {
-    return undefined
-  } finally {
-    clearTimeout(timer)
-  }
-}
-
-function json(value: unknown, status = 200): Response {
-  return Response.json(value, {
-    status,
-    headers: { 'Cache-Control': 'no-store' },
-  })
 }
