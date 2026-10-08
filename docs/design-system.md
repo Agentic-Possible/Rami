@@ -2,13 +2,33 @@
 
 Rami is the PWA's visual language and voice. Read this before changing UI in
 `src/`. The tokens live in `src/index.css`; shared components live in
-`src/components/` (`BookCover`, `Ribbon`, `Passage`, `Wordmark`, `Ornament`) and
+`src/components/` (`BookCover`, `Ribbon`, `Passage`, `Wordmark`, `Mark`,
+`Ornament`) and
 shared control classes in `src/components/ui.ts`.
 
 _Rami_ is Latin and Italian for branches. A passage is the trunk; each question
 grows a branch. The interface should feel like an old, well-loved book on an
 evening with time to spare: warm paper, iron-gall ink, cloth and gilt, nothing
-shouting. The mark is the sprig, 🌿.
+shouting.
+
+## The mark
+
+The logo is the branching r: the r of EB Garamond whose arm grows into a stem
+and two leaves, a letter of the book becoming something alive. Its outlines live
+in `src/components/logoPaths.ts`.
+
+- `Wordmark` (moss r, ink “ami”) where there is room for the name: once per
+  screen, 24 to 28px tall in headers, 64px or more on a splash. It follows the
+  theme through `--moss` and `--ink`; `mono` sets it all in ink.
+- `Mark` (the r alone, one color) where the name won't fit: beside Rami's
+  replies and in loading states. Pass `decorative` when the name is visible.
+- The wordmark is always lowercase and always drawn, never retyped in a font. In
+  sentences the product is “Rami”.
+- Clear space is the height of the “a”; minimum size is 20px tall for the
+  wordmark and 16px for the mark.
+- App icons (`public/favicon.svg`, `icon-*.png`, `apple-touch-icon.png`) are
+  the paper-leaf mark on moss. The maskable and Apple icons use the full-bleed
+  square so the platform can round it.
 
 ## Spirit
 
@@ -47,8 +67,8 @@ shouting. The mark is the sprig, 🌿.
 - Greet by the hour (“A good evening for reading”), never with exclamation marks.
 - Use real typography in UI copy: curly quotes, the ellipsis character, and an
   unspaced em dash.
-- The only emoji is the 🌿 sprig, and only as the mark: the wordmark, Rami's
-  reply mark and the app icon.
+- No emoji in the interface; the branching r is the mark everywhere. 🌿 stands
+  in for the brand only where an image can't go, such as plain-text bios.
 
 ## Color
 
