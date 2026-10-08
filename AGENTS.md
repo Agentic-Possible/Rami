@@ -115,6 +115,8 @@ Device chat uses the hosted relay and is billed; ask before testing live chat.
 - Name TypeScript tests `*.test.ts` under `src/`, `shared/`, `workers/`, or
   `koreader/tests/`. Name Python tests `tools/narrate/tests/test_*.py` and Lua
   specs `koreader/tests/*_spec.lua`, exercised through their Vitest harnesses.
+- Follow `docs/design-system.md` (Rami) for UI: use its token utilities and the
+  controls in `src/components/ui.ts`, not raw colours or one-off button styles.
 - Mirror system-prompt changes between `src/lib/prompt.ts` and
   `koreader/marginalia.koplugin/marginalia_prompt.lua`; run the plugin prompt specs.
 - Preserve Dexie migrations and edition matching by file hash, not title.
