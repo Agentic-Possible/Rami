@@ -91,6 +91,8 @@ async function relay(
   if (request.method !== 'POST') {
     return errorResponse(405, 'Use POST.')
   }
+  // Secrets pasted by hand can carry stray whitespace; a blank one is no key.
+  apiKey = apiKey.trim()
   if (!apiKey || !enabled) {
     return errorResponse(503, 'This deployment has no inference key configured.')
   }

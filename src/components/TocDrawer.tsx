@@ -1,63 +1,47 @@
 import type { NavItem } from 'epubjs'
 import type { ReaderTheme } from '../db/types'
 import { THEMES } from '../lib/themes'
-import { useModal } from '../lib/useModal'
-import { CloseIcon } from './Icons'
+import ReaderPanel from './ReaderPanel'
 
 export default function TocDrawer({
   toc,
   theme,
+  bookTitle,
   currentChapterHref,
   onSelect,
   onClose,
 }: {
   toc: NavItem[]
   theme: ReaderTheme
+  bookTitle?: string
   /** Exact TOC href of the current chapter, anchor included. */
   currentChapterHref?: string
   onSelect: (href: string) => void
   onClose: () => void
 }) {
   const palette = THEMES[theme]
-  const ref = useModal<HTMLElement>(onClose)
 
   return (
-    <div className="fixed inset-0 z-40 flex">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden />
-      <aside
-        ref={ref}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Table of contents"
-        className={`relative flex h-full w-[85%] max-w-sm flex-col ${palette.chrome} ${palette.chromeText} shadow-2xl`}
-      >
-        <header
-          className={`pt-safe flex items-center justify-between border-b px-4 pb-3 ${palette.border}`}
-        >
-          <h2 className="text-sm font-semibold tracking-wide uppercase opacity-60">Contents</h2>
-          <button
-            onClick={onClose}
-            aria-label="Close contents"
-            className="-m-2 flex h-11 w-11 shrink-0 items-center justify-center opacity-70"
-          >
-            <CloseIcon />
-          </button>
-        </header>
-
-        <nav className="flex-1 overflow-y-auto overscroll-contain px-2 py-2">
-          {toc.length === 0 && (
-            <p className="px-2 py-4 text-sm opacity-60">This book has no table of contents.</p>
-          )}
-          <TocList
-            items={toc}
-            depth={0}
-            currentChapterHref={currentChapterHref}
-            palette={palette}
-            onSelect={onSelect}
-          />
-        </nav>
-      </aside>
-    </div>
+    <ReaderPanel
+      theme={theme}
+      label="Table of contents"
+      eyebrow={bookTitle}
+      title="Contents"
+      onClose={onClose}
+    >
+      <nav className="flex-1 overflow-y-auto overscroll-contain p-3 pb-safe">
+        {toc.length === 0 && (
+          <p className="px-3 py-4 text-sm opacity-60">This book has no table of contents.</p>
+        )}
+        <TocList
+          items={toc}
+          depth={0}
+          currentChapterHref={currentChapterHref}
+          palette={palette}
+          onSelect={onSelect}
+        />
+      </nav>
+    </ReaderPanel>
   )
 }
 
@@ -82,17 +66,30 @@ function TocList({
           <li key={`${item.href}-${i}`}>
             <button
               onClick={() => item.href && onSelect(item.href)}
-              style={{ paddingLeft: `${0.75 + depth * 0.9}rem` }}
-              className={`w-full rounded-md py-2.5 pr-3 text-left text-sm leading-snug ${
-                isCurrent ? 'font-semibold' : 'opacity-80'
-              }`}
+              aria-current={isCurrent ? 'location' : undefined}
+              style={{
+                paddingLeft: `${0.75 + depth * 0.9}rem`,
+                background: isCurrent
+                  ? `color-mix(in srgb, ${palette.link} 9%, transparent)`
+                  : undefined,
+              }}
+              className="flex w-full items-center gap-3 rounded-lg py-3 pr-3 text-left transition hover:bg-current/5"
             >
               <span
-                style={isCurrent ? { color: palette.link } : undefined}
-                className="line-clamp-2"
+                className={`line-clamp-2 flex-1 font-serif leading-snug ${
+                  depth === 0 ? 'text-[15px] font-medium' : 'text-sm opacity-80'
+                }`}
               >
                 {item.label?.trim() || 'Untitled'}
               </span>
+              {isCurrent && (
+                <small
+                  className="shrink-0 text-[9px] font-semibold tracking-wider uppercase"
+                  style={{ color: palette.link }}
+                >
+                  Reading now
+                </small>
+              )}
             </button>
             {item.subitems && item.subitems.length > 0 && (
               <TocList

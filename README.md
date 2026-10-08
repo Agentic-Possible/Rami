@@ -14,7 +14,7 @@ Milestones M1 to M5 from `epub-chat-reader-plan.md` are implemented and verified
 | --- | --- |
 | M1 Library | EPUB import, OPF metadata + cover extraction, library grid, delete with cascade |
 | M2 Reader | Paginated epub.js rendition, position persistence, TOC, themes, font size |
-| M3 Highlights | Selection action bar, four colours, painted annotations, tap a highlight to reopen its chat, per-book list |
+| M3 Highlights | Selection action bar, one highlight colour set in Settings, painted annotations, tap a highlight to reopen its chat, per-book list |
 | M4 Chat | Hosted relay or own OpenAI key, context assembly, streaming replies, persisted conversations |
 | M5 Memory | Rolling per-book digest injected into every new conversation, readable and editable under the reader's Memory tab |
 

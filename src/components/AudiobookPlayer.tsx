@@ -333,7 +333,7 @@ export default function AudiobookPlayer({ token, theme, hidden, initialPosition,
   return (
     <section
       aria-label="Audiobook player"
-      className={`no-select absolute inset-x-3 bottom-16 z-40 rounded-xl border p-3 shadow-2xl ${palette.chrome} ${palette.chromeText} ${palette.border} ${hidden ? 'hidden' : ''}`}
+      className={`no-select absolute inset-x-3 bottom-16 z-40 mx-auto max-w-xl rounded-2xl border p-3 shadow-[0_16px_44px_rgba(30,30,24,0.18)] ${palette.chrome} ${palette.chromeText} ${palette.border} ${hidden ? 'hidden' : ''}`}
     >
       <div className="mb-3 flex items-start gap-2">
         <div className="min-w-0 flex-1">
@@ -358,7 +358,7 @@ export default function AudiobookPlayer({ token, theme, hidden, initialPosition,
           Add your personal audiobook token in Settings, then reopen the player.
         </p>
       ) : error ? (
-        <p className="text-sm text-red-500">{error}</p>
+        <p className="text-sm text-[#b4483a]">{error}</p>
       ) : audioUrl && metadata && activeChapter ? (
         <>
           <audio
@@ -434,7 +434,7 @@ export default function AudiobookPlayer({ token, theme, hidden, initialPosition,
           </label>
           <input
             id="audiobook-progress"
-            className="h-7 w-full accent-amber-500"
+            className="h-7 w-full accent-rust"
             type="range"
             min="0"
             max={chapterDuration}
@@ -482,7 +482,7 @@ export default function AudiobookPlayer({ token, theme, hidden, initialPosition,
             </button>
             <button
               type="button"
-              className={`${controlClass} rounded-full bg-amber-500 text-lg text-stone-950`}
+              className={`${controlClass} rounded-full border-transparent bg-olive text-lg text-white`}
               aria-label={isPlaying ? 'Pause audiobook' : 'Play audiobook'}
               onClick={togglePlayback}
             >

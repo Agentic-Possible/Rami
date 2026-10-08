@@ -120,8 +120,8 @@ export default function KoreaderImport() {
 
   return (
     <section>
-      <h2 className="text-sm font-semibold">Import from KOReader</h2>
-      <p className="mt-1 text-sm text-stone-400">
+      <h2 className="font-serif text-lg font-medium">Import from KOReader</h2>
+      <p className="mt-1 text-sm text-muted">
         Highlights made on an e-reader running KOReader, brought in through the Marginalia plugin's
         export file. Each passage is found again by its text, so the import needs the same EPUB file
         that is on the e-reader.
@@ -142,13 +142,13 @@ export default function KoreaderImport() {
       <button
         onClick={() => input.current?.click()}
         disabled={phase.name === 'working'}
-        className="mt-3 rounded-lg border border-stone-700 px-4 py-2 text-sm font-medium disabled:opacity-50"
+        className="mt-3 rounded-full border border-line px-4 py-2 text-sm font-semibold transition hover:bg-ink/5 disabled:opacity-50"
       >
         {phase.name === 'working' ? 'Importing…' : 'Choose an export file'}
       </button>
 
       {phase.name === 'working' && <Working phase={phase} />}
-      {phase.name === 'error' && <p className="mt-3 text-sm text-red-300">{phase.message}</p>}
+      {phase.name === 'error' && <p className="mt-3 text-sm text-[#a33a2c]">{phase.message}</p>}
       {phase.name === 'done' && <Summary result={phase.result} handoff={phase.handoff} />}
     </section>
   )
@@ -160,7 +160,7 @@ function Working({ phase }: { phase: Extract<Phase, { name: 'working' }> }) {
     progress && progress.total > 0 ? Math.round((progress.done / progress.total) * 100) : undefined
 
   return (
-    <p className="mt-3 text-sm text-stone-400" aria-live="polite">
+    <p className="mt-3 text-sm text-muted" aria-live="polite">
       {phase.label}
       {percent !== undefined && ` ${percent}%`}
     </p>
@@ -176,7 +176,7 @@ function Summary({ result, handoff }: { result: ImportResult; handoff: Handoff }
 
   return (
     <div className="mt-3 space-y-2 text-sm" aria-live="polite">
-      <p className="text-emerald-300">
+      <p className="text-olive">
         {nothingNew
           ? `Nothing new — “${handoff.title}” was already up to date.`
           : `Imported ${added} ${added === 1 ? 'highlight' : 'highlights'}${
@@ -189,33 +189,33 @@ function Summary({ result, handoff }: { result: ImportResult; handoff: Handoff }
       </p>
 
       {result.messagesAdded > 0 && (
-        <p className="text-stone-400">
+        <p className="text-muted">
           {result.messagesAdded} new {result.messagesAdded === 1 ? 'turn' : 'turns'} added to
           conversations you already had.
         </p>
       )}
 
       {(result.highlightsSkipped > 0 || result.threadsSkipped > 0) && (
-        <p className="text-stone-400">
+        <p className="text-muted">
           {result.highlightsSkipped + result.threadsSkipped} already here, left alone.
         </p>
       )}
 
       {result.rejected.length > 0 && (
-        <details className="rounded-lg border border-stone-800 p-3">
-          <summary className="cursor-pointer text-amber-300">
+        <details className="rounded-lg border border-ink/10 p-3">
+          <summary className="cursor-pointer text-rust">
             {result.rejected.length} {result.rejected.length === 1 ? 'passage' : 'passages'} could
             not be placed in this edition
           </summary>
           <ul className="mt-2 space-y-2">
             {result.rejected.map((rejection, index) => (
-              <li key={index} className="text-stone-400">
-                <span className="line-clamp-2 text-stone-300">“{rejection.text}”</span>
+              <li key={index} className="text-muted">
+                <span className="line-clamp-2 text-ink/80">“{rejection.text}”</span>
                 <span className="text-xs">{REJECTION_REASONS[rejection.failure]}</span>
               </li>
             ))}
           </ul>
-          <p className="mt-2 text-xs text-stone-500">
+          <p className="mt-2 text-xs text-muted">
             These are still in the export file, which is the record of them. They are left out here
             rather than added without a position, because a highlight that cannot be opened in the
             book is a dead end in every screen that lists it.
