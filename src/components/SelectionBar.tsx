@@ -1,13 +1,11 @@
-import type { ReaderTheme } from '../db/types'
 import type { SelectionRect } from '../lib/highlights'
-import { THEMES } from '../lib/themes'
 import { ChatIcon, TrashIcon } from './Icons'
+import { button, iconButton } from './ui'
 
-const BAR_HEIGHT = 68
+const BAR_HEIGHT = 70
 
 export default function SelectionBar({
   rect,
-  theme,
   existing,
   onChat,
   onCopy,
@@ -15,7 +13,6 @@ export default function SelectionBar({
   onDismiss,
 }: {
   rect: SelectionRect
-  theme: ReaderTheme
   /** Set when the bar was opened by tapping an existing highlight. */
   existing?: boolean
   onChat: () => void
@@ -23,8 +20,6 @@ export default function SelectionBar({
   onDelete?: () => void
   onDismiss: () => void
 }) {
-  const palette = THEMES[theme]
-
   // Prefer sitting above the selection; drop below when it would clip the top.
   const above = rect.top > BAR_HEIGHT + 60
   const top = above ? rect.top - BAR_HEIGHT - 8 : rect.bottom + 12
@@ -36,32 +31,24 @@ export default function SelectionBar({
         role="toolbar"
         aria-label="Selection actions"
         style={{ top: Math.max(8, top) }}
-        className={`no-select fixed inset-x-3 z-50 mx-auto max-w-md rounded-2xl border shadow-[0_16px_44px_rgba(30,30,24,0.22)] ${palette.chrome} ${palette.chromeText} ${palette.border}`}
+        className="no-select fixed inset-x-3 z-50 mx-auto flex max-w-[420px] items-center gap-2 rounded-lg border border-rule bg-paper-leaf p-3 text-ink shadow-sheet"
       >
-        <div className="flex items-center gap-2 p-3">
-          {existing && onDelete && (
-            <button
-              onClick={onDelete}
-              aria-label="Delete highlight"
-              className={`grid h-11 w-11 shrink-0 place-items-center rounded-full border ${palette.border}`}
-            >
-              <TrashIcon className="h-4 w-4" />
-            </button>
-          )}
+        {existing && onDelete && (
           <button
-            onClick={onChat}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-olive py-2.5 text-sm font-semibold text-white"
+            onClick={onDelete}
+            aria-label="Delete highlight"
+            className={`${iconButton} border border-rule-strong`}
           >
-            <ChatIcon className="h-4 w-4" />
-            Chat about this
+            <TrashIcon />
           </button>
-          <button
-            onClick={onCopy}
-            className={`rounded-full border px-4 py-2.5 text-sm font-semibold ${palette.border}`}
-          >
-            Copy
-          </button>
-        </div>
+        )}
+        <button onClick={onChat} className={`${button.primary} flex-1`}>
+          <ChatIcon />
+          Ask about this
+        </button>
+        <button onClick={onCopy} className={button.secondary}>
+          Copy
+        </button>
       </div>
     </>
   )

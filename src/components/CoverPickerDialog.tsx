@@ -11,9 +11,8 @@ import {
 import { readEpubCover } from '../lib/epub'
 import { useBlobUrl } from '../lib/useBlobUrl'
 import { useModal } from '../lib/useModal'
-
-const SECONDARY_BUTTON =
-  'rounded-full border border-line px-3.5 py-2 text-xs font-medium text-muted transition hover:bg-ink/5 hover:text-ink disabled:opacity-50'
+import { button, iconButton } from './ui'
+import { CloseIcon } from './Icons'
 
 /** What is being saved: a cover id, an uploaded image, or the EPUB's own cover. */
 type Saving = number | 'upload' | 'restore'
@@ -121,7 +120,7 @@ export default function CoverPickerDialog({ book, onClose }: { book: Book; onClo
       role="presentation"
     >
       <div
-        className="absolute inset-0 bg-[#1d1e19]/45 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-scrim backdrop-blur-[2px]"
         onClick={onClose}
         aria-hidden
       />
@@ -130,14 +129,14 @@ export default function CoverPickerDialog({ book, onClose }: { book: Book; onClo
         role="dialog"
         aria-modal="true"
         aria-labelledby="cover-picker-title"
-        className="relative max-h-[88vh] w-full overflow-y-auto rounded-t-[20px] border border-line bg-card p-5 text-ink shadow-[0_24px_60px_rgba(30,30,24,0.25)] sm:max-w-2xl sm:rounded-[20px] sm:p-6"
+        className="relative max-h-[88vh] w-full overflow-y-auto rounded-t-lg border border-rule bg-paper-leaf p-5 text-ink shadow-sheet sm:max-w-2xl sm:rounded-lg sm:p-6"
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h2 id="cover-picker-title" className="font-serif text-xl font-medium">
+            <h2 id="cover-picker-title" className="font-book text-heading font-medium">
               Change cover
             </h2>
-            <p className="truncate text-xs text-muted">
+            <p className="truncate font-ui text-meta text-ink-soft">
               {book.title} · {book.author}
             </p>
           </div>
@@ -146,13 +145,13 @@ export default function CoverPickerDialog({ book, onClose }: { book: Book; onClo
             data-close
             onClick={onClose}
             aria-label="Close"
-            className="-mt-1.5 grid h-11 w-11 shrink-0 place-items-center rounded-full text-2xl leading-none text-muted transition hover:bg-ink/8 hover:text-ink"
+            className={`${iconButton} -mt-1.5`}
           >
-            ×
+            <CloseIcon />
           </button>
         </div>
 
-        <label htmlFor="cover-search" className="eyebrow mt-5 block text-rust">
+        <label htmlFor="cover-search" className="eyebrow mt-5 block">
           Search Open Library
         </label>
         <input
@@ -161,37 +160,39 @@ export default function CoverPickerDialog({ book, onClose }: { book: Book; onClo
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Book title"
-          className="mt-2 w-full rounded-xl border border-line bg-paper px-3.5 py-3 text-base text-ink outline-none placeholder:text-faint focus:border-olive"
+          className="mt-2 w-full min-h-tap w-full rounded-md border border-rule-strong bg-paper px-3.5 font-ui text-control text-ink placeholder:text-ink-faint"
         />
 
         {searchError && (
           <div className="mt-3 flex items-start justify-between gap-3">
-            <p className="text-sm text-rust">{searchError}</p>
+            <p className="font-ui text-meta text-danger">{searchError}</p>
             <button
               type="button"
               onClick={() => setAttempt((n) => n + 1)}
-              className={SECONDARY_BUTTON}
+              className={button.secondary}
             >
               Retry
             </button>
           </div>
         )}
-        {saveError && <p className="mt-3 text-sm text-rust">{saveError}</p>}
+        {saveError && <p className="mt-3 font-ui text-meta text-danger">{saveError}</p>}
 
         <ul aria-busy={searching} className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
           {currentUrl && (
             <li>
-              <div className="relative aspect-2/3 overflow-hidden rounded-[2px_6px_6px_2px] ring-2 ring-olive">
+              <div className="relative aspect-2/3 overflow-hidden rounded-[2px_6px_6px_2px] ring-2 ring-moss">
                 <img src={currentUrl} alt="Current cover" className="h-full w-full object-cover" />
               </div>
-              <p className="mt-1.5 text-center text-[11px] font-semibold text-olive">Current</p>
+              <p className="mt-1.5 text-center font-ui text-caption font-medium text-moss">
+                Current
+              </p>
             </li>
           )}
 
           {searching &&
             Array.from({ length: 6 }, (_, index) => (
               <li key={`placeholder-${index}`} aria-hidden>
-                <div className="aspect-2/3 animate-pulse rounded-[2px_6px_6px_2px] bg-line" />
+                <div className="aspect-2/3 animate-pulse rounded-[2px_6px_6px_2px] bg-rule" />
               </li>
             ))}
 
@@ -203,7 +204,7 @@ export default function CoverPickerDialog({ book, onClose }: { book: Book; onClo
                   disabled={busy}
                   onClick={() => void save(cover.id, (signal) => downloadCover(cover.id, signal))}
                   aria-label={`Use the cover of ${cover.title}${cover.year ? ` (${cover.year})` : ''}`}
-                  className="relative block aspect-2/3 w-full overflow-hidden rounded-[2px_6px_6px_2px] bg-line shadow-[-3px_4px_10px_rgba(47,45,38,0.16)] transition hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-olive disabled:opacity-60"
+                  className="relative block aspect-2/3 w-full overflow-hidden rounded-[2px_6px_6px_2px] bg-rule shadow-book transition hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-moss disabled:opacity-60"
                 >
                   <img
                     src={cover.thumbnailUrl}
@@ -213,30 +214,32 @@ export default function CoverPickerDialog({ book, onClose }: { book: Book; onClo
                     onError={() => setBroken((prev) => new Set(prev).add(cover.id))}
                   />
                   {saving === cover.id && (
-                    <span className="absolute inset-0 grid place-items-center bg-black/45 text-xs font-semibold text-white">
+                    <span className="absolute inset-0 grid place-items-center bg-scrim font-ui text-caption font-medium text-cloth-lettering">
                       Saving…
                     </span>
                   )}
                 </button>
                 {cover.year && (
-                  <p className="mt-1.5 text-center text-[11px] text-faint">{cover.year}</p>
+                  <p className="mt-1.5 text-center font-ui text-caption text-ink-faint">
+                    {cover.year}
+                  </p>
                 )}
               </li>
             ))}
         </ul>
 
         {!searching && !searchError && query.trim().length >= 2 && visible.length === 0 && (
-          <p className="mt-3 text-sm text-muted">
+          <p className="mt-3 font-ui text-meta text-ink-soft">
             No covers found. Try a shorter title, or upload an image.
           </p>
         )}
 
-        <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-line pt-4">
+        <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-rule pt-4">
           <button
             type="button"
             disabled={busy}
             onClick={() => upload.current?.click()}
-            className={SECONDARY_BUTTON}
+            className={button.secondary}
           >
             {saving === 'upload' ? 'Saving…' : 'Upload image'}
           </button>
@@ -245,12 +248,12 @@ export default function CoverPickerDialog({ book, onClose }: { book: Book; onClo
               type="button"
               disabled={busy}
               onClick={() => void restore()}
-              className={SECONDARY_BUTTON}
+              className={button.secondary}
             >
               {saving === 'restore' ? 'Restoring…' : 'Restore original'}
             </button>
           )}
-          <p className="ml-auto text-[11px] text-faint">Covers from Open Library</p>
+          <p className="ml-auto font-ui text-caption text-ink-faint">Covers from Open Library</p>
         </div>
 
         <input

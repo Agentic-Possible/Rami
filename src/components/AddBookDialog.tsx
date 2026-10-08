@@ -7,12 +7,13 @@ import {
   type CatalogBook,
 } from '../lib/gutenberg'
 import { useModal } from '../lib/useModal'
+import { button, iconButton } from './ui'
+import { CloseIcon } from './Icons'
 
 /** How long a search may run before the dialog admits it is being slow. */
 const SLOW_SEARCH_MS = 5_000
 
-const PRIMARY_BUTTON =
-  'shrink-0 rounded-full bg-olive px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-olive-deep disabled:opacity-50'
+const PRIMARY_BUTTON = `${button.primary} shrink-0`
 
 /** Searches Project Gutenberg or hands off to the device file picker. */
 export default function AddBookDialog({
@@ -119,7 +120,7 @@ export default function AddBookDialog({
       role="presentation"
     >
       <div
-        className="absolute inset-0 bg-[#1d1e19]/45 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-scrim backdrop-blur-[2px]"
         onClick={onClose}
         aria-hidden
       />
@@ -128,28 +129,23 @@ export default function AddBookDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="add-book-title"
-        className="relative max-h-[88vh] w-full overflow-y-auto rounded-t-[20px] border border-line bg-card p-5 text-ink shadow-[0_24px_60px_rgba(30,30,24,0.25)] sm:max-w-xl sm:rounded-[20px] sm:p-6"
+        className="relative max-h-[88vh] w-full overflow-y-auto rounded-t-lg border border-rule bg-paper-leaf p-5 text-ink shadow-sheet sm:max-w-xl sm:rounded-lg sm:p-6"
       >
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 id="add-book-title" className="font-serif text-xl font-medium">
+            <h2 id="add-book-title" className="font-book text-heading font-medium">
               Add a book
             </h2>
-            <p className="text-xs text-muted">
+            <p className="font-ui text-meta text-ink-soft">
               Search free public-domain EPUBs or import your own.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="grid h-11 w-11 place-items-center rounded-full text-2xl leading-none text-muted transition hover:bg-ink/8 hover:text-ink"
-          >
-            ×
+          <button type="button" onClick={onClose} aria-label="Close" className={iconButton}>
+            <CloseIcon />
           </button>
         </div>
 
-        <label htmlFor="gutenberg-search" className="eyebrow mt-5 block text-rust">
+        <label htmlFor="gutenberg-search" className="eyebrow mt-5 block">
           Project Gutenberg
         </label>
         <input
@@ -158,15 +154,15 @@ export default function AddBookDialog({
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Search by title or author"
-          className="mt-2 w-full rounded-xl border border-line bg-paper px-3.5 py-3 text-base text-ink outline-none placeholder:text-faint focus:border-olive"
+          className="mt-2 w-full min-h-tap w-full rounded-md border border-rule-strong bg-paper px-3.5 font-ui text-control text-ink placeholder:text-ink-faint"
         />
-        <p className="mt-2 text-xs text-muted">
+        <p className="mt-2 font-ui text-meta text-ink-soft">
           Or paste a book link from{' '}
           <a
             href="https://www.gutenberg.org/ebooks/"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-olive underline underline-offset-2"
+            className="text-moss underline underline-offset-2"
           >
             gutenberg.org
           </a>
@@ -174,10 +170,10 @@ export default function AddBookDialog({
         </p>
 
         {pastedRef && (
-          <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-line bg-paper/60 p-3">
+          <div className="mt-3 flex items-center justify-between gap-3 rounded-md border border-rule bg-paper/60 p-3">
             <div className="min-w-0">
               <p className="text-sm font-medium">Project Gutenberg #{pastedRef.id}</p>
-              <p className="mt-0.5 text-xs text-muted">
+              <p className="mt-0.5 font-ui text-meta text-ink-soft">
                 {pastedRef.source === 'url'
                   ? 'From the link you pasted.'
                   : 'Add this book id directly.'}
@@ -195,7 +191,7 @@ export default function AddBookDialog({
         )}
 
         {searching && (
-          <p className="mt-3 text-sm text-muted">
+          <p className="mt-3 font-ui text-meta text-ink-soft">
             {slow
               ? 'Still searching. Project Gutenberg is slow right now…'
               : 'Searching Project Gutenberg…'}
@@ -203,29 +199,31 @@ export default function AddBookDialog({
         )}
         {searchError && (
           <div className="mt-3 flex items-start justify-between gap-3">
-            <p className="text-sm text-rust">{searchError}</p>
+            <p className="font-ui text-meta text-danger">{searchError}</p>
             <button
               type="button"
               onClick={() => setAttempt((n) => n + 1)}
-              className="shrink-0 rounded-full border border-line px-3 py-1 text-xs font-medium text-muted transition hover:bg-ink/5 hover:text-ink"
+              className={`${button.secondary} shrink-0`}
             >
               Retry
             </button>
           </div>
         )}
-        {addError && <p className="mt-3 text-sm text-rust">{addError}</p>}
+        {addError && <p className="mt-3 font-ui text-meta text-danger">{addError}</p>}
         {!searching &&
           !pastedRef &&
           query.trim().length >= 2 &&
           !searchError &&
-          results.length === 0 && <p className="mt-3 text-sm text-muted">No books found.</p>}
+          results.length === 0 && (
+            <p className="mt-3 font-ui text-meta text-ink-soft">No books found.</p>
+          )}
 
         {results.length > 0 && (
-          <ul className="mt-3 divide-y divide-line rounded-xl border border-line bg-paper/60">
+          <ul className="mt-3 divide-y divide-rule rounded-md border border-rule bg-paper/60">
             {results.map((book) => (
               <li key={book.id} className="flex gap-3 p-3">
-                <div className="relative h-20 w-14 shrink-0 overflow-hidden rounded bg-line">
-                  <span className="absolute inset-0 flex items-center justify-center px-1 text-center text-[10px] text-faint">
+                <div className="relative h-20 w-14 shrink-0 overflow-hidden rounded bg-rule">
+                  <span className="absolute inset-0 flex items-center justify-center px-1 text-center font-ui text-caption text-ink-faint">
                     No cover
                   </span>
                   <img
@@ -240,13 +238,15 @@ export default function AddBookDialog({
                   />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="line-clamp-2 font-serif text-[15px] leading-snug font-medium">
+                  <p className="line-clamp-2 font-book text-[15px] leading-snug font-medium">
                     {book.title}
                   </p>
-                  <p className="mt-0.5 line-clamp-1 text-xs text-muted">{book.author}</p>
+                  <p className="mt-0.5 line-clamp-1 font-ui text-meta text-ink-soft">
+                    {book.author}
+                  </p>
                   <div className="mt-2 flex items-center justify-between gap-2">
                     {/* Editions often share a title; the number tells them apart. */}
-                    <span className="text-[11px] text-faint">#{book.id}</span>
+                    <span className="font-ui text-caption text-ink-faint">#{book.id}</span>
                     <button
                       type="button"
                       disabled={addingId !== undefined}
@@ -262,20 +262,22 @@ export default function AddBookDialog({
           </ul>
         )}
 
-        <div className="my-5 flex items-center gap-3 text-xs text-faint">
-          <div className="h-px flex-1 bg-line" />
+        <div className="my-5 flex items-center gap-3 font-ui text-caption text-ink-faint">
+          <div className="h-px flex-1 bg-rule" />
           or
-          <div className="h-px flex-1 bg-line" />
+          <div className="h-px flex-1 bg-rule" />
         </div>
 
         <button
           type="button"
           onClick={onChooseFile}
-          className="w-full rounded-xl border border-line bg-paper px-4 py-3 text-sm font-medium transition hover:bg-ink/5"
+          className="w-full rounded-md border border-rule bg-paper px-4 py-3 text-sm font-medium transition hover:bg-paper-sunk"
         >
           Choose an EPUB from this device
         </button>
-        <p className="mt-2 text-center text-xs text-faint">Books stay stored on this device.</p>
+        <p className="mt-2 text-center font-ui text-caption text-ink-faint">
+          Books stay stored on this device.
+        </p>
       </section>
     </div>
   )

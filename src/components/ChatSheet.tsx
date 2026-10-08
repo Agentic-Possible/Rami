@@ -2,13 +2,12 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, getSettings } from '../db/db'
-import type { ReaderTheme } from '../db/types'
 import { newId } from '../lib/id'
 import { InferenceError, streamChat, targetFor } from '../lib/inference'
 import { buildMessages } from '../lib/prompt'
 import { getBookMemory, updateBookMemory } from '../lib/memory'
-import { THEMES } from '../lib/themes'
 import ReaderPanel from './ReaderPanel'
+import Passage from './Passage'
 import { SendIcon } from './Icons'
 
 /** Breathing room left above the pinned question, in pixels. */
@@ -16,14 +15,11 @@ const ANCHOR_GAP = 12
 
 export default function ChatSheet({
   conversationId,
-  theme,
   onClose,
 }: {
   conversationId: string
-  theme: ReaderTheme
   onClose: () => void
 }) {
-  const palette = THEMES[theme]
   const [draft, setDraft] = useState('')
   const [streaming, setStreaming] = useState('')
   const [busy, setBusy] = useState(false)
@@ -194,11 +190,10 @@ export default function ChatSheet({
 
   return (
     <ReaderPanel
-      theme={theme}
-      label={conversation?.title ?? 'Conversation'}
+      label={conversation?.title ?? 'Thread'}
       eyebrow={conversation?.chapter}
-      title="Marginalia"
-      closeLabel="Close chat"
+      title="Thread"
+      closeLabel="Close thread"
       // Land on the composer: opening a chat to ask something and having to tab
       // past the close button first is the wrong default.
       initialFocus="textarea"
@@ -206,19 +201,17 @@ export default function ChatSheet({
       onClose={onClose}
     >
       {conversation?.seedText && (
-        <blockquote
-          className="mx-5 mt-5 shrink-0 border-l-2 bg-[#b79671]/10 p-4"
-          style={{ borderColor: '#b8866f' }}
+        <Passage
+          className="mx-5 mt-5 shrink-0"
+          clamp
+          cite={
+            conversation.progress !== undefined
+              ? `${Math.round(conversation.progress * 100)}% through the book`
+              : undefined
+          }
         >
-          <p className="line-clamp-4 font-serif text-sm leading-relaxed italic">
-            “{conversation.seedText}”
-          </p>
-          {conversation.progress !== undefined && (
-            <span className="mt-2 block text-[10px] opacity-55">
-              Highlight · {Math.round(conversation.progress * 100)}% through
-            </span>
-          )}
-        </blockquote>
+          {conversation.seedText}
+        </Passage>
       )}
 
       <div
@@ -230,8 +223,8 @@ export default function ChatSheet({
         className="flex-1 space-y-4 overflow-y-auto overscroll-contain p-5"
       >
         {messages?.length === 0 && !streaming && (
-          <p className="mt-6 text-center text-sm opacity-50">
-            Ask about this passage, or just say what you think.
+          <p className="mt-6 text-center font-book text-body text-ink-soft">
+            Wonder aloud about this passage, or say what struck you.
           </p>
         )}
 
@@ -243,10 +236,12 @@ export default function ChatSheet({
 
         {streaming && <Bubble role="assistant">{streaming}</Bubble>}
 
-        {busy && !streaming && <p className="text-sm opacity-50">Thinking…</p>}
+        {busy && !streaming && (
+          <p className="font-book text-body text-ink-faint italic">Following the thread…</p>
+        )}
 
         {error && (
-          <div className="rounded-xl border border-[#b4483a]/30 bg-[#b4483a]/8 p-3 text-sm">
+          <div className="rounded-md border border-danger bg-paper p-3 font-ui text-meta text-danger">
             {error}
             {error.includes('Settings') && (
               <>
@@ -261,7 +256,7 @@ export default function ChatSheet({
       </div>
 
       <form
-        className={`mx-4 mb-[max(1rem,env(safe-area-inset-bottom))] flex shrink-0 items-end gap-2 rounded-2xl border bg-white/25 p-2 pl-3 ${palette.border}`}
+        className="mx-4 mb-[max(1rem,env(safe-area-inset-bottom))] flex shrink-0 items-end gap-2 rounded-lg border border-rule-strong bg-paper-leaf py-1.5 pr-1.5 pl-3.5 shadow-leaf focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus"
         onSubmit={(e) => {
           e.preventDefault()
           void send(draft)
@@ -277,15 +272,15 @@ export default function ChatSheet({
             }
           }}
           rows={1}
-          placeholder="Ask about this passage…"
-          aria-label="Ask about this passage"
-          className="max-h-32 min-h-11 flex-1 resize-none bg-transparent py-2.5 text-sm outline-none placeholder:opacity-55"
+          placeholder={messages?.length ? 'Keep going…' : 'What caught your eye?'}
+          aria-label="Your note"
+          className="max-h-32 min-h-8 flex-1 resize-none bg-transparent py-2 font-ui text-control text-ink outline-none placeholder:text-ink-faint focus-visible:outline-none"
         />
         <button
           type="submit"
           disabled={!draft.trim() || busy}
           aria-label="Send"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-olive text-white transition disabled:opacity-35"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-moss text-on-moss transition-colors duration-150 hover:bg-moss-deep disabled:opacity-45"
         >
           <SendIcon className="h-4.5 w-4.5" />
         </button>
@@ -295,27 +290,26 @@ export default function ChatSheet({
 }
 
 function Bubble({ id, role, children }: { id?: string; role: string; children: React.ReactNode }) {
-  const isUser = role === 'user'
-
-  if (isUser) {
+  if (role === 'user') {
     return (
       <div data-message={id} className="flex justify-end">
-        <p className="max-w-[85%] rounded-[13px_13px_3px_13px] bg-olive px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap text-white">
+        <p className="max-w-[85%] rounded-[8px_8px_3px_8px] bg-moss px-3.5 py-2.5 font-book text-[17px] leading-[25px] whitespace-pre-wrap text-on-moss">
           {children}
         </p>
       </div>
     )
   }
 
+  // Set like the book's own prose, not in a bubble: a marginal note beside the sprig.
   return (
-    <div data-message={id} className="flex items-start gap-2.5">
+    <div data-message={id} className="flex max-w-reading items-start gap-3">
       <span
         aria-hidden
-        className="grid h-6 w-6 shrink-0 place-items-center rounded-[50%_50%_50%_7px] bg-rust font-serif text-[11px] text-white"
+        className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-paper-sunk text-[15px] leading-none"
       >
-        M
+        🌿
       </span>
-      <p className="min-w-0 flex-1 text-sm leading-[1.7] whitespace-pre-wrap">{children}</p>
+      <p className="mt-0.5 min-w-0 flex-1 font-book text-body whitespace-pre-wrap">{children}</p>
     </div>
   )
 }

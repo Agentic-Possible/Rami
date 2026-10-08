@@ -23,7 +23,9 @@ import SelectionBar from '../components/SelectionBar'
 import ChatSheet from '../components/ChatSheet'
 import AudiobookPlayer from '../components/AudiobookPlayer'
 import RemoveBookDialog from '../components/RemoveBookDialog'
+import Ribbon from '../components/Ribbon'
 import { BackIcon, ChatIcon, HeadphonesIcon, ListIcon, TypeIcon } from '../components/Icons'
+import { iconButton } from '../components/ui'
 import { isTwilightOfTheIdols } from '../lib/audiobooks'
 
 /** A pending selection, or an existing highlight the reader tapped. */
@@ -79,10 +81,7 @@ export default function ReaderPage() {
   const percent = Math.round((reader.location?.progress ?? book?.progress ?? 0) * 100)
   const isDark = settings.theme === 'dark'
   const highlightColor = settings.highlightColor
-  const activeStyle = {
-    color: palette.link,
-    background: `color-mix(in srgb, ${palette.link} 10%, transparent)`,
-  }
+  const activeClass = 'bg-paper-sunk text-ink'
   const chatCount =
     useLiveQuery(
       () => (bookId ? db.conversations.where('bookId').equals(bookId).count() : 0),
@@ -245,7 +244,7 @@ export default function ReaderPage() {
     return (
       <CenteredNote>
         That book is not in your library.{' '}
-        <Link to="/" className="text-rust underline underline-offset-2">
+        <Link to="/" className="text-rubric underline underline-offset-2">
           Back to library
         </Link>
       </CenteredNote>
@@ -256,7 +255,7 @@ export default function ReaderPage() {
       <CenteredNote>
         “{book.title}” was removed from your library. Import the EPUB again to keep reading, or open
         its{' '}
-        <Link to={`/book/${book.id}/chats`} className="text-rust underline underline-offset-2">
+        <Link to={`/book/${book.id}/chats`} className="text-rubric underline underline-offset-2">
           conversations and memory
         </Link>
         .
@@ -266,11 +265,11 @@ export default function ReaderPage() {
 
   return (
     <div
-      className="relative h-full overflow-hidden"
-      style={{ background: palette.bg, color: palette.fg }}
+      data-theme={palette.dataTheme}
+      className="relative h-full overflow-hidden bg-paper text-ink"
     >
       <header
-        className={`pt-safe no-select absolute inset-x-0 top-0 z-30 border-b transition-all duration-200 ${palette.chrome} ${palette.border} ${chromeClasses}`}
+        className={`pt-safe no-select absolute inset-x-0 top-0 z-30 border-b border-rule bg-paper transition-all duration-300 ease-out motion-reduce:translate-y-0 ${chromeClasses}`}
       >
         <div className="grid h-14 grid-cols-[1fr_auto] items-center gap-2 px-2.5 sm:h-[70px] sm:grid-cols-[1fr_auto_1fr] sm:px-6">
           <div className="flex min-w-0 items-center gap-1">
@@ -278,17 +277,14 @@ export default function ReaderPage() {
               <BackIcon />
             </Link>
             <div className="ml-1 min-w-0">
-              <p className="truncate font-serif text-[15px] font-medium">{book.title}</p>
-              <p className="truncate text-[11px]" style={{ color: palette.muted }}>
-                {book.author}
+              <p className="truncate font-book text-[17px] leading-[22px] font-medium">
+                {book.title}
               </p>
+              <p className="truncate font-ui text-meta text-ink-soft">{book.author}</p>
             </div>
           </div>
           {reader.location?.chapter && (
-            <p
-              className="hidden max-w-[28vw] truncate text-[10px] font-semibold tracking-[0.17em] uppercase sm:block"
-              style={{ color: palette.muted }}
-            >
+            <p className="eyebrow hidden max-w-[28vw] truncate sm:block">
               {reader.location.chapter}
             </p>
           )}
@@ -301,8 +297,7 @@ export default function ReaderPage() {
                 }}
                 aria-label={audiobookOpen ? 'Hide audiobook controls' : 'Show audiobook controls'}
                 aria-pressed={audiobookOpen}
-                className={iconButton}
-                style={audiobookOpen ? activeStyle : undefined}
+                className={`${iconButton} ${audiobookOpen ? activeClass : ''}`}
               >
                 <HeadphonesIcon />
               </button>
@@ -310,30 +305,28 @@ export default function ReaderPage() {
             <button
               onClick={() => setPanel('display')}
               aria-label="Reader settings"
-              className={iconButton}
-              style={panel === 'display' ? activeStyle : undefined}
+              className={`${iconButton} ${panel === 'display' ? activeClass : ''}`}
             >
               <TypeIcon />
             </button>
             <button
               onClick={() => setPanel('toc')}
               aria-label="Table of contents"
-              className={iconButton}
-              style={panel === 'toc' ? activeStyle : undefined}
+              className={`${iconButton} ${panel === 'toc' ? activeClass : ''}`}
             >
               <ListIcon />
             </button>
             <Link
               to={`/book/${book.id}/chats`}
-              aria-label="Conversations and highlights"
-              className={`relative ml-1 flex h-10 items-center gap-2 rounded-full text-xs font-semibold sm:border sm:px-3.5 ${palette.border}`}
+              aria-label="Threads and highlights"
+              className="relative ml-1 flex min-h-tap items-center gap-2 rounded-md font-ui text-label font-medium text-ink transition-colors duration-150 hover:bg-paper-sunk sm:border sm:border-rule-strong sm:px-3.5"
             >
-              <span className="grid h-10 w-10 place-items-center sm:contents">
-                <ChatIcon className="h-[18px] w-[18px]" />
+              <span className="grid h-11 w-11 place-items-center text-ink-soft sm:contents">
+                <ChatIcon className="h-5 w-5" />
               </span>
-              <span className="hidden sm:inline">Marginalia</span>
+              <span className="hidden sm:inline">Threads</span>
               {chatCount > 0 && (
-                <span className="absolute top-0.5 right-0.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-rust px-1 text-[10px] text-white sm:static">
+                <span className="absolute top-0.5 right-0.5 grid h-[18px] min-w-[18px] place-items-center rounded-sm bg-rubric px-1 font-ui text-caption font-medium text-paper-leaf sm:static">
                   {chatCount}
                 </span>
               )}
@@ -353,58 +346,41 @@ export default function ReaderPage() {
           onClick={side === 'prev' ? reader.prev : reader.next}
           tabIndex={-1}
           aria-hidden
-          className={`no-select absolute inset-y-0 z-20 hidden w-[calc((100%-760px)/2)] items-center font-serif text-[32px] font-light min-[761px]:flex ${
+          className={`no-select absolute inset-y-0 z-20 hidden w-[calc((100%-760px)/2)] items-center font-book text-[32px] text-ink-faint transition-colors duration-150 hover:text-ink-soft min-[761px]:flex ${
             side === 'prev' ? 'left-0 justify-end pr-6' : 'right-0 justify-start pl-6'
           }`}
-          style={{ color: palette.muted }}
         >
           {side === 'prev' ? '‹' : '›'}
         </button>
       ))}
 
       {!reader.ready && !reader.error && (
-        <div
-          className="pointer-events-none absolute inset-0 flex items-center justify-center"
-          style={{ background: palette.bg }}
-        >
-          <p className="text-sm opacity-60">Opening “{book.title}”…</p>
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-paper">
+          <p className="font-book text-body text-ink-soft italic">Opening “{book.title}”…</p>
         </div>
       )}
 
       {reader.error && (
-        <div
-          className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center"
-          style={{ background: palette.bg }}
-        >
-          <p className="text-sm opacity-80">{reader.error}</p>
-          <Link to="/" className="text-sm underline" style={{ color: palette.link }}>
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-paper p-6 text-center">
+          <p className="max-w-reading font-book text-body text-danger">{reader.error}</p>
+          <Link to="/" className="font-ui text-label text-moss underline underline-offset-2">
             Back to library
           </Link>
         </div>
       )}
 
       <footer
-        className={`pb-safe no-select absolute inset-x-0 bottom-0 z-30 border-t transition-all duration-200 ${palette.chrome} ${palette.border} ${
+        className={`pb-safe no-select absolute inset-x-0 bottom-0 z-30 border-t border-rule bg-paper transition-all duration-300 ease-out motion-reduce:translate-y-0 ${
           chromeVisible ? 'opacity-100' : 'pointer-events-none translate-y-full opacity-0'
         }`}
       >
-        <div
-          className="flex items-center justify-center gap-3 px-2 text-[11px]"
-          style={{ color: palette.muted }}
-        >
+        <div className="flex items-center justify-center gap-3 px-2">
           <button onClick={reader.prev} aria-label="Previous page" className={pageTurn}>
-            <BackIcon className="h-4 w-4" />
+            <BackIcon className="h-[18px] w-[18px]" />
           </button>
-          <span className="w-9 text-right tabular-nums">{percent}%</span>
-          <div className="h-0.5 w-28 overflow-hidden rounded bg-current/20 sm:w-40">
-            <div
-              className="h-full transition-[width] duration-300"
-              style={{ width: `${percent}%`, background: palette.link }}
-            />
-          </div>
-          <span className="w-9" aria-hidden />
+          <Ribbon progress={percent} className="w-40 sm:w-56" />
           <button onClick={reader.next} aria-label="Next page" className={pageTurn}>
-            <BackIcon className="h-4 w-4 rotate-180" />
+            <BackIcon className="h-[18px] w-[18px] rotate-180" />
           </button>
         </div>
       </footer>
@@ -412,7 +388,6 @@ export default function ReaderPage() {
       {active && (
         <SelectionBar
           rect={active.rect}
-          theme={settings.theme}
           existing={Boolean(active.highlight)}
           onChat={() => void startChat()}
           onCopy={() => void copySelection()}
@@ -427,7 +402,6 @@ export default function ReaderPage() {
       {audiobookStarted && (
         <AudiobookPlayer
           token={settings.audiobookAccessToken}
-          theme={settings.theme}
           hidden={!audiobookOpen}
           initialPosition={settings.audiobookPositionSeconds ?? 0}
           onHide={() => setAudiobookOpen(false)}
@@ -438,7 +412,6 @@ export default function ReaderPage() {
         <TocDrawer
           toc={reader.toc}
           bookTitle={book.title}
-          theme={settings.theme}
           currentChapterHref={reader.location?.chapterHref}
           onSelect={(href) => {
             reader.goTo(href)
@@ -448,13 +421,7 @@ export default function ReaderPage() {
         />
       )}
 
-      {chatId && (
-        <ChatSheet
-          conversationId={chatId}
-          theme={settings.theme}
-          onClose={() => setChatId(undefined)}
-        />
-      )}
+      {chatId && <ChatSheet conversationId={chatId} onClose={() => setChatId(undefined)} />}
 
       {panel === 'display' && (
         <DisplaySheet
@@ -475,7 +442,6 @@ export default function ReaderPage() {
       {removing && (
         <RemoveBookDialog
           book={book}
-          theme={settings.theme}
           onCancel={() => setRemoving(false)}
           onRemove={async (choice) => {
             if (choice === 'keep') await archiveBook(book.id)
@@ -490,14 +456,12 @@ export default function ReaderPage() {
   )
 }
 
-const iconButton =
-  'grid h-10 w-10 shrink-0 place-items-center rounded-full transition hover:bg-current/8 active:scale-95'
 const pageTurn =
-  'grid h-11 w-14 place-items-center rounded-full transition hover:bg-current/8 active:scale-95'
+  'grid h-11 w-14 place-items-center rounded-full text-ink-soft transition-colors duration-150 hover:bg-paper-sunk hover:text-ink'
 
 function CenteredNote({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-full items-center justify-center bg-paper p-6 text-center font-serif text-[15px] text-muted">
+    <div className="flex h-full items-center justify-center bg-paper p-6 text-center font-book text-body text-ink-soft">
       <p>{children}</p>
     </div>
   )

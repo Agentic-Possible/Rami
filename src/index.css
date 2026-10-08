@@ -1,54 +1,247 @@
 @import 'tailwindcss';
 
+/*
+ * Rami design system. Tokens follow tokens.css: Paper by day, Lamplight at
+ * night, and Sepia for the reader only. The reader sets `data-theme` on its
+ * root; everything else follows the system colour scheme.
+ */
+
 /* Latin only: every bundled subset would land in the offline precache. */
 @font-face {
-  font-family: 'DM Sans Variable';
+  font-family: 'EB Garamond Variable';
   font-style: normal;
   font-display: swap;
-  font-weight: 100 1000;
-  src: url('@fontsource-variable/dm-sans/files/dm-sans-latin-wght-normal.woff2')
+  font-weight: 400 800;
+  src: url('@fontsource-variable/eb-garamond/files/eb-garamond-latin-wght-normal.woff2')
     format('woff2-variations');
   unicode-range:
     U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
     U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
-  font-family: 'Source Serif 4 Variable';
-  font-style: normal;
-  font-display: swap;
-  font-weight: 200 900;
-  src: url('@fontsource-variable/source-serif-4/files/source-serif-4-latin-wght-normal.woff2')
-    format('woff2-variations');
-  unicode-range:
-    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
-    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  font-family: 'Source Serif 4 Variable';
+  font-family: 'EB Garamond Variable';
   font-style: italic;
   font-display: swap;
-  font-weight: 200 900;
-  src: url('@fontsource-variable/source-serif-4/files/source-serif-4-latin-wght-italic.woff2')
+  font-weight: 400 800;
+  src: url('@fontsource-variable/eb-garamond/files/eb-garamond-latin-wght-italic.woff2')
     format('woff2-variations');
   unicode-range:
     U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
     U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Alegreya Sans';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('@fontsource/alegreya-sans/files/alegreya-sans-latin-400-normal.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Alegreya Sans';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url('@fontsource/alegreya-sans/files/alegreya-sans-latin-500-normal.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Alegreya Sans';
+  font-style: italic;
+  font-display: swap;
+  font-weight: 400;
+  src: url('@fontsource/alegreya-sans/files/alegreya-sans-latin-400-italic.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root,
+[data-theme='paper'] {
+  --paper: #f4ecda;
+  --paper-leaf: #faf5e9;
+  --paper-sunk: #ebe0c8;
+  --rule: #ddd0b3;
+  --rule-strong: #8c7a5d;
+  --ink: #2b2219;
+  --ink-soft: #5c4d3c;
+  --ink-faint: #6c5c46;
+  --moss: #4b5c3c;
+  --moss-deep: #3d4c30;
+  --on-moss: #faf5e9;
+  --rubric: #8e3626;
+  --gilt: #96702a;
+  --highlight: rgba(190, 146, 58, 0.3);
+  --danger: #9e2b1e;
+  --focus: #4b5c3c;
+  --scrim: rgba(29, 24, 19, 0.45);
+  --cloth-moss: #4e5b47;
+  --cloth-oxblood: #6e3328;
+  --cloth-navy: #34404f;
+  --cloth-umber: #5a4632;
+  --cloth-lettering: #ecdcb0;
+  --shadow-leaf: 0 1px 2px rgba(60, 44, 24, 0.08), 0 6px 20px rgba(60, 44, 24, 0.06);
+  --shadow-book: -5px 7px 16px rgba(52, 36, 18, 0.22);
+  --shadow-sheet: 0 -10px 36px rgba(52, 36, 18, 0.16);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #1d1813;
+    --paper-leaf: #27201a;
+    --paper-sunk: #15110d;
+    --rule: #3b3128;
+    --rule-strong: #7d6c55;
+    --ink: #eee2c9;
+    --ink-soft: #c4b497;
+    --ink-faint: #a39275;
+    --moss: #a7b78c;
+    --moss-deep: #bccaa1;
+    --on-moss: #1d1813;
+    --rubric: #e0937a;
+    --gilt: #d6b066;
+    --highlight: rgba(214, 176, 102, 0.26);
+    --danger: #ee8a74;
+    --focus: #a7b78c;
+    --scrim: rgba(8, 6, 4, 0.6);
+    --cloth-moss: #4a5643;
+    --cloth-oxblood: #683127;
+    --cloth-navy: #323d4b;
+    --cloth-umber: #56432f;
+    --cloth-lettering: #e4d3a6;
+    --shadow-leaf: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.3);
+    --shadow-book: -5px 7px 16px rgba(0, 0, 0, 0.5);
+    --shadow-sheet: 0 -10px 36px rgba(0, 0, 0, 0.55);
+    color-scheme: dark;
+  }
+}
+
+/* Repeats the media block so the reader's Lamplight holds under a light system theme. */
+[data-theme='lamplight'] {
+  --paper: #1d1813;
+  --paper-leaf: #27201a;
+  --paper-sunk: #15110d;
+  --rule: #3b3128;
+  --rule-strong: #7d6c55;
+  --ink: #eee2c9;
+  --ink-soft: #c4b497;
+  --ink-faint: #a39275;
+  --moss: #a7b78c;
+  --moss-deep: #bccaa1;
+  --on-moss: #1d1813;
+  --rubric: #e0937a;
+  --gilt: #d6b066;
+  --highlight: rgba(214, 176, 102, 0.26);
+  --danger: #ee8a74;
+  --focus: #a7b78c;
+  --scrim: rgba(8, 6, 4, 0.6);
+  --shadow-leaf: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.3);
+  --shadow-book: -5px 7px 16px rgba(0, 0, 0, 0.5);
+  --shadow-sheet: 0 -10px 36px rgba(0, 0, 0, 0.55);
+  color-scheme: dark;
+}
+
+/* Reader only. Ground and ink from the design system; the rest derived to keep its contrast. */
+[data-theme='sepia'] {
+  --paper: #e9dcc0;
+  --paper-leaf: #f2e8d2;
+  --paper-sunk: #dfcfae;
+  --rule: #d3c19e;
+  --rule-strong: #85704f;
+  --ink: #3a2e22;
+  --ink-soft: #5a4836;
+  --ink-faint: #66533d;
+  --moss: #4b5c3c;
+  --moss-deep: #3d4c30;
+  --on-moss: #faf5e9;
+  --rubric: #8e3626;
+  --gilt: #8a6524;
+  --highlight: rgba(190, 146, 58, 0.3);
+  --danger: #9e2b1e;
+  --focus: #4b5c3c;
+  --scrim: rgba(29, 24, 19, 0.45);
+  --shadow-leaf: 0 1px 2px rgba(60, 44, 24, 0.08), 0 6px 20px rgba(60, 44, 24, 0.06);
+  --shadow-book: -5px 7px 16px rgba(52, 36, 18, 0.22);
+  --shadow-sheet: 0 -10px 36px rgba(52, 36, 18, 0.16);
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-leaf: var(--paper-leaf);
+  --color-paper-sunk: var(--paper-sunk);
+  --color-rule: var(--rule);
+  --color-rule-strong: var(--rule-strong);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-moss: var(--moss);
+  --color-moss-deep: var(--moss-deep);
+  --color-on-moss: var(--on-moss);
+  --color-rubric: var(--rubric);
+  --color-gilt: var(--gilt);
+  --color-highlight: var(--highlight);
+  --color-danger: var(--danger);
+  --color-focus: var(--focus);
+  --color-scrim: var(--scrim);
+  --color-cloth-moss: var(--cloth-moss);
+  --color-cloth-oxblood: var(--cloth-oxblood);
+  --color-cloth-navy: var(--cloth-navy);
+  --color-cloth-umber: var(--cloth-umber);
+  --color-cloth-lettering: var(--cloth-lettering);
 }
 
 @theme {
-  --font-sans: 'DM Sans Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-serif: 'Source Serif 4 Variable', 'Iowan Old Style', Palatino, Georgia, serif;
+  --font-book: 'EB Garamond Variable', 'Iowan Old Style', Palatino, Georgia, serif;
+  --font-ui: 'Alegreya Sans', 'Gill Sans', 'Seravek', system-ui, sans-serif;
 
-  --color-paper: #f3f1e9;
-  --color-card: #fbfaf6;
-  --color-ink: #24251f;
-  --color-muted: #76776e;
-  --color-faint: #99998f;
-  --color-line: #dcdacf;
-  --color-olive: #485744;
-  --color-olive-deep: #3b4838;
-  --color-rust: #8a473a;
-  --color-gold: #d5b277;
+  --radius-sm: 3px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+
+  /* Type scale: pair with font-book or font-ui. */
+  --text-display: 52px;
+  --text-display--line-height: 54px;
+  --text-display--letter-spacing: -0.01em;
+  --text-title: 34px;
+  --text-title--line-height: 40px;
+  --text-heading: 25px;
+  --text-heading--line-height: 32px;
+  --text-book-title: 18px;
+  --text-book-title--line-height: 23px;
+  --text-reading: 20px;
+  --text-reading--line-height: 34px;
+  --text-passage: 18px;
+  --text-passage--line-height: 29px;
+  --text-body: 17px;
+  --text-body--line-height: 27px;
+  --text-label: 16px;
+  --text-label--line-height: 20px;
+  --text-control: 16px;
+  --text-control--line-height: 24px;
+  --text-meta: 14px;
+  --text-meta--line-height: 19px;
+  --text-caption: 12px;
+  --text-caption--line-height: 16px;
+
+  --spacing-tap: 44px;
+  --container-reading: 34em;
+  --container-page: 1080px;
+}
+
+@utility shadow-leaf {
+  box-shadow: var(--shadow-leaf);
+}
+@utility shadow-book {
+  box-shadow: var(--shadow-book);
+}
+@utility shadow-sheet {
+  box-shadow: var(--shadow-sheet);
 }
 
 html,
@@ -61,10 +254,20 @@ body {
   margin: 0;
   overscroll-behavior: none;
   -webkit-font-smoothing: antialiased;
-  font-family: var(--font-sans);
+  font-family: var(--font-ui);
   text-rendering: optimizeLegibility;
-  background: var(--color-paper);
-  color: var(--color-ink);
+  font-variant-ligatures: common-ligatures;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--highlight);
 }
 
 /* Safe-area helpers for installed PWA on phones with notches/home bars. */
@@ -82,11 +285,32 @@ body {
   -webkit-touch-callout: none;
 }
 
+/* Running head: rubric small caps, as a scribe would letter it. */
 .eyebrow {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  margin: 0;
+  font-family: var(--font-book);
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  font-variant-caps: all-small-caps;
+  text-transform: lowercase;
+  color: var(--rubric);
+}
+
+/* A faint fibre grain over the library and settings; never inside the reader. */
+.paper-grain {
+  position: relative;
+  isolation: isolate;
+}
+.paper-grain::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.25 0 0 0 0 0.12 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 @keyframes panel-in {
@@ -97,5 +321,13 @@ body {
 }
 
 .animate-panel-in {
-  animation: panel-in 0.25s ease-out;
+  animation: panel-in 0.28s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes panel-in {
+    from {
+      opacity: 0;
+    }
+  }
 }

@@ -27,14 +27,6 @@ export function BackIcon({ className }: Props) {
   )
 }
 
-export function ChevronIcon({ className }: Props) {
-  return (
-    <Svg className={className}>
-      <path d="m9 18 6-6-6-6" />
-    </Svg>
-  )
-}
-
 export function GearIcon({ className }: Props) {
   return (
     <Svg className={className}>
@@ -91,23 +83,6 @@ export function MoreIcon({ className }: Props) {
       <circle cx="5" cy="12" r="1" fill="currentColor" stroke="none" />
       <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
       <circle cx="19" cy="12" r="1" fill="currentColor" stroke="none" />
-    </Svg>
-  )
-}
-
-export function SunIcon({ className }: Props) {
-  return (
-    <Svg className={className}>
-      <circle cx="12" cy="12" r="4" />
-      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
-    </Svg>
-  )
-}
-
-export function MoonIcon({ className }: Props) {
-  return (
-    <Svg className={className}>
-      <path d="M20 15.2A8.5 8.5 0 0 1 8.8 4 8.5 8.5 0 1 0 20 15.2Z" />
     </Svg>
   )
 }
