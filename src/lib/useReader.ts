@@ -5,7 +5,8 @@ import type { ReaderFont, ReaderTheme } from '../db/types'
 import { db } from '../db/db'
 import { epubThemeStyles } from './themes'
 import { buildAnchors, chapterAt, normalizeHref, type ChapterAnchor } from './chapters'
-import { longPressToSelect } from './touchSelect'
+import { LONG_PRESS_MS, MOVE_TOLERANCE_PX, longPressToSelect } from './touchSelect'
+import { keepFrameInPlace, neutralizeScripts } from './bookScripts'
 
 interface ReaderLocation {
   cfi: string
@@ -56,6 +57,9 @@ const RESIZE_SETTLE_MS = 150
  * promise has already resolved.
  */
 const REANCHOR_RELEASE_MS = 250
+
+/** How long after a touch a click is the browser's echo of it, not a new tap. */
+const GHOST_CLICK_MS = 800
 
 /**
  * Owns the epub.js Book + Rendition lifecycle for one book id.
@@ -157,19 +161,20 @@ export function useReader(
         if (canceled) return
         setToc(nav.toc ?? [])
 
+        // Before any section loads, so every one is disarmed before it renders.
+        epubBook.spine.hooks.content.register(neutralizeScripts)
+
         rend = epubBook.renderTo(container, {
           width: '100%',
           height: '100%',
           flow: 'paginated',
           spread: 'none',
           manager: 'default',
-          // Deliberately left off. epub.js turns this into
-          // sandbox="allow-same-origin allow-scripts" on the content iframe,
-          // which is the combination that voids the sandbox: a book's own
-          // scripts would then run on this origin and could read the API key
-          // and every highlight and conversation straight out of IndexedDB.
-          // Scripted EPUBs lose interactivity; the text still renders.
-          allowScriptedContent: false,
+          // sandbox="allow-same-origin allow-scripts", which on its own voids
+          // the sandbox. WebKit needs it to deliver the frame's events to our
+          // listeners at all; the book's own scripts are blocked by
+          // `neutralizeScripts` instead, registered above.
+          allowScriptedContent: true,
         })
 
         // In-book links (footnotes and their back-links) are ours to follow.
@@ -183,6 +188,7 @@ export function useReader(
         // Registered before the first display so section one gets it too.
         rend.hooks.content.register((contents: Contents) => {
           detachTouch.add(longPressToSelect(contents))
+          detachTouch.add(keepFrameInPlace(contents.document))
           if (!ownsLinks) return
           contents.on('linkClicked', (href: string) => {
             // Runs from the link's onclick, before the click bubbles to the
@@ -390,27 +396,27 @@ export function useReader(
       }
     }
 
-    const onClick = (event: MouseEvent) => {
+    const tap = (target: EventTarget | null, clientX: number, since: number) => {
       const scroller = container?.querySelector('.epub-container') as HTMLElement | null
       const width = scroller?.clientWidth || container?.clientWidth || window.innerWidth
 
-      // epub.js re-emits clicks from inside the book iframe, and that iframe is
+      // epub.js re-emits events from inside the book iframe, and that iframe is
       // as wide as the whole paginated strip rather than the visible page. Its
       // clientX therefore counts from the start of the section, so on any page
       // but the first it is far larger than the viewport and every tap reads as
       // "right edge". Subtracting the scroll offset puts it back in page space.
-      const x = event.clientX - (scroller?.scrollLeft ?? 0)
+      const x = clientX - (scroller?.scrollLeft ?? 0)
 
-      // The click that finishes a drag-selection is not a page turn.
-      const selection = (event.target as Node | null)?.ownerDocument?.getSelection()
+      // The tap that finishes a drag-selection is not a page turn.
+      const selection = (target as Node | null)?.ownerDocument?.getSelection()
       if (selection && !selection.isCollapsed && selection.toString().trim()) return
 
       // A tap on a highlight rides the same DOM event: marks-pane hand-proxies
-      // mouse events to its annotations, so both handlers see this click and the
-      // order between them is not guaranteed. Defer the turn by a task to let an
+      // events to its annotations, so both handlers see this tap and the order
+      // between them is not guaranteed. Defer the turn by a task to let an
       // annotation callback claim the tap first.
       window.setTimeout(() => {
-        if (Date.now() < suppressTapUntil.current) return
+        if (suppressTapUntil.current > since) return
         if (x < width * 0.28) {
           supersede()
           void rendition.prev()
@@ -421,15 +427,48 @@ export function useReader(
       }, 0)
     }
 
+    // iOS fires no click for a tap on plain text, so touch taps are read from
+    // the touches themselves, and the click a browser may add after is ignored.
+    let touch: { x: number; y: number; at: number } | undefined
+    let touchEndedAt = 0
+
+    const onTouchStart = (event: TouchEvent) => {
+      const point = event.touches.length === 1 ? event.touches[0] : undefined
+      touch = point && { x: point.clientX, y: point.clientY, at: Date.now() }
+    }
+
+    const onTouchEnd = (event: TouchEvent) => {
+      touchEndedAt = Date.now()
+      const start = touch
+      touch = undefined
+      const point = event.changedTouches[0]
+      if (!start || !point || event.touches.length) return
+      if (touchEndedAt - start.at >= LONG_PRESS_MS) return
+      const moved = Math.max(Math.abs(point.clientX - start.x), Math.abs(point.clientY - start.y))
+      if (moved > MOVE_TOLERANCE_PX) return
+      // A link is followed through its own click.
+      if ((event.target as Element | null)?.closest?.('a[href]')) return
+      tap(event.target, point.clientX, start.at)
+    }
+
+    const onClick = (event: MouseEvent) => {
+      if (Date.now() - touchEndedAt < GHOST_CLICK_MS) return
+      tap(event.target, event.clientX, Date.now())
+    }
+
     rendition.on('selected', onSelected)
     rendition.on('keyup', onKeyUp)
     rendition.on('click', onClick)
+    rendition.on('touchstart', onTouchStart)
+    rendition.on('touchend', onTouchEnd)
     document.addEventListener('keyup', onKeyUp)
 
     return () => {
       rendition.off('selected', onSelected)
       rendition.off('keyup', onKeyUp)
       rendition.off('click', onClick)
+      rendition.off('touchstart', onTouchStart)
+      rendition.off('touchend', onTouchEnd)
       document.removeEventListener('keyup', onKeyUp)
     }
   }, [rendition, container, supersede])
@@ -579,8 +618,9 @@ function snapToPage(container: HTMLElement | null, rendition: Rendition) {
 const LAYOUT_SETTLE_TIMEOUT_MS = 3000
 
 async function waitForIdleLayout(rendition: Rendition) {
-  const doc = currentContents(rendition)?.document
-  if (!doc) return
+  const contents = currentContents(rendition)
+  const doc = contents?.document
+  if (!contents || !doc) return
 
   const pending = [...doc.images].filter((img) => !img.complete)
 
@@ -610,6 +650,13 @@ async function waitForIdleLayout(rendition: Rendition) {
 
   // Let the renderer finish its own reflow pass before measuring again.
   await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 60)))
+
+  // Widen the strip to the reflowed text. epub.js re-measures only when the
+  // document's box changes size, and a font reflow adds columns without
+  // changing it, so the strip can stay short of its text indefinitely. A
+  // display into it is clamped to its end, pages short of a heading near the
+  // end of the section. The view expands synchronously on this event.
+  contents.emit('expand')
 }
 
 async function loadLocations(
@@ -649,7 +696,14 @@ function anchorsForHref(
   const current = currentContents(rendition)
   if (!current) return []
 
-  const anchors = buildAnchors(toc, href, current)
+  const spine = rendition.book.spine
+  const anchors = buildAnchors(
+    toc,
+    href,
+    current,
+    // epub.js keys the spine by the manifest href as written, `./` and all.
+    (target) => (spine.get(target) ?? spine.get(normalizeHref(target)))?.index,
+  )
   cache.set(key, anchors)
   return anchors
 }
