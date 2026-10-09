@@ -20,7 +20,9 @@ describe('buildSystemPrompt', () => {
   it('sets the reply voice from the design system', () => {
     expect(prompt).toContain('## Voice')
     expect(prompt).toContain('Write prose. Use lists or headings only if the reader asks for them.')
-    expect(prompt).toContain('never more than one.')
+    expect(prompt).toContain(
+      'Do not add a closing question or suggest what to explore next unless they ask.',
+    )
     expect(prompt).toContain('No emoji.')
   })
 
