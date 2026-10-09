@@ -22,9 +22,12 @@ export function neutralizeScripts(doc: Document): void {
   // `<SCRIPT>` or `HTTP-EQUIV` must be caught here too.
   const named = (node: Element | Attr, name: string) => node.localName.toLowerCase() === name
 
-  let head = Array.from(root.children).find((element) => named(element, 'head'))
-  if (!head) {
-    // The HTML parser in the frame would add a head anyway, so CFIs agree.
+  // The policy only counts inside the head the frame's parser opens, which is
+  // the first thing in the document. A head after the body is ignored, policy
+  // and all, so it is not good enough.
+  let head = root.firstElementChild
+  if (!head || !named(head, 'head')) {
+    // The frame's parser would open one here anyway, so CFIs agree.
     head = doc.createElementNS(XHTML_NS, 'head')
     root.insertBefore(head, root.firstChild)
   }

@@ -62,4 +62,14 @@ describe('neutralizeScripts', () => {
     neutralizeScripts(doc)
     expect(doc.documentElement.firstElementChild?.localName).toBe('head')
   })
+
+  it('puts the policy ahead of a body that comes before the head', () => {
+    const doc = parse(
+      '<html xmlns="http://www.w3.org/1999/xhtml"><body><p>T</p></body><head><title>T</title></head></html>',
+    )
+    neutralizeScripts(doc)
+    const first = doc.documentElement.firstElementChild!
+    expect(first.localName).toBe('head')
+    expect(first.firstElementChild?.getAttribute('http-equiv')).toBe('Content-Security-Policy')
+  })
 })
