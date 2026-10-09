@@ -10,10 +10,11 @@ const CHAPTER = `<?xml version="1.0" encoding="utf-8"?>
 <title>Chapter</title>
 <script>top.pwned = 'inline script'</script>
 <script src="evil.js"></script>
-<meta http-equiv="refresh" content="0;url=evil.xhtml" />
+<meta HTTP-EQUIV="Refresh" content="0;url=evil.xhtml" />
 </head>
 <body>
 <h1>Hostile chapter</h1>
+<SCRIPT TYPE="text/javascript">top.pwned = 'uppercase script'</SCRIPT>
 <p>Plain prose follows the attempts below.</p>
 <img src="missing.png" alt="" onerror="top.pwned = 'onerror attribute'" />
 <svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"><script>top.pwned = 'svg script'</script></svg>

@@ -7,8 +7,10 @@ const parse = (xhtml: string) => new DOMParser().parseFromString(xhtml, 'applica
 const SECTION = `<?xml version="1.0" encoding="utf-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head><title>T</title><script src="a.js"></script>
-<meta http-equiv="refresh" content="0;url=b.xhtml" /></head>
+<meta http-equiv="refresh" content="0;url=b.xhtml" />
+<meta HTTP-EQUIV="Refresh" content="0;url=c.xhtml" /></head>
 <body><p onclick="x()" class="keep">Text</p>
+<SCRIPT TYPE="text/javascript">z()</SCRIPT>
 <svg xmlns="http://www.w3.org/2000/svg"><script>y()</script></svg></body>
 </html>`
 
@@ -25,11 +27,15 @@ describe('neutralizeScripts', () => {
     const doc = parse(SECTION)
     const before = doc.getElementsByTagName('body')[0].getElementsByTagName('*').length
     neutralizeScripts(doc)
-    const scripts = Array.from(doc.getElementsByTagNameNS('*', 'script'))
-    expect(scripts).toHaveLength(2)
+    const scripts = Array.from(doc.getElementsByTagName('*')).filter(
+      (element) => element.localName.toLowerCase() === 'script',
+    )
+    expect(scripts).toHaveLength(3)
     for (const script of scripts) {
-      expect(script.getAttribute('type')).toBe('text/plain')
-      expect(script.hasAttribute('src')).toBe(false)
+      // Exactly one attribute, so no leftover `TYPE` or `src` can win over it.
+      expect(Array.from(script.attributes).map(({ name, value }) => `${name}=${value}`)).toEqual([
+        'type=text/plain',
+      ])
     }
     expect(doc.getElementsByTagName('body')[0].getElementsByTagName('*')).toHaveLength(before)
   })
@@ -40,8 +46,13 @@ describe('neutralizeScripts', () => {
     const paragraph = doc.getElementsByTagName('p')[0]
     expect(paragraph.hasAttribute('onclick')).toBe(false)
     expect(paragraph.getAttribute('class')).toBe('keep')
-    const refresh = Array.from(doc.getElementsByTagName('meta')).filter(
-      (meta) => meta.getAttribute('http-equiv')?.toLowerCase() === 'refresh',
+    // XML keeps attribute case; the frame's HTML parser does not.
+    const refresh = Array.from(doc.getElementsByTagName('meta')).filter((meta) =>
+      Array.from(meta.attributes).some(
+        (attribute) =>
+          attribute.name.toLowerCase() === 'http-equiv' &&
+          attribute.value.toLowerCase() === 'refresh',
+      ),
     )
     expect(refresh).toHaveLength(0)
   })

@@ -18,7 +18,11 @@ export function neutralizeScripts(doc: Document): void {
   const root = doc.documentElement
   if (!root) return
 
-  let head = root.getElementsByTagNameNS('*', 'head')[0]
+  // XML keeps the case of names, but the frame's HTML parser folds it, so
+  // `<SCRIPT>` or `HTTP-EQUIV` must be caught here too.
+  const named = (node: Element | Attr, name: string) => node.localName.toLowerCase() === name
+
+  let head = Array.from(root.children).find((element) => named(element, 'head'))
   if (!head) {
     // The HTML parser in the frame would add a head anyway, so CFIs agree.
     head = doc.createElementNS(XHTML_NS, 'head')
@@ -31,21 +35,18 @@ export function neutralizeScripts(doc: Document): void {
   policy.setAttribute('content', "script-src 'none'; object-src 'none'; frame-src 'none'")
   head.insertBefore(policy, head.firstChild)
 
-  for (const script of Array.from(root.getElementsByTagNameNS('*', 'script'))) {
-    script.setAttribute('type', 'text/plain')
-    script.removeAttribute('src')
-    script.removeAttribute('href')
-    script.removeAttribute('xlink:href')
-  }
-
   for (const element of Array.from(root.getElementsByTagName('*'))) {
-    for (const { name } of Array.from(element.attributes)) {
-      if (/^on/i.test(name)) element.removeAttribute(name)
+    const script = named(element, 'script')
+    for (const attribute of Array.from(element.attributes)) {
+      const strip =
+        // Every attribute of a script, or a leftover `TYPE` would win over ours.
+        script ||
+        /^on/i.test(attribute.localName) ||
+        // A refresh would navigate the frame to a raw book file that skipped
+        // this pass, and the frame keeps its sandbox, scripts and all.
+        (named(attribute, 'http-equiv') && attribute.value.trim().toLowerCase() === 'refresh')
+      if (strip) element.removeAttributeNode(attribute)
     }
-    // A refresh would navigate the frame to a raw book file that skipped this
-    // pass, and the frame keeps its sandbox, scripts and all.
-    if (element.getAttribute('http-equiv')?.toLowerCase() === 'refresh') {
-      element.removeAttribute('http-equiv')
-    }
+    if (script) element.setAttribute('type', 'text/plain')
   }
 }
