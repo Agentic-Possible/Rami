@@ -172,9 +172,26 @@ export function useReader(
           allowScriptedContent: false,
         })
 
+        // In-book links (footnotes and their back-links) are ours to follow.
+        // epub.js's own handler displays the target once, measured before a
+        // newly loaded section has settled, which landed a footnote in another
+        // file five pages short; and the tap also reached the page-turn
+        // handler, costing another page when the link sat near an edge.
+        const ownsLinks = takeOverLinks(rend)
+        const book = epubBook
+
         // Registered before the first display so section one gets it too.
         rend.hooks.content.register((contents: Contents) => {
           detachTouch.add(longPressToSelect(contents))
+          if (!ownsLinks) return
+          contents.on('linkClicked', (href: string) => {
+            // Runs from the link's onclick, before the click bubbles to the
+            // page-turn handler, so the claim is in place when it looks.
+            suppressTapUntil.current = Date.now() + 400
+            supersede()
+            const epoch = navEpoch.current
+            void goToSettled(rend, book.path.relative(href), () => navEpoch.current === epoch)
+          })
         })
 
         const opts = optionsRef.current
@@ -237,7 +254,7 @@ export function useReader(
         // epub.js can throw if it is torn down mid-load; nothing to recover.
       }
     }
-  }, [bookId, container, hold])
+  }, [bookId, container, hold, supersede])
 
   // Track position and persist it.
   useEffect(() => {
@@ -502,6 +519,19 @@ async function goToSettled(
   } catch {
     // Unresolvable target (stale href or broken CFI); leave the view as-is.
   }
+}
+
+/**
+ * Removes epub.js's built-in link handler so the caller can follow links
+ * itself. It is the content hook epub.js registers first, as a bound method.
+ * Returns false, leaving epub.js in charge, if it cannot be found.
+ */
+function takeOverLinks(rendition: Rendition): boolean {
+  const hooks = rendition.hooks.content
+  const builtIn = (hooks.list() as Function[]).find((hook) => hook.name === 'bound handleLinks')
+  if (!builtIn) return false
+  hooks.deregister(builtIn)
+  return true
 }
 
 /** Single-spread paginated mode renders one section at a time. */
