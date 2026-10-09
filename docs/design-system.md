@@ -117,6 +117,12 @@ If the words are the book's, set them in Garamond; if they are ours (the
 reader's or Rami's), set them in Alegreya Sans. Never set conversation in
 Garamond or a quotation from the book in Alegreya Sans.
 
+The one exception is the book's running text inside the reader, where the
+reader picks the face in Settings: Literata (the default), EB Garamond (at
+weight 500) or Charis SIL. `READER_FONTS` in `src/lib/themes.ts` holds each
+one's files, weight and line height. Titles, headings and quoted passages
+elsewhere stay in Garamond.
+
 Pair a family with a scale step: `text-display` once per screen, `text-title`,
 `text-heading`, `text-book-title`, `text-reading`, `text-passage`, `text-body`,
 `text-label`, `text-control`, `text-meta`, `text-caption`. Running heads use the

@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, getSettings, saveSettings } from '../db/db'
-import { DEFAULT_SETTINGS, type HighlightColor, type Provider } from '../db/types'
+import { DEFAULT_SETTINGS, type HighlightColor, type Provider, type ReaderFont } from '../db/types'
 import { HIGHLIGHT_COLORS } from '../lib/highlights'
+import { READER_FONTS } from '../lib/themes'
 import { HOSTED_MODEL_LABEL, verifyKey } from '../lib/inference'
 import { createAudiobookSession } from '../lib/audiobooks'
 import { BackIcon } from '../components/Icons'
@@ -250,6 +251,18 @@ export default function SettingsPage() {
         </section>
 
         <section className={card}>
+          <h2 className="font-book text-heading font-medium">Reading font</h2>
+          <p className="mt-1 font-ui text-body text-ink-soft">
+            Used for the book's text in the reader.
+          </p>
+          <div role="radiogroup" aria-label="Reading font" className="mt-3 space-y-2">
+            {(Object.keys(READER_FONTS) as ReaderFont[]).map((font) => (
+              <FontOption key={font} value={font} current={settings.readerFont} />
+            ))}
+          </div>
+        </section>
+
+        <section className={card}>
           <h2 className="font-book text-heading font-medium">Highlight color</h2>
           <p className="mt-1 font-ui text-body text-ink-soft">
             Used for every highlight, old and new.
@@ -365,6 +378,37 @@ function ProviderOption({
       <span>
         <span className="font-ui text-label font-medium">{title}</span>
         <span className="mt-0.5 block font-ui text-meta text-ink-soft">{detail}</span>
+      </span>
+    </label>
+  )
+}
+
+function FontOption({ value, current }: { value: ReaderFont; current: ReaderFont }) {
+  const selected = current === value
+  const { label, stack, weight } = READER_FONTS[value]
+
+  return (
+    <label
+      className={`flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors duration-150 ${
+        selected ? 'border-moss bg-paper' : 'border-rule hover:bg-paper-sunk'
+      }`}
+    >
+      <input
+        type="radio"
+        name="reader-font"
+        value={value}
+        checked={selected}
+        onChange={() => void saveSettings({ readerFont: value })}
+        className="mt-1 h-4 w-4 accent-moss"
+      />
+      <span>
+        <span className="font-ui text-label font-medium">{label}</span>
+        <span
+          style={{ fontFamily: stack, fontWeight: weight }}
+          className="mt-0.5 block text-reading"
+        >
+          Call me Ishmael. <em>Some years ago, never mind how long precisely.</em>
+        </span>
       </span>
     </label>
   )

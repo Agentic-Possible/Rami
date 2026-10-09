@@ -110,6 +110,9 @@ export interface BookMemory {
 
 export type ReaderTheme = 'light' | 'sepia' | 'dark'
 
+/** Typeface for the book's text inside the reader. */
+export type ReaderFont = 'literata' | 'garamond' | 'charis'
+
 /**
  * `hosted` routes through this site's relay, which holds an OpenRouter key
  * server-side. `openai` sends the reader's own key straight to OpenAI.
@@ -124,6 +127,7 @@ export interface Settings {
   summaryModel: string
   theme: ReaderTheme
   fontSize: number
+  readerFont: ReaderFont
   /** One color for every highlight; the per-highlight `color` is kept for imports. */
   highlightColor: HighlightColor
   /** Ask the model to avoid spoiling content past the reader's position. */
@@ -154,6 +158,7 @@ export const DEFAULT_SETTINGS: Settings = {
   summaryModel: 'gpt-4o-mini',
   theme: 'light',
   fontSize: 100,
+  readerFont: 'literata',
   highlightColor: 'yellow',
   spoilerGuard: true,
 }

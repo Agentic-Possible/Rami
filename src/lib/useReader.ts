@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Book as EpubBook, Rendition, NavItem, Contents } from 'epubjs'
 import ePub from 'epubjs'
-import type { ReaderTheme } from '../db/types'
+import type { ReaderFont, ReaderTheme } from '../db/types'
 import { db } from '../db/db'
 import { epubThemeStyles } from './themes'
 import { buildAnchors, chapterAt, normalizeHref, type ChapterAnchor } from './chapters'
@@ -19,6 +19,7 @@ interface ReaderLocation {
 export interface UseReaderOptions {
   theme: ReaderTheme
   fontSize: number
+  font: ReaderFont
   /** Fires when the user selects text inside the book iframe. */
   onSelected?: (cfiRange: string, contents: Contents) => void
   /** Fires on a tap in the middle of the page (used to toggle chrome). */
@@ -177,7 +178,7 @@ export function useReader(
         })
 
         const opts = optionsRef.current
-        rend.themes.register(THEME_NAME, epubThemeStyles(opts.theme))
+        rend.themes.register(THEME_NAME, epubThemeStyles(opts.theme, opts.font))
         rend.themes.select(THEME_NAME)
         rend.themes.fontSize(`${opts.fontSize}%`)
 
@@ -416,14 +417,14 @@ export function useReader(
     }
   }, [rendition, container, supersede])
 
-  // Theme and font size can change without rebuilding the rendition.
+  // Theme, font and font size can change without rebuilding the rendition.
   useEffect(() => {
     if (!rendition) return
-    rendition.themes.register(THEME_NAME, epubThemeStyles(options.theme))
+    rendition.themes.register(THEME_NAME, epubThemeStyles(options.theme, options.font))
     rendition.themes.select(THEME_NAME)
     rendition.themes.fontSize(`${options.fontSize}%`)
     // Re-selecting a theme does not always repaint the current page, and a font
-    // size change repaginates the section under the reader. Both need the
+    // or size change repaginates the section under the reader. Both need the
     // position put back, and the held anchor is the one to put it back to:
     // `currentLocation` reports where the unchanged scroll offset lands in the
     // new pagination, which is not where the reader was.
@@ -451,7 +452,7 @@ export function useReader(
       window.clearTimeout(releaseTimer)
       release()
     }
-  }, [rendition, options.theme, options.fontSize, hold])
+  }, [rendition, options.theme, options.font, options.fontSize, hold])
 
   return {
     rendition,
