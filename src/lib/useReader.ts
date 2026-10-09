@@ -618,8 +618,9 @@ function snapToPage(container: HTMLElement | null, rendition: Rendition) {
 const LAYOUT_SETTLE_TIMEOUT_MS = 3000
 
 async function waitForIdleLayout(rendition: Rendition) {
-  const doc = currentContents(rendition)?.document
-  if (!doc) return
+  const contents = currentContents(rendition)
+  const doc = contents?.document
+  if (!contents || !doc) return
 
   const pending = [...doc.images].filter((img) => !img.complete)
 
@@ -649,6 +650,13 @@ async function waitForIdleLayout(rendition: Rendition) {
 
   // Let the renderer finish its own reflow pass before measuring again.
   await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 60)))
+
+  // Widen the strip to the reflowed text. epub.js re-measures only when the
+  // document's box changes size, and a font reflow adds columns without
+  // changing it, so the strip can stay short of its text indefinitely. A
+  // display into it is clamped to its end, pages short of a heading near the
+  // end of the section. The view expands synchronously on this event.
+  contents.emit('expand')
 }
 
 async function loadLocations(
@@ -688,7 +696,14 @@ function anchorsForHref(
   const current = currentContents(rendition)
   if (!current) return []
 
-  const anchors = buildAnchors(toc, href, current)
+  const spine = rendition.book.spine
+  const anchors = buildAnchors(
+    toc,
+    href,
+    current,
+    // epub.js keys the spine by the manifest href as written, `./` and all.
+    (target) => (spine.get(target) ?? spine.get(normalizeHref(target)))?.index,
+  )
   cache.set(key, anchors)
   return anchors
 }
