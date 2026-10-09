@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Removed audiobook playback, the audiobook Worker, and the narrator tool.
 - Reproducible validation, strict typing, coverage gates and isolated audiobook QA.
 - Privacy-safe optional diagnostics and usage counters, off until configured.
 - Dependency security fixes and Lua test-runtime migration.

@@ -1,20 +1,13 @@
 import { readdir, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
-const roots = [
-  'src',
-  'shared',
-  'workers/app/src',
-  'workers/audiobooks/src',
-  'koreader/marginalia.koplugin',
-  'tools/narrate/narrate',
-]
+const roots = ['src', 'shared', 'workers/app/src', 'koreader/marginalia.koplugin']
 const failures = []
 async function inspect(dir) {
   for (const entry of await readdir(dir, { withFileTypes: true })) {
     const path = join(dir, entry.name)
     if (entry.isDirectory()) await inspect(path)
-    else if (/\.(tsx?|py|lua)$/.test(path)) {
+    else if (/\.(tsx?|lua)$/.test(path)) {
       const source = await readFile(path, 'utf8')
       const count = source.split('\n').length
       if (count > 750) failures.push(`${path}: ${count} lines exceeds module budget`)

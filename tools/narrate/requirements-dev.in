@@ -1,9 +1,0 @@
--r requirements.txt
-ruff==0.16.10
-mypy==2.4.0
-coverage==7.16.2
-vulture==2.16
-deptry==0.25.1
-types-lxml
-PyYAML
-jsonschema

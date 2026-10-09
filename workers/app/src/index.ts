@@ -7,9 +7,7 @@ import { operationMetric } from '../../../shared/telemetry.ts'
 const CONTENT_SECURITY_POLICY =
   "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' blob:; " +
   "img-src 'self' data: blob: https://www.gutenberg.org; font-src 'self' data: blob:; " +
-  "connect-src 'self' " +
-  'https://api.openai.com https://marginalia-audiobooks.cloudflare-cdd.workers.dev; ' +
-  "media-src 'self' blob: https://marginalia-audiobooks.cloudflare-cdd.workers.dev; " +
+  "connect-src 'self' https://api.openai.com; " +
   "frame-src 'self' blob: data:; object-src 'none'; base-uri 'self'; form-action 'self'"
 
 function withSecurityHeaders(response: Response): Response {

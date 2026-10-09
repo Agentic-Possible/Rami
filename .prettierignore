@@ -7,7 +7,5 @@ test-books/
 contracts/
 databricks/
 diagrams/
-tools/narrate/.venv/
-tools/narrate/.quality-venv/
 **/worker-configuration.d.ts
 package-lock.json

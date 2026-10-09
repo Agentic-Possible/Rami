@@ -145,10 +145,6 @@ export interface Settings {
    * reason it is separate from it.
    */
   seededSampleIds?: string[]
-  /** Personal R2 streaming token. Stored only in this browser's IndexedDB. */
-  audiobookAccessToken?: string
-  /** Playback position for the personal Twilight of the Idols audiobook. */
-  audiobookPositionSeconds?: number
 }
 
 export const DEFAULT_SETTINGS: Settings = {

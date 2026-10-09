@@ -60,15 +60,6 @@ export function TypeIcon({ className }: Props) {
   )
 }
 
-export function HeadphonesIcon({ className }: Props) {
-  return (
-    <Svg className={className}>
-      <path d="M4 14v-2a8 8 0 0 1 16 0v2" />
-      <path d="M4 14a2 2 0 0 1 2-2h1v7H6a2 2 0 0 1-2-2v-3zM20 14a2 2 0 0 0-2-2h-1v7h1a2 2 0 0 0 2-2v-3z" />
-    </Svg>
-  )
-}
-
 export function PlusIcon({ className }: Props) {
   return (
     <Svg className={className}>

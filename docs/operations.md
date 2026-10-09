@@ -3,7 +3,7 @@
 ## Configuration and secrets
 
 Use `.env.example` for local keys; never commit populated environment files.
-The OpenRouter key, audiobook token, and signing key are server-side secrets.
+The OpenRouter key is a server-side secret.
 The browser's optional personal OpenAI key remains in IndexedDB, is not encrypted,
 and must not be used on a shared profile. Never export keys or access tokens.
 
@@ -13,8 +13,8 @@ emit source maps.
 
 ## Health, outages, and spending
 
-App and audiobook Workers expose `/health`, a liveness check only. It does not
-call OpenRouter or R2. An absent inference key returns 503 for chat, not a reader
+The app Worker exposes `/health`, a liveness check only. It does not call
+OpenRouter. An absent inference key returns 503 for chat, not a reader
 failure. Set `CHAT_ENABLED=false` on the relevant deploy target to stop paid chat
 while keeping reading available. Vite and Cloudflare honor it. On
 Cloudflare, use `wrangler secret put CHAT_ENABLED` so later deploys keep it.
@@ -27,9 +27,6 @@ Set a hard credit cap on the provider key. No automatic retries of paid requests
 
 For rising 5xx rates: inspect status/duration aggregates, provider status and
 credit usage, turn off chat if needed, and reproduce using fake upstream tests.
-For audiobook 401: check token/signing-key deployment consistency and URL expiry
-without copying secrets or signed URLs into logs. For 416: reproduce local range
-fixtures. Never test against the production R2 bucket as a debugging shortcut.
 
 Suggested hosted alerts, after deliberate operator setup: 5xx >5% for 5 minutes
 (minimum 20 requests), p95 relay header latency >20s for 10 minutes, health failures

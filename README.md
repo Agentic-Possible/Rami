@@ -46,50 +46,16 @@ npm run check     # lint + typecheck + PWA/KOReader unit and integration tests
 ```
 
 See [AGENTS.md](AGENTS.md) for application boundaries, conventions, focused tests,
-and interactive QA. CI runs the documented checks and production build. Python
-narrator setup and its standard-library test runner are documented there and in
-[tools/narrate/README.md](tools/narrate/README.md).
+and interactive QA. CI runs the documented checks and production build.
 
 For a containerized environment, follow the
 [devcontainer setup and smoke check](.devcontainer/README.md). A dedicated CI job
 builds it, runs post-create setup, and exercises the reader inside the container.
 
-`npm run quality`, `npm run check:narrate`, and `npm run test:qa` add formatter,
-dead/duplicate code, Python, and desktop/mobile browser gates. Setup uses a
-separate validation environment and installs a pre-commit hook. See
+`npm run quality` and `npm run test:qa` add formatter, dead/duplicate code, and
+desktop/mobile browser gates. Setup installs a pre-commit hook. See
 [architecture](docs/architecture.md), [API contracts](docs/api.openapi.yml), and
 [operations/privacy](docs/operations.md).
-
-## Personal audiobook streaming
-
-The headphone button appears when an imported book's title contains *Twilight
-of the Idols*. In **Settings → Personal audiobook**, enter the private token for
-this deployment. The token stays in that browser's IndexedDB; the app exchanges
-it for 24-hour signed URLs and streams the combined Opus file with byte-range
-requests, so seeking does not download the whole book.
-
-The combined file stays as one continuous stream. Chapter boundaries from
-`workers/audiobooks/catalog/twilight-of-the-idols.json` drive the chapter picker,
-previous/next buttons, lock-screen Media Session controls, and a progress slider
-whose time is relative to the active chapter. Playback crosses chapter boundaries
-without swapping audio sources. Resume state is saved locally against the audio
-file's SHA-256 identity, so stale positions are discarded if the recording changes.
-
-The `josh-audiobooks` R2 bucket has no public development URL. The Worker in
-`workers/audiobooks/` exposes only the combined audiobook and its metadata;
-checkpoint files remain inaccessible. The personal token and signed URLs are
-the authorization boundary; CORS additionally limits browser response access to
-the live PWA, the active PR preview, and localhost. `ACCESS_TOKEN` and `SIGNING_KEY`
-are Cloudflare Worker secrets and must never be committed.
-
-After changing `wrangler.jsonc`, regenerate the binding/runtime types and verify
-the bundle from `workers/audiobooks/`:
-
-```bash
-npx wrangler types --env-file .dev.vars.example
-npx tsc -p tsconfig.json
-npx wrangler deploy --dry-run
-```
 
 ## Inference
 
@@ -127,7 +93,7 @@ Because the relay is open to anyone who loads the site, `shared/relay.ts` pins t
 
 ### Untrusted book content
 
-Book content is treated as untrusted. EPUB scripts are not allowed to run: epub.js turns `allowScriptedContent` into `sandbox="allow-same-origin allow-scripts"`, and that pair voids the sandbox, so a book's own scripts would run on this origin and could read any stored key and every note out of IndexedDB. The cost is that scripted or interactive EPUBs lose their interactivity; the text still renders. Text drawn from a book is also fenced with a per-request delimiter before it reaches the model, so a passage cannot pose as an instruction. A CSP set in `workers/app/src/index.ts` is the second layer: `connect-src` allows only this origin — which covers `/api/chat`, since the relay is same-origin — `api.openai.com` for readers using their own key, and the exact private-audiobook Worker origin. `media-src` likewise permits only self/blob audio and that Worker.
+Book content is treated as untrusted. EPUB scripts are not allowed to run: epub.js turns `allowScriptedContent` into `sandbox="allow-same-origin allow-scripts"`, and that pair voids the sandbox, so a book's own scripts would run on this origin and could read any stored key and every note out of IndexedDB. The cost is that scripted or interactive EPUBs lose their interactivity; the text still renders. Text drawn from a book is also fenced with a per-request delimiter before it reaches the model, so a passage cannot pose as an instruction. A CSP set in `workers/app/src/index.ts` is the second layer: `connect-src` allows only this origin — which covers `/api/chat`, since the relay is same-origin — and `api.openai.com` for readers using their own key.
 
 ## How it works
 
