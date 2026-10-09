@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { expectBookScriptsBlocked } from './hostileBook.js'
 
 test.beforeEach(async ({ context }) => {
   // QA must never contact hosted services.
@@ -52,6 +53,10 @@ test('an in-book link lands on the page that holds its target', async ({ page })
   const box = (await paragraph.boundingBox())!
   expect(box.x).toBeGreaterThanOrEqual(0)
   expect(box.x).toBeLessThan(width)
+})
+
+test("a book's own scripts never run", async ({ page }) => {
+  await expectBookScriptsBlocked(page)
 })
 
 test('an unconfigured relay fails safely', async ({ request }) => {
