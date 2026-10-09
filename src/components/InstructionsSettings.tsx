@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { saveSettings } from '../db/db'
 import { MAX_INSTRUCTIONS_CHARS } from '../lib/prompt'
 import { button, card } from './ui'
@@ -15,16 +15,23 @@ export default function InstructionsSettings({ stored = '' }: { stored?: string 
   const [dirty, setDirty] = useState(false)
   const [saved, setSaved] = useState(false)
 
+  // Read after the write resolves, by which point `draft` may have moved on.
+  const draftRef = useRef(draft)
+  draftRef.current = draft
+
   useEffect(() => {
     if (!dirty) setDraft(stored)
   }, [stored, dirty])
 
   const commit = async () => {
-    const text = draft.trim()
-    await saveSettings({ instructions: text || undefined })
-    setDirty(false)
+    const text = draft
+    await saveSettings({ instructions: text.trim() || undefined })
     setSaved(true)
     window.setTimeout(() => setSaved(false), 2000)
+
+    // Typing during the write would otherwise be marked saved and then
+    // replaced by the effect above with what went to disk.
+    if (draftRef.current === text) setDirty(false)
   }
 
   return (
