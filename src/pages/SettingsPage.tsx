@@ -7,7 +7,7 @@ import { HIGHLIGHT_COLORS } from '../lib/highlights'
 import { READER_FONTS } from '../lib/themes'
 import { HOSTED_MODEL_LABEL, verifyKey } from '../lib/inference'
 import { BackIcon } from '../components/Icons'
-import InstructionsSettings from '../components/InstructionsSettings'
+import InstructionsEditor from '../components/InstructionsEditor'
 import KoreaderImport from '../components/KoreaderImport'
 import Ornament from '../components/Ornament'
 import { button, card, field, iconButton } from '../components/ui'
@@ -231,7 +231,19 @@ export default function SettingsPage() {
           </label>
         </section>
 
-        <InstructionsSettings stored={settings.instructions} />
+        <section className={card}>
+          <h2 className="font-book text-heading font-medium">Standing instructions</h2>
+          <p className="mt-1 font-ui text-body text-ink-soft">
+            Sent with every message about every book. Tell Rami what to call you, how to answer, or
+            anything else it should always do. Each book can add its own on its Memory tab.
+          </p>
+          <InstructionsEditor
+            stored={settings.instructions}
+            label="Standing instructions"
+            placeholder="For example: Call me Sam, and work in a little Latin so I can start learning it."
+            onSave={(instructions) => saveSettings({ instructions })}
+          />
+        </section>
 
         <Ornament short />
 

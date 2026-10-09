@@ -171,6 +171,30 @@ do
     )
 end
 
+-- Book instructions follow the general ones, also unfenced, and stand alone.
+do
+    local fence = "BOOKDATA_0123456789ABCDEF"
+    local both = build({ book_instructions = " Answer in German. ", instructions = "Call me Sam." })
+    local general_at = both:find("## Standing instructions from the reader", 1, true)
+    local book_at = both:find("## Standing instructions for this book", 1, true)
+    H.ok(
+        general_at ~= nil and book_at ~= nil and general_at < book_at,
+        "book section follows general"
+    )
+    H.contains(both, "these win.\nAnswer in German.\n", "book instructions are trimmed")
+    H.ok(
+        both:find("Answer in German.", 1, true) < both:find(fence .. "\n", 1, true),
+        "and unfenced"
+    )
+
+    local book_only = build({ book_instructions = "Answer in German." })
+    H.ok(
+        not book_only:find("## Standing instructions from the reader", 1, true),
+        "no empty general section"
+    )
+    H.contains(book_only, "and the standing instructions below.", "rule still names them")
+end
+
 -- Trimming to a title counts characters, not bytes: a title of accented prose
 -- should not be cut to half its apparent length or severed mid-codepoint.
 do

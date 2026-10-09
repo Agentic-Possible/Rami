@@ -30,6 +30,11 @@ export interface Book {
   progress?: number
   /** Serialized epub.js locations, so progress isn't recomputed on every open. */
   locations?: string
+  /**
+   * The reader's own instructions for this book, sent unfenced with its chats.
+   * Set only from the Memory tab, never from an import.
+   */
+  instructions?: string
 }
 
 export type HighlightColor = 'yellow' | 'green' | 'blue' | 'pink'

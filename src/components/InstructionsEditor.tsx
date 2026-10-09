@@ -1,16 +1,26 @@
 import { useEffect, useRef, useState } from 'react'
-import { saveSettings } from '../db/db'
 import { MAX_INSTRUCTIONS_CHARS } from '../lib/prompt'
-import { button, card } from './ui'
+import { button } from './ui'
 
 /**
- * The reader's standing instructions to Rami.
+ * A box for the reader's own instructions to Rami, saved on demand.
  *
  * Unlike the per-book digest, which Rami writes from text a book supplied and
- * so is fenced as untrusted, only the reader writes this, so it goes into the
- * system message as instructions to follow.
+ * so is fenced as untrusted, only the reader writes these, so they go into the
+ * system message as instructions to follow. Nothing imported may set them.
  */
-export default function InstructionsSettings({ stored = '' }: { stored?: string }) {
+export default function InstructionsEditor({
+  stored = '',
+  label,
+  placeholder,
+  onSave,
+}: {
+  stored?: string
+  label: string
+  placeholder: string
+  /** Receives the trimmed text, or undefined to clear. */
+  onSave: (instructions: string | undefined) => Promise<unknown>
+}) {
   const [draft, setDraft] = useState(stored)
   const [dirty, setDirty] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -25,7 +35,7 @@ export default function InstructionsSettings({ stored = '' }: { stored?: string 
 
   const commit = async () => {
     const text = draft
-    await saveSettings({ instructions: text.trim() || undefined })
+    await onSave(text.trim() || undefined)
     setSaved(true)
     window.setTimeout(() => setSaved(false), 2000)
 
@@ -35,12 +45,7 @@ export default function InstructionsSettings({ stored = '' }: { stored?: string 
   }
 
   return (
-    <section className={card}>
-      <h2 className="font-book text-heading font-medium">Standing instructions</h2>
-      <p className="mt-1 font-ui text-body text-ink-soft">
-        Sent with every message about every book. Tell Rami what to call you, how to answer, or
-        anything else it should always do.
-      </p>
+    <>
       <textarea
         value={draft}
         onChange={(event) => {
@@ -49,8 +54,8 @@ export default function InstructionsSettings({ stored = '' }: { stored?: string 
         }}
         rows={4}
         maxLength={MAX_INSTRUCTIONS_CHARS}
-        placeholder="For example: Call me Sam, and work in a little Latin so I can start learning it."
-        aria-label="Standing instructions"
+        placeholder={placeholder}
+        aria-label={label}
         className="mt-3 w-full resize-y rounded-md border border-rule-strong bg-paper-leaf p-3 font-ui text-body text-ink placeholder:text-ink-faint"
       />
       <div className="mt-2 flex items-center gap-2">
@@ -62,6 +67,6 @@ export default function InstructionsSettings({ stored = '' }: { stored?: string 
           {!saved && dirty && 'Unsaved changes'}
         </span>
       </div>
-    </section>
+    </>
   )
 }

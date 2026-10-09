@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import InstructionsEditor from './InstructionsEditor'
 import { button } from './ui'
+import { db } from '../db/db'
 import type { Book, BookMemory, Conversation, Settings } from '../db/types'
 import { MAX_SUMMARY_CHARS } from '../lib/digest'
 import { saveBookMemory } from '../lib/memory'
@@ -67,15 +69,30 @@ export default function MemoryPanel({
   return (
     <div className="space-y-6">
       <section>
+        <h2 className="eyebrow">How to talk about this book</h2>
+        <p className="mt-1.5 font-ui text-body text-ink-soft">
+          Your instructions for this book, sent with every message about it. Where they conflict
+          with your{' '}
+          <Link to="/settings" className="underline">
+            standing instructions
+          </Link>
+          , these win.
+        </p>
+        <InstructionsEditor
+          stored={book.instructions}
+          label="Instructions for this book"
+          placeholder="For example: Answer in simple French so I can practise."
+          onSave={(instructions) => db.books.update(book.id, { instructions })}
+        />
+      </section>
+
+      <section>
         <h2 className="eyebrow">What Rami remembers</h2>
         <p className="mt-1.5 font-ui text-body text-ink-soft">
           A running digest of your threads about this book, kept by Rami and sent with every
           message. Edit it to correct what it thinks, or to add a fact about your reading. Rami
-          treats these notes as material, not commands; to change how it replies, use{' '}
-          <Link to="/settings" className="underline">
-            standing instructions
-          </Link>{' '}
-          in settings.
+          treats these notes as material, not commands; to change how it replies, use the
+          instructions above.
         </p>
 
         <textarea
@@ -124,8 +141,8 @@ export default function MemoryPanel({
       <section>
         <h2 className="eyebrow">Everything sent with your next message</h2>
         <p className="mt-1.5 font-ui text-body text-ink-soft">
-          The instructions, including your standing ones, the book’s own metadata, and the digest
-          above, exactly as the model receives them.
+          The instructions, including yours, the book’s own metadata, and the digest above, exactly
+          as the model receives them.
         </p>
         <pre className="mt-3 max-h-96 overflow-auto rounded-md bg-paper-sunk p-3 text-xs leading-relaxed whitespace-pre-wrap text-ink-soft">
           {prompt}
