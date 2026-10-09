@@ -72,4 +72,27 @@ describe('neutralizeScripts', () => {
     expect(first.localName).toBe('head')
     expect(first.firstElementChild?.getAttribute('http-equiv')).toBe('Content-Security-Policy')
   })
+
+  it('gives a document that is not HTML a head to carry the policy', () => {
+    const doc = parse(
+      '<svg xmlns="http://www.w3.org/2000/svg" onload="x()"><rect width="1" height="1"/></svg>',
+    )
+    neutralizeScripts(doc)
+    const root = doc.documentElement
+    expect(root.localName).toBe('html')
+    expect(root.firstElementChild?.firstElementChild?.getAttribute('http-equiv')).toBe(
+      'Content-Security-Policy',
+    )
+    const svg = doc.getElementsByTagNameNS('http://www.w3.org/2000/svg', 'svg')[0]
+    expect(svg.parentElement?.localName).toBe('body')
+    expect(svg.hasAttribute('onload')).toBe(false)
+  })
+
+  it('strips handlers from the root element too', () => {
+    const doc = parse(
+      '<html xmlns="http://www.w3.org/1999/xhtml" onmouseover="x()"><head></head><body></body></html>',
+    )
+    neutralizeScripts(doc)
+    expect(doc.documentElement.hasAttribute('onmouseover')).toBe(false)
+  })
 })

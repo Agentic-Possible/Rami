@@ -15,12 +15,23 @@ const XHTML_NS = 'http://www.w3.org/1999/xhtml'
  * and with them saved CFIs are unchanged.
  */
 export function neutralizeScripts(doc: Document): void {
-  const root = doc.documentElement
-  if (!root) return
-
   // XML keeps the case of names, but the frame's HTML parser folds it, so
   // `<SCRIPT>` or `HTTP-EQUIV` must be caught here too.
   const named = (node: Element | Attr, name: string) => node.localName.toLowerCase() === name
+
+  let root = doc.documentElement
+  if (!root) return
+
+  // Anything else, an SVG content document say, ends up inside the body the
+  // frame's parser opens, with no head of its own to carry the policy.
+  if (!named(root, 'html')) {
+    const html = doc.createElementNS(XHTML_NS, 'html')
+    const body = doc.createElementNS(XHTML_NS, 'body')
+    doc.replaceChild(html, root)
+    body.appendChild(root)
+    html.appendChild(body)
+    root = html
+  }
 
   // The policy only counts inside the head the frame's parser opens, which is
   // the first thing in the document. A head after the body is ignored, policy
@@ -38,7 +49,7 @@ export function neutralizeScripts(doc: Document): void {
   policy.setAttribute('content', "script-src 'none'; object-src 'none'; frame-src 'none'")
   head.insertBefore(policy, head.firstChild)
 
-  for (const element of Array.from(root.getElementsByTagName('*'))) {
+  for (const element of [root, ...Array.from(root.getElementsByTagName('*'))]) {
     const script = named(element, 'script')
     for (const attribute of Array.from(element.attributes)) {
       const strip =
