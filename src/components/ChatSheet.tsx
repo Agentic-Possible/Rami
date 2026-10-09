@@ -202,6 +202,7 @@ export default function ChatSheet({
       // Land on the composer: opening a chat to ask something and having to tab
       // past the close button first is the wrong default.
       initialFocus="textarea"
+      compact
       zIndex="z-50"
       onClose={onClose}
     >
