@@ -4,7 +4,8 @@ import { iconButton } from './ui'
 
 /**
  * The side panel the reader's contents, display settings and conversations open
- * in: full width on a phone, a 360px column on anything wider.
+ * in: full width on a phone, a 360px column on anything wider. A `wide` panel
+ * grows toward half the window, for content worth the room, like a thread.
  */
 export default function ReaderPanel({
   label,
@@ -13,6 +14,7 @@ export default function ReaderPanel({
   closeLabel,
   initialFocus,
   compact = false,
+  wide = false,
   zIndex = 'z-40',
   onClose,
   children,
@@ -26,6 +28,7 @@ export default function ReaderPanel({
   initialFocus?: string
   /** A slimmer header for panels whose content needs the height, like a thread. */
   compact?: boolean
+  wide?: boolean
   zIndex?: string
   onClose: () => void
   children: React.ReactNode
@@ -40,7 +43,9 @@ export default function ReaderPanel({
         role="dialog"
         aria-modal="true"
         aria-label={label}
-        className="animate-panel-in relative flex h-full w-full flex-col border-l border-rule bg-paper-leaf text-ink shadow-sheet sm:w-[360px]"
+        className={`animate-panel-in relative flex h-full w-full flex-col border-l border-rule bg-paper-leaf text-ink shadow-sheet ${
+          wide ? 'sm:w-[clamp(360px,50vw,48rem)]' : 'sm:w-[360px]'
+        }`}
       >
         <header
           className={`flex shrink-0 justify-between gap-3 border-b border-rule px-6 ${

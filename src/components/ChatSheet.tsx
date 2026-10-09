@@ -29,6 +29,7 @@ export default function ChatSheet({
   const [passageOpen, setPassageOpen] = useState(false)
   const abortRef = useRef<AbortController>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const composerRef = useRef<HTMLTextAreaElement>(null)
   // The message the view is anchored to, or null when the reader is in charge.
   // A turn pins the question that started it just under the top edge, so the
   // answer fills the space below it instead of hauling the viewport down behind
@@ -78,7 +79,31 @@ export default function ChatSheet({
     if (messages?.at(-1)?.role === 'assistant') setStreaming('')
   }, [messages])
 
+  // The composer grows with its text until its max height, then scrolls. A
+  // width change rewraps the text, so the panel resizing refits it too.
+  useLayoutEffect(fitComposer, [draft])
+
+  useEffect(() => {
+    const box = composerRef.current
+    if (!box) return
+    let width = box.clientWidth
+    const observer = new ResizeObserver(() => {
+      if (box.clientWidth === width) return
+      width = box.clientWidth
+      fitComposer()
+    })
+    observer.observe(box)
+    return () => observer.disconnect()
+  }, [])
+
   useEffect(() => () => abortRef.current?.abort(), [])
+
+  function fitComposer() {
+    const box = composerRef.current
+    if (!box) return
+    box.style.height = 'auto'
+    box.style.height = `${box.scrollHeight}px`
+  }
 
   /** Scrolls without tripping `handleScroll`, which watches for the reader. */
   function scrollList(list: HTMLDivElement, top: number) {
@@ -203,6 +228,7 @@ export default function ChatSheet({
       // past the close button first is the wrong default.
       initialFocus="textarea"
       compact
+      wide
       zIndex="z-50"
       onClose={onClose}
     >
@@ -270,6 +296,7 @@ export default function ChatSheet({
         }}
       >
         <textarea
+          ref={composerRef}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {
@@ -281,7 +308,7 @@ export default function ChatSheet({
           rows={1}
           placeholder={messages?.length ? 'Keep going…' : 'What caught your eye?'}
           aria-label="Your note"
-          className="max-h-32 min-h-8 flex-1 resize-none bg-transparent py-2 font-ui text-control text-ink outline-none placeholder:text-ink-faint"
+          className="max-h-[40dvh] min-h-8 flex-1 resize-none bg-transparent py-2 font-ui text-control text-ink outline-none placeholder:text-ink-faint"
         />
         <button
           type="submit"
