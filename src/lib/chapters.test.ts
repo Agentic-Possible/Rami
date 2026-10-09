@@ -61,6 +61,12 @@ describe('chapter labels across split documents', () => {
     expect(chapterAt(anchors, BEFORE_FRIENDSHIP)?.label).toBe('SELF-RELIANCE')
   })
 
+  it('lets an unresolved first heading name the document', () => {
+    const toc = [...TOC.slice(0, 2), { id: '5', label: 'MISSING', href: 'h-1.xhtml#missing' }]
+    const anchors = buildAnchors(toc, 'h-1.xhtml', contents, spineIndex)
+    expect(anchors.map((anchor) => anchor.label)).toEqual(['MISSING'])
+  })
+
   it('does not carry over when an entry covers the whole document', () => {
     const toc = [...TOC, { id: '5', label: 'NOTES', href: 'h-2.xhtml' }]
     const anchors = buildAnchors(toc, 'h-2.xhtml', contentsFor({}), spineIndex)

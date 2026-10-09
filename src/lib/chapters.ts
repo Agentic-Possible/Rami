@@ -74,9 +74,11 @@ export function buildAnchors(
     return anchor
   })
 
-  // An entry for the whole document already covers its start. An unresolved
-  // fragment does not, so it must not stop the carry.
-  if (candidates.some((item) => !item.href.includes('#'))) return anchors
+  // Carry only when this document has no headings or provably opens before its
+  // first one. An entry for the whole document already covers its start, and
+  // an unresolved first heading cannot be placed, so a carry would mask it for
+  // the whole document. An unresolved later heading does not stop the carry.
+  if (anchors.length > 0 && !anchors[0].cfi) return anchors
   const carried = spineIndex && openChapter(flat, href, spineIndex)
   return carried ? [{ label: labelOf(carried), href: carried.href }, ...anchors] : anchors
 }

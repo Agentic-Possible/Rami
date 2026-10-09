@@ -662,7 +662,8 @@ function anchorsForHref(
     toc,
     href,
     current,
-    (target) => spine.get(normalizeHref(target))?.index,
+    // epub.js keys the spine by the manifest href as written, `./` and all.
+    (target) => (spine.get(target) ?? spine.get(normalizeHref(target)))?.index,
   )
   cache.set(key, anchors)
   return anchors
