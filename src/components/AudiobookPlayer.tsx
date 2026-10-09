@@ -352,7 +352,7 @@ export default function AudiobookPlayer({ token, hidden, initialPosition, onHide
       </div>
 
       {!token ? (
-        <p className="font-book text-body text-ink-soft">
+        <p className="font-ui text-body text-ink-soft">
           Add your personal audiobook token in Settings, then reopen the player.
         </p>
       ) : error ? (

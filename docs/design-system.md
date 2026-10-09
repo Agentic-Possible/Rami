@@ -62,8 +62,9 @@ in `src/components/logoPaths.ts`.
 - Reference copy: “Ask about this” (selection bar), “Pick up where you left off”,
   “Follow this thread”, “Threads from this book”, “What caught your eye?” (empty
   composer), “Every book starts somewhere. Add one to begin.” (empty library).
-- Rami's replies are prose, not lists or headings, unless the reader asks. A
-  reply may close with one open question or one pointer to another passage.
+- Rami's replies are prose in the conversation voice (Alegreya Sans), not lists
+  or headings, unless the reader asks. A reply may close with one open question
+  or one pointer to another passage.
 - Greet by the hour (“A good evening for reading”), never with exclamation marks.
 - Use real typography in UI copy: curly quotes, the ellipsis character, and an
   unspaced em dash.
@@ -107,15 +108,21 @@ page colors for it, the browser theme color and the page color swatches.
 Two families, both SIL Open Font License, self-hosted through Fontsource (Latin
 subsets only, so they stay in the offline precache):
 
-- **EB Garamond** (`font-book`): titles, the book's text, passages, Rami's
-  replies, the reader's notes, and any prose longer than a line.
-- **Alegreya Sans** (`font-ui`, the body default): buttons, fields, authors,
-  metadata, badges. Never for anything longer than a line.
+- **EB Garamond** (`font-book`), the book's voice: display, titles, the book's
+  own text, and any passage quoted from it (always italic).
+- **Alegreya Sans** (`font-ui`, the body default), the conversation's voice:
+  Rami's replies, the reader's notes, the composer, and every interface label.
+
+If the words are the book's, set them in Garamond; if they are ours (the
+reader's or Rami's), set them in Alegreya Sans. Never set conversation in
+Garamond or a quotation from the book in Alegreya Sans.
 
 Pair a family with a scale step: `text-display` once per screen, `text-title`,
 `text-heading`, `text-book-title`, `text-reading`, `text-passage`, `text-body`,
 `text-label`, `text-control`, `text-meta`, `text-caption`. Running heads use the
-`eyebrow` class (rubric small caps). Never set Garamond below 14px.
+`eyebrow` class (rubric small caps). Never set Garamond below 14px. Alegreya
+Sans runs small, so conversation prose uses `text-body` (18px), a step above
+the interface's 16px.
 
 ## Space, shape and depth
 

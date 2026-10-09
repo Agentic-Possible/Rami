@@ -19,7 +19,7 @@ export default function TocDrawer({
     <ReaderPanel label="Table of contents" eyebrow={bookTitle} title="Contents" onClose={onClose}>
       <nav className="flex-1 overflow-y-auto overscroll-contain p-3 pb-safe">
         {toc.length === 0 && (
-          <p className="px-3 py-4 font-book text-body text-ink-soft">
+          <p className="px-3 py-4 font-ui text-body text-ink-soft">
             This book has no table of contents.
           </p>
         )}

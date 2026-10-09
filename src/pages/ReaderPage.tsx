@@ -356,13 +356,13 @@ export default function ReaderPage() {
 
       {!reader.ready && !reader.error && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-paper">
-          <p className="font-book text-body text-ink-soft italic">Opening “{book.title}”…</p>
+          <p className="font-ui text-body text-ink-soft italic">Opening “{book.title}”…</p>
         </div>
       )}
 
       {reader.error && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-paper p-6 text-center">
-          <p className="max-w-reading font-book text-body text-danger">{reader.error}</p>
+          <p className="max-w-reading font-ui text-body text-danger">{reader.error}</p>
           <Link to="/" className="font-ui text-label text-moss underline underline-offset-2">
             Back to library
           </Link>
@@ -461,7 +461,7 @@ const pageTurn =
 
 function CenteredNote({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-full items-center justify-center bg-paper p-6 text-center font-book text-body text-ink-soft">
+    <div className="flex h-full items-center justify-center bg-paper p-6 text-center font-ui text-body text-ink-soft">
       <p>{children}</p>
     </div>
   )

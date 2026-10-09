@@ -122,7 +122,7 @@ export default function KoreaderImport() {
   return (
     <section className={card}>
       <h2 className="font-book text-heading font-medium">Import from KOReader</h2>
-      <p className="mt-1 font-book text-body text-ink-soft">
+      <p className="mt-1 font-ui text-body text-ink-soft">
         Highlights made on an e-reader running KOReader, brought in through the Marginalia plugin's
         export file. Each passage is found again by its text, so the import needs the same EPUB file
         that is on the e-reader.
