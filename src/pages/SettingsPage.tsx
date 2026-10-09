@@ -111,7 +111,7 @@ export default function SettingsPage() {
       <main className="mx-auto max-w-2xl space-y-4 px-4 py-8">
         <section className={card}>
           <h2 className="font-book text-heading font-medium">Chat model</h2>
-          <p className="mt-1 font-book text-body text-ink-soft">
+          <p className="mt-1 font-ui text-body text-ink-soft">
             Chat works out of the box — no account or key needed.
           </p>
 
@@ -135,7 +135,7 @@ export default function SettingsPage() {
           <>
             <section className={card}>
               <h2 className="font-book text-heading font-medium">OpenAI API key</h2>
-              <p className="mt-1 font-book text-body text-ink-soft">
+              <p className="mt-1 font-ui text-body text-ink-soft">
                 Stored only in this browser and sent only to api.openai.com. Don't use this on a
                 shared device.
               </p>
@@ -188,7 +188,7 @@ export default function SettingsPage() {
               </select>
 
               <h3 className="mt-5 font-ui text-label font-medium">Summary model</h3>
-              <p className="mt-1 font-book text-body text-ink-soft">
+              <p className="mt-1 font-ui text-body text-ink-soft">
                 Used for the per-book memory digest. A cheap model is plenty.
               </p>
               <select
@@ -210,7 +210,7 @@ export default function SettingsPage() {
 
         <section className={card}>
           <h2 className="font-book text-heading font-medium">Personal audiobook</h2>
-          <p className="mt-1 font-book text-body text-ink-soft">
+          <p className="mt-1 font-ui text-body text-ink-soft">
             Unlocks the private <em>Twilight of the Idols</em> stream. The token is stored only in
             this browser's IndexedDB and is sent only to the audiobook Worker. Don't use it on a
             shared device.
@@ -251,7 +251,7 @@ export default function SettingsPage() {
 
         <section className={card}>
           <h2 className="font-book text-heading font-medium">Highlight color</h2>
-          <p className="mt-1 font-book text-body text-ink-soft">
+          <p className="mt-1 font-ui text-body text-ink-soft">
             Used for every highlight, old and new.
           </p>
           <div role="radiogroup" aria-label="Highlight color" className="mt-3 flex gap-2">
@@ -299,7 +299,7 @@ export default function SettingsPage() {
 
         <section className={card}>
           <h2 className="font-book text-heading font-medium">Data</h2>
-          <p className="mt-1 font-book text-body text-ink-soft">
+          <p className="mt-1 font-ui text-body text-ink-soft">
             Everything lives in this browser's IndexedDB. The export is a JSON file containing your
             highlighted passages and the surrounding text, every thread, and Rami's running notes on
             each book. It does not include your API key, audiobook token, or the book files. Treat
@@ -314,7 +314,7 @@ export default function SettingsPage() {
 
         <section className={card}>
           <h2 className="font-book text-heading font-medium">Feedback and community</h2>
-          <p className="mt-1 font-book text-body text-ink-soft">
+          <p className="mt-1 font-ui text-body text-ink-soft">
             Share an idea or wander through other readers’ questions in the discussions. Something
             broken? Open an issue. Anything else, write to {CONTACT_EMAIL}.
           </p>

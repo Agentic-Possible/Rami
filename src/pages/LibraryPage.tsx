@@ -128,7 +128,7 @@ export default function LibraryPage() {
             <h1 className="font-book text-[40px] leading-[44px] font-medium tracking-[-0.01em] sm:text-display">
               {greeting()}
             </h1>
-            <p className="mt-3 font-book text-body text-ink-soft">
+            <p className="mt-3 font-ui text-body text-ink-soft">
               {continuing
                 ? 'Pick up where you left off, or wander somewhere new.'
                 : 'Open a book, select a line, and see where the question leads.'}
@@ -155,7 +155,7 @@ export default function LibraryPage() {
         )}
 
         {books && books.length === 0 && seeding && (
-          <p className="mt-24 text-center font-book text-body text-ink-soft italic">
+          <p className="mt-24 text-center font-ui text-body text-ink-soft italic">
             Setting out the shelf…
           </p>
         )}
@@ -200,7 +200,7 @@ export default function LibraryPage() {
       </main>
 
       <footer className="pb-safe mx-auto max-w-page px-4 sm:px-8">
-        <p className="border-t border-rule py-8 text-center font-book text-body text-ink-soft">
+        <p className="border-t border-rule py-8 text-center font-ui text-body text-ink-soft">
           Rami is made by one reader. If it has kept you good company,{' '}
           <a
             href={COFFEE_URL}
@@ -302,7 +302,7 @@ function ContinueCard({ book }: { book: Book }) {
 function EmptyState({ onPick }: { onPick: () => void }) {
   return (
     <div className="mt-20 text-center">
-      <p className="mx-auto max-w-xs font-book text-body text-ink-soft">
+      <p className="mx-auto max-w-xs font-ui text-body text-ink-soft">
         Every book starts somewhere. Add one to begin.
       </p>
       <p className="mx-auto mt-2 max-w-xs font-ui text-meta text-ink-faint">
@@ -438,7 +438,7 @@ function ArchivedShelf({
     <section className="mt-16">
       <Ornament />
       <h2 className="font-book text-heading font-medium">Removed books</h2>
-      <p className="mt-1 max-w-reading font-book text-body text-ink-soft">
+      <p className="mt-1 max-w-reading font-ui text-body text-ink-soft">
         Their threads, highlights and memory are kept. Add the same EPUB again to pick up where you
         left off.
       </p>

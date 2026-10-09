@@ -224,7 +224,7 @@ export default function ChatSheet({
         className="flex-1 space-y-4 overflow-y-auto overscroll-contain p-5"
       >
         {messages?.length === 0 && !streaming && (
-          <p className="mt-6 text-center font-book text-body text-ink-soft">
+          <p className="mt-6 text-center font-ui text-body text-ink-soft">
             Wonder aloud about this passage, or say what struck you.
           </p>
         )}
@@ -238,7 +238,7 @@ export default function ChatSheet({
         {streaming && <Bubble role="assistant">{streaming}</Bubble>}
 
         {busy && !streaming && (
-          <p className="font-book text-body text-ink-faint italic">Following the thread…</p>
+          <p className="font-ui text-body text-ink-faint italic">Following the thread…</p>
         )}
 
         {error && (
@@ -294,14 +294,14 @@ function Bubble({ id, role, children }: { id?: string; role: string; children: R
   if (role === 'user') {
     return (
       <div data-message={id} className="flex justify-end">
-        <p className="max-w-[85%] rounded-[8px_8px_3px_8px] bg-moss px-3.5 py-2.5 font-book text-[17px] leading-[25px] whitespace-pre-wrap text-on-moss">
+        <p className="max-w-[85%] rounded-[8px_8px_3px_8px] bg-moss px-3.5 py-2.5 font-ui text-[18px] leading-[26px] whitespace-pre-wrap text-on-moss">
           {children}
         </p>
       </div>
     )
   }
 
-  // Set like the book's own prose, not in a bubble: a marginal note beside the mark.
+  // The conversation's voice, not in a bubble: a marginal note beside the mark.
   return (
     <div data-message={id} className="flex max-w-reading items-start gap-3">
       <span
@@ -310,7 +310,7 @@ function Bubble({ id, role, children }: { id?: string; role: string; children: R
       >
         <Mark size={18} decorative />
       </span>
-      <p className="mt-0.5 min-w-0 flex-1 font-book text-body whitespace-pre-wrap">{children}</p>
+      <p className="mt-0.5 min-w-0 flex-1 font-ui text-body whitespace-pre-wrap">{children}</p>
     </div>
   )
 }

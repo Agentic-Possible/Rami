@@ -54,7 +54,7 @@ export default function RemoveBookDialog({
         </h2>
 
         {archived ? (
-          <p className="mt-1.5 font-book text-body text-ink-soft">
+          <p className="mt-1.5 font-ui text-body text-ink-soft">
             This deletes its highlights, conversations and memory for good. It cannot be undone.
           </p>
         ) : (
