@@ -67,3 +67,22 @@ export function neutralizeScripts(doc: Document, section?: { contents?: Element 
     if (script) element.setAttribute('type', 'text/plain')
   }
 }
+
+/**
+ * Keeps the book frame on the section it was given.
+ *
+ * epub.js follows HTML links itself, from their `onclick`, which still runs. Any
+ * other link, an SVG `<a>` say, would navigate the frame to a book file or a
+ * blob of one that never passed through `neutralizeScripts`, and the frame
+ * would run its scripts on this origin.
+ */
+export function keepFrameInPlace(doc: Document): () => void {
+  const onClick = (event: MouseEvent) => {
+    const link = (event.target as Element | null)?.closest?.('a, area')
+    if (!link) return
+    const href = link.getAttribute('href') ?? link.getAttribute('xlink:href') ?? ''
+    if (!href.trim().toLowerCase().startsWith('mailto:')) event.preventDefault()
+  }
+  doc.addEventListener('click', onClick, true)
+  return () => doc.removeEventListener('click', onClick, true)
+}

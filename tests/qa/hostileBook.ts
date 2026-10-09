@@ -20,6 +20,8 @@ const CHAPTER = `<?xml version="1.0" encoding="utf-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"><script>top.pwned = 'svg script'</script></svg>
 <iframe src="evil.xhtml" title="frame"></iframe>
 <object data="evil.xhtml" type="application/xhtml+xml"></object>
+<form action="evil.svg"><button id="submit-form">Submit form</button></form>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="120" height="40"><a id="svg-link" xlink:href="evil.svg"><rect width="120" height="40" fill="gray" /></a></svg>
 </body>
 </html>`
 
@@ -29,6 +31,11 @@ const DRAWING = `<?xml version="1.0" encoding="utf-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="300" height="200" onload="top.pwned = 'svg root onload'">
 <text x="10" y="40">Plain drawing text</text>
 </svg>`
+
+// An asset epub.js swaps for a same-origin blob URL. It never passes through
+// the section hooks, so the frame must not be able to navigate to it.
+const EVIL_SVG = `<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"><script>top.pwned = 'navigated to an asset'</script></svg>`
 
 const EVIL_PAGE = `<?xml version="1.0" encoding="utf-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml"><head><title>Evil</title></head>
@@ -48,6 +55,7 @@ const OPF = `<?xml version="1.0" encoding="utf-8"?>
 <item id="chapter" href="chapter.xhtml" media-type="application/xhtml+xml" properties="scripted svg" />
 <item id="drawing" href="drawing.xhtml" media-type="application/xhtml+xml" properties="scripted svg" />
 <item id="evil-page" href="evil.xhtml" media-type="application/xhtml+xml" properties="scripted" />
+<item id="evil-svg" href="evil.svg" media-type="image/svg+xml" />
 <item id="evil-script" href="evil.js" media-type="application/javascript" />
 </manifest>
 <spine><itemref idref="chapter" /><itemref idref="drawing" /></spine>
@@ -77,6 +85,7 @@ function hostileBook() {
       ['OEBPS/chapter.xhtml', CHAPTER],
       ['OEBPS/drawing.xhtml', DRAWING],
       ['OEBPS/evil.xhtml', EVIL_PAGE],
+      ['OEBPS/evil.svg', EVIL_SVG],
       ['OEBPS/evil.js', "top.pwned = 'script file'"],
     ]),
   }
@@ -95,6 +104,14 @@ export async function expectBookScriptsBlocked(page: Page) {
   const book = page.frameLocator('.epub-view iframe').first()
   await expect(book.locator('body')).toContainText('Plain prose follows')
   await expectPolicy(page)
+
+  // Navigations a reader can trigger. HTML links are epub.js's to follow.
+  for (const id of ['submit-form', 'svg-link']) {
+    await book.locator(`[id="${id}"]`).click({ force: true })
+    await page.waitForTimeout(1000)
+    expect(await page.evaluate(() => (globalThis as { pwned?: string }).pwned), id).toBeUndefined()
+    await expect(book.locator('body'), id).toContainText('Plain prose follows')
+  }
 
   await page.getByRole('button', { name: 'Table of contents' }).click()
   const contents = page.getByRole('dialog', { name: 'Table of contents' })

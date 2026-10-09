@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest'
-import { neutralizeScripts } from './bookScripts'
+import { keepFrameInPlace, neutralizeScripts } from './bookScripts'
 
 const parse = (xhtml: string) => new DOMParser().parseFromString(xhtml, 'application/xhtml+xml')
 
@@ -97,5 +97,27 @@ describe('neutralizeScripts', () => {
     )
     neutralizeScripts(doc)
     expect(doc.documentElement.hasAttribute('onmouseover')).toBe(false)
+  })
+})
+
+describe('keepFrameInPlace', () => {
+  const click = (doc: Document, id: string) => {
+    const event = new MouseEvent('click', { bubbles: true, cancelable: true })
+    doc.getElementById(id)!.dispatchEvent(event)
+    return event.defaultPrevented
+  }
+
+  const doc = parse(`<html xmlns="http://www.w3.org/1999/xhtml"><body>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<a xlink:href="evil.svg"><rect id="svg" width="1" height="1"/></a></svg>
+<a href="mailto:a@example.com" id="mail">Mail</a><p id="text">Text</p></body></html>`)
+
+  it('stops a link from navigating the frame, but not mail or plain taps', () => {
+    const detach = keepFrameInPlace(doc)
+    expect(click(doc, 'svg')).toBe(true)
+    expect(click(doc, 'mail')).toBe(false)
+    expect(click(doc, 'text')).toBe(false)
+    detach()
+    expect(click(doc, 'svg')).toBe(false)
   })
 })

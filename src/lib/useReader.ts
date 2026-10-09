@@ -6,7 +6,7 @@ import { db } from '../db/db'
 import { epubThemeStyles } from './themes'
 import { buildAnchors, chapterAt, normalizeHref, type ChapterAnchor } from './chapters'
 import { LONG_PRESS_MS, MOVE_TOLERANCE_PX, longPressToSelect } from './touchSelect'
-import { neutralizeScripts } from './bookScripts'
+import { keepFrameInPlace, neutralizeScripts } from './bookScripts'
 
 interface ReaderLocation {
   cfi: string
@@ -188,6 +188,7 @@ export function useReader(
         // Registered before the first display so section one gets it too.
         rend.hooks.content.register((contents: Contents) => {
           detachTouch.add(longPressToSelect(contents))
+          detachTouch.add(keepFrameInPlace(contents.document))
           if (!ownsLinks) return
           contents.on('linkClicked', (href: string) => {
             // Runs from the link's onclick, before the click bubbles to the
