@@ -141,6 +141,36 @@ do
     H.contains(prompt, retried .. "\n" .. passage .. "\n" .. retried, "wrapped by the real fence")
 end
 
+-- The reader's standing instructions are trusted and sit outside the fence,
+-- ahead of anything the book contributed.
+do
+    local fence = "BOOKDATA_0123456789ABCDEF"
+    local without = build()
+    H.ok(not without:find("## Standing instructions", 1, true), "absent unless set")
+    H.ok(
+        not build({ instructions = "   " }):find("## Standing instructions", 1, true),
+        "blank is unset"
+    )
+
+    local prompt = build({ instructions = "  Call me Sam.  " })
+    H.contains(
+        prompt,
+        "## Standing instructions from the reader\n"
+            .. "The reader wrote these in settings. Follow them in every reply unless a reader turn says otherwise.\n"
+            .. "Call me Sam.\n",
+        "instructions are trimmed and unfenced"
+    )
+    H.contains(
+        prompt,
+        "and the standing instructions below.",
+        "the quoted-material rule names them"
+    )
+    H.ok(
+        prompt:find("Call me Sam.", 1, true) < prompt:find(fence .. "\n", 1, true),
+        "they come before any fenced block"
+    )
+end
+
 -- Trimming to a title counts characters, not bytes: a title of accented prose
 -- should not be cut to half its apparent length or severed mid-codepoint.
 do

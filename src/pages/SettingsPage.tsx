@@ -7,6 +7,7 @@ import { HIGHLIGHT_COLORS } from '../lib/highlights'
 import { READER_FONTS } from '../lib/themes'
 import { HOSTED_MODEL_LABEL, verifyKey } from '../lib/inference'
 import { BackIcon } from '../components/Icons'
+import InstructionsSettings from '../components/InstructionsSettings'
 import KoreaderImport from '../components/KoreaderImport'
 import Ornament from '../components/Ornament'
 import { button, card, field, iconButton } from '../components/ui'
@@ -229,6 +230,8 @@ export default function SettingsPage() {
             </span>
           </label>
         </section>
+
+        <InstructionsSettings stored={settings.instructions} />
 
         <Ornament short />
 
