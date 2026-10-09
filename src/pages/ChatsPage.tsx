@@ -172,8 +172,6 @@ function TabButton({
 
 function Empty({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mx-auto mt-16 max-w-xs text-center font-book text-body text-ink-soft">
-      {children}
-    </p>
+    <p className="mx-auto mt-16 max-w-xs text-center font-ui text-body text-ink-soft">{children}</p>
   )
 }

@@ -66,7 +66,7 @@ export default function MemoryPanel({
     <div className="space-y-6">
       <section>
         <h2 className="eyebrow">What Rami remembers</h2>
-        <p className="mt-1.5 font-book text-body text-ink-soft">
+        <p className="mt-1.5 font-ui text-body text-ink-soft">
           A running digest of your threads about this book, kept by Rami and sent with every
           message. Edit it to correct what it thinks, or to tell it something it never worked out on
           its own.
@@ -81,7 +81,7 @@ export default function MemoryPanel({
           rows={10}
           maxLength={MAX_SUMMARY_CHARS}
           placeholder="Nothing yet. Rami starts a digest after a few exchanges, or you can write one here."
-          className="mt-3 w-full resize-y rounded-md border border-rule-strong bg-paper-leaf p-3 font-book text-body text-ink placeholder:text-ink-faint"
+          className="mt-3 w-full resize-y rounded-md border border-rule-strong bg-paper-leaf p-3 font-ui text-body text-ink placeholder:text-ink-faint"
         />
 
         <div className="mt-2 flex items-center gap-2">
@@ -117,7 +117,7 @@ export default function MemoryPanel({
 
       <section>
         <h2 className="eyebrow">Everything sent with your next message</h2>
-        <p className="mt-1.5 font-book text-body text-ink-soft">
+        <p className="mt-1.5 font-ui text-body text-ink-soft">
           The instructions, the book’s own metadata, and the digest above, exactly as the model
           receives them.
         </p>
