@@ -19,7 +19,7 @@ assert(paths === '/api/chat,/api/covers,/api/gutenberg,/health', `Unexpected API
 const container = JSON.parse(await readFile('.devcontainer/devcontainer.json', 'utf8'))
 assert(
   container.postCreateCommand ===
-    'npm run setup && npx --no-install playwright install --with-deps chromium',
+    'npm run setup && npx --no-install playwright install --with-deps chromium webkit',
   'Unexpected devcontainer postCreateCommand',
 )
 assert(container.waitFor === 'postCreateCommand', 'Devcontainer must wait for setup')
