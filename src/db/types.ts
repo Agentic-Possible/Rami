@@ -30,6 +30,11 @@ export interface Book {
   progress?: number
   /** Serialized epub.js locations, so progress isn't recomputed on every open. */
   locations?: string
+  /**
+   * The reader's own instructions for this book, sent unfenced with its chats.
+   * Set only from the Memory tab, never from an import.
+   */
+  instructions?: string
 }
 
 export type HighlightColor = 'yellow' | 'green' | 'blue' | 'pink'
@@ -132,6 +137,8 @@ export interface Settings {
   highlightColor: HighlightColor
   /** Ask the model to avoid spoiling content past the reader's position. */
   spoilerGuard: boolean
+  /** The reader's own standing instructions, sent unfenced with every chat. */
+  instructions?: string
   /** Set once every bundled book has been offered, so deleting them sticks. */
   sampleBookSeeded?: boolean
   /**

@@ -141,6 +141,60 @@ do
     H.contains(prompt, retried .. "\n" .. passage .. "\n" .. retried, "wrapped by the real fence")
 end
 
+-- The reader's standing instructions are trusted and sit outside the fence,
+-- ahead of anything the book contributed.
+do
+    local fence = "BOOKDATA_0123456789ABCDEF"
+    local without = build()
+    H.ok(not without:find("## Standing instructions", 1, true), "absent unless set")
+    H.ok(
+        not build({ instructions = "   " }):find("## Standing instructions", 1, true),
+        "blank is unset"
+    )
+
+    local prompt = build({ instructions = "  Call me Sam.  " })
+    H.contains(
+        prompt,
+        "## Standing instructions from the reader\n"
+            .. "The reader wrote these in settings. Follow them in every reply unless a reader turn says otherwise.\n"
+            .. "Call me Sam.\n",
+        "instructions are trimmed and unfenced"
+    )
+    H.contains(
+        prompt,
+        "and the standing instructions below.",
+        "the quoted-material rule names them"
+    )
+    H.ok(
+        prompt:find("Call me Sam.", 1, true) < prompt:find(fence .. "\n", 1, true),
+        "they come before any fenced block"
+    )
+end
+
+-- Book instructions follow the general ones, also unfenced, and stand alone.
+do
+    local fence = "BOOKDATA_0123456789ABCDEF"
+    local both = build({ book_instructions = " Answer in German. ", instructions = "Call me Sam." })
+    local general_at = both:find("## Standing instructions from the reader", 1, true)
+    local book_at = both:find("## Standing instructions for this book", 1, true)
+    H.ok(
+        general_at ~= nil and book_at ~= nil and general_at < book_at,
+        "book section follows general"
+    )
+    H.contains(both, "these win.\nAnswer in German.\n", "book instructions are trimmed")
+    H.ok(
+        both:find("Answer in German.", 1, true) < both:find(fence .. "\n", 1, true),
+        "and unfenced"
+    )
+
+    local book_only = build({ book_instructions = "Answer in German." })
+    H.ok(
+        not book_only:find("## Standing instructions from the reader", 1, true),
+        "no empty general section"
+    )
+    H.contains(book_only, "and the standing instructions below.", "rule still names them")
+end
+
 -- Trimming to a title counts characters, not bytes: a title of accented prose
 -- should not be cut to half its apparent length or severed mid-codepoint.
 do
