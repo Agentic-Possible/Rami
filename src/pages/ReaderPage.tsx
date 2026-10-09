@@ -68,6 +68,7 @@ export default function ReaderPage() {
   const reader = useReader(bookId, viewer, {
     theme: settings.theme,
     fontSize: settings.fontSize,
+    font: settings.readerFont,
     onTapCenter: toggleChrome,
     onSelected: handleSelected,
   })
