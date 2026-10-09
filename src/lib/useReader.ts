@@ -98,6 +98,19 @@ export function useReader(
     holds.current = 0
   }, [])
 
+  // Takes a hold and returns its release. A move zeroes the count, so a hold
+  // taken before it must not decrement one taken after it.
+  const hold = useCallback(() => {
+    const epoch = navEpoch.current
+    let held = true
+    holds.current += 1
+    return () => {
+      if (!held) return
+      held = false
+      if (navEpoch.current === epoch) holds.current = Math.max(0, holds.current - 1)
+    }
+  }, [])
+
   useEffect(() => {
     // `container` is a state-held element, not a ref: the viewer div mounts a
     // render after the page first paints, and the effect must re-run when it does.
@@ -181,7 +194,7 @@ export function useReader(
         if (stored.lastCfi) {
           const target = stored.lastCfi
           const epoch = navEpoch.current
-          holds.current += 1
+          const release = hold()
           void waitForIdleLayout(rend)
             .then(() =>
               canceled || navEpoch.current !== epoch ? undefined : rend?.display(target),
@@ -192,7 +205,7 @@ export function useReader(
               // at or before the saved position, and saving that would cost a
               // page every time the book is opened.
               releaseHold = window.setTimeout(() => {
-                if (!canceled) holds.current = Math.max(0, holds.current - 1)
+                if (!canceled) release()
               }, REANCHOR_RELEASE_MS)
             })
         }
@@ -223,7 +236,7 @@ export function useReader(
         // epub.js can throw if it is torn down mid-load; nothing to recover.
       }
     }
-  }, [bookId, container])
+  }, [bookId, container, hold])
 
   // Track position and persist it.
   useEffect(() => {
@@ -291,12 +304,10 @@ export function useReader(
 
     let settleTimer = 0
     let releaseTimer = 0
-    let held = false
-
+    let releaseHold: (() => void) | undefined
     const release = () => {
-      if (!held) return
-      held = false
-      holds.current = Math.max(0, holds.current - 1)
+      releaseHold?.()
+      releaseHold = undefined
     }
 
     const onResized = () => {
@@ -305,10 +316,10 @@ export function useReader(
 
       // One hold for the whole burst. A phone's address bar sliding away fires
       // `resize` repeatedly, and epub.js re-displays on every one of them.
-      if (!held) {
-        held = true
-        holds.current += 1
-      }
+      // Swapped rather than kept, so a page turn mid-burst cannot leave the
+      // rest of the burst re-anchoring unheld.
+      release()
+      releaseHold = hold()
       const epoch = navEpoch.current
       window.clearTimeout(settleTimer)
       window.clearTimeout(releaseTimer)
@@ -336,7 +347,7 @@ export function useReader(
       window.clearTimeout(releaseTimer)
       release()
     }
-  }, [rendition])
+  }, [rendition, hold])
 
   // Selection, taps, and keyboard navigation inside the book iframe.
   useEffect(() => {
@@ -347,6 +358,10 @@ export function useReader(
     }
 
     const onKeyUp = (event: KeyboardEvent) => {
+      // Arrows in a sheet's slider or text box belong to that control, not to
+      // the book behind it.
+      const target = event.target as Element | null
+      if (target?.closest?.('input, textarea, select, [contenteditable]')) return
       if (event.key === 'ArrowRight') {
         supersede()
         void rendition.next()
@@ -412,16 +427,31 @@ export function useReader(
     // position put back, and the held anchor is the one to put it back to:
     // `currentLocation` reports where the unchanged scroll offset lands in the
     // new pagination, which is not where the reader was.
+    let target = anchorCfi.current
     try {
       const current = rendition.currentLocation() as unknown as {
         start?: { cfi?: string }
       }
-      const target = anchorCfi.current ?? current?.start?.cfi
-      if (target) void rendition.display(target)
+      target ??= current?.start?.cfi
     } catch {
       // Ignore: the rendition may not have a location yet.
     }
-  }, [rendition, options.theme, options.fontSize])
+    if (!target) return
+
+    // Held like a resize. The re-display reports the start of the page that
+    // holds the anchor, which after repagination is earlier text; adopting it
+    // cost a page on every size change and was saved as the reading position.
+    let releaseTimer = 0
+    const release = hold()
+    const epoch = navEpoch.current
+    void goToSettled(rendition, target, () => navEpoch.current === epoch).finally(() => {
+      releaseTimer = window.setTimeout(release, REANCHOR_RELEASE_MS)
+    })
+    return () => {
+      window.clearTimeout(releaseTimer)
+      release()
+    }
+  }, [rendition, options.theme, options.fontSize, hold])
 
   return {
     rendition,
@@ -457,12 +487,17 @@ export function useReader(
  * anchor several chapters off-screen. Re-displaying against the settled layout
  * lands on the right page.
  */
-async function goToSettled(rendition: Rendition | undefined, target: string) {
+async function goToSettled(
+  rendition: Rendition | undefined,
+  target: string,
+  /** Checked before the second display, so a page turn meanwhile wins. */
+  stillWanted: () => boolean = () => true,
+) {
   if (!rendition) return
   try {
     await rendition.display(target)
     await waitForIdleLayout(rendition)
-    await rendition.display(target)
+    if (stillWanted()) await rendition.display(target)
   } catch {
     // Unresolvable target (stale href or broken CFI); leave the view as-is.
   }
