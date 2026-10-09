@@ -5,7 +5,6 @@ import { db, getSettings, saveSettings } from '../db/db'
 import { DEFAULT_SETTINGS, type HighlightColor, type Provider } from '../db/types'
 import { HIGHLIGHT_COLORS } from '../lib/highlights'
 import { HOSTED_MODEL_LABEL, verifyKey } from '../lib/inference'
-import { createAudiobookSession } from '../lib/audiobooks'
 import { BackIcon } from '../components/Icons'
 import KoreaderImport from '../components/KoreaderImport'
 import Ornament from '../components/Ornament'
@@ -31,24 +30,12 @@ export default function SettingsPage() {
   const [dirtyKey, setDirtyKey] = useState(false)
   const [status, setStatus] = useState<'idle' | 'checking' | 'ok' | 'error'>('idle')
   const [message, setMessage] = useState<string>()
-  const [audiobookToken, setAudiobookToken] = useState('')
-  const [dirtyAudiobookToken, setDirtyAudiobookToken] = useState(false)
-  const [audiobookStatus, setAudiobookStatus] = useState<'idle' | 'checking' | 'ok' | 'error'>(
-    'idle',
-  )
-  const [audiobookMessage, setAudiobookMessage] = useState<string>()
 
   const settings = stored ?? DEFAULT_SETTINGS
 
   useEffect(() => {
     if (stored && !dirtyKey) setApiKey(stored.apiKey ?? '')
   }, [stored, dirtyKey])
-
-  useEffect(() => {
-    if (stored && !dirtyAudiobookToken) {
-      setAudiobookToken(stored.audiobookAccessToken ?? '')
-    }
-  }, [stored, dirtyAudiobookToken])
 
   async function testAndSave() {
     const key = apiKey.trim()
@@ -70,30 +57,6 @@ export default function SettingsPage() {
     } catch (err) {
       setStatus('error')
       setMessage(err instanceof Error ? err.message : 'Could not verify that key.')
-    }
-  }
-
-  async function testAndSaveAudiobookToken() {
-    const token = audiobookToken.trim()
-    if (!token) {
-      await saveSettings({ audiobookAccessToken: undefined })
-      setDirtyAudiobookToken(false)
-      setAudiobookStatus('idle')
-      setAudiobookMessage('Token cleared.')
-      return
-    }
-
-    setAudiobookStatus('checking')
-    setAudiobookMessage(undefined)
-    try {
-      await createAudiobookSession(token)
-      await saveSettings({ audiobookAccessToken: token })
-      setDirtyAudiobookToken(false)
-      setAudiobookStatus('ok')
-      setAudiobookMessage('Token works and is saved on this device.')
-    } catch (err) {
-      setAudiobookStatus('error')
-      setAudiobookMessage(err instanceof Error ? err.message : 'Could not verify that token.')
     }
   }
 
@@ -207,47 +170,6 @@ export default function SettingsPage() {
         )}
 
         <Ornament short />
-
-        <section className={card}>
-          <h2 className="font-book text-heading font-medium">Personal audiobook</h2>
-          <p className="mt-1 font-ui text-body text-ink-soft">
-            Unlocks the private <em>Twilight of the Idols</em> stream. The token is stored only in
-            this browser's IndexedDB and is sent only to the audiobook Worker. Don't use it on a
-            shared device.
-          </p>
-          <input
-            type="password"
-            value={audiobookToken}
-            onChange={(e) => {
-              setAudiobookToken(e.target.value)
-              setDirtyAudiobookToken(true)
-              setAudiobookStatus('idle')
-              setAudiobookMessage(undefined)
-            }}
-            placeholder="Personal access token"
-            autoComplete="off"
-            spellCheck={false}
-            className={`${field} mt-3 font-mono text-[15px]`}
-          />
-          <div className="mt-3 flex items-center gap-3">
-            <button
-              onClick={() => void testAndSaveAudiobookToken()}
-              disabled={audiobookStatus === 'checking'}
-              className={button.primary}
-            >
-              {audiobookStatus === 'checking' ? 'Checking…' : 'Test and save'}
-            </button>
-            {audiobookMessage && (
-              <p
-                className={`font-ui text-meta ${
-                  audiobookStatus === 'error' ? 'text-danger' : 'text-moss'
-                }`}
-              >
-                {audiobookMessage}
-              </p>
-            )}
-          </div>
-        </section>
 
         <section className={card}>
           <h2 className="font-book text-heading font-medium">Highlight color</h2>

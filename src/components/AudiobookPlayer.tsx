@@ -353,7 +353,7 @@ export default function AudiobookPlayer({ token, hidden, initialPosition, onHide
 
       {!token ? (
         <p className="font-ui text-body text-ink-soft">
-          Add your personal audiobook token in Settings, then reopen the player.
+          No audiobook token is saved on this device.
         </p>
       ) : error ? (
         <p className="font-ui text-meta text-danger">{error}</p>

@@ -63,9 +63,9 @@ separate validation environment and installs a pre-commit hook. See
 ## Personal audiobook streaming
 
 The headphone button appears when an imported book's title contains *Twilight
-of the Idols*. In **Settings → Personal audiobook**, enter the private token for
-this deployment. The token stays in that browser's IndexedDB; the app exchanges
-it for 24-hour signed URLs and streams the combined Opus file with byte-range
+of the Idols*. The app no longer offers a way to enter the private token; a token
+already saved in that browser's IndexedDB still works. The app exchanges it for
+24-hour signed URLs and streams the combined Opus file with byte-range
 requests, so seeking does not download the whole book.
 
 The combined file stays as one continuous stream. Chapter boundaries from
