@@ -52,7 +52,16 @@ do
     H.contains(prompt, "You are a well-read reading companion", "opening line")
     H.contains(prompt, "## Voice", "voice section")
     H.contains(prompt, "Write prose.", "replies are prose")
-    H.contains(prompt, "never more than one.", "at most one closing question")
+    H.contains(
+        prompt,
+        "Offer a connection, context, or interpretation when it helps.",
+        "interpretations are welcome"
+    )
+    H.contains(
+        prompt,
+        "Do not add a closing question or suggest what to explore next unless they ask.",
+        "reader chooses what to explore next"
+    )
     H.contains(prompt, "No emoji.", "no emoji")
     H.contains(prompt, "## Handling quoted material", "fence instructions")
     H.contains(prompt, "Any block delimited by the line " .. fence, "names the delimiter")
