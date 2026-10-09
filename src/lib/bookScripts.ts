@@ -14,7 +14,7 @@ const XHTML_NS = 'http://www.w3.org/1999/xhtml'
  * kept with a type no browser runs, rather than removed, so element positions
  * and with them saved CFIs are unchanged.
  */
-export function neutralizeScripts(doc: Document): void {
+export function neutralizeScripts(doc: Document, section?: { contents?: Element }): void {
   // XML keeps the case of names, but the frame's HTML parser folds it, so
   // `<SCRIPT>` or `HTTP-EQUIV` must be caught here too.
   const named = (node: Element | Attr, name: string) => node.localName.toLowerCase() === name
@@ -31,6 +31,9 @@ export function neutralizeScripts(doc: Document): void {
     body.appendChild(root)
     html.appendChild(body)
     root = html
+    // epub.js took this reference before the hooks ran and serializes it, not
+    // the document, so it has to follow the new root.
+    if (section) section.contents = html
   }
 
   // The policy only counts inside the head the frame's parser opens, which is

@@ -23,6 +23,13 @@ const CHAPTER = `<?xml version="1.0" encoding="utf-8"?>
 </body>
 </html>`
 
+// A section whose root is not html. epub.js keeps a reference to that root
+// from before the content hooks run, so it must still carry the policy.
+const DRAWING = `<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200" onload="top.pwned = 'svg root onload'">
+<text x="10" y="40">Plain drawing text</text>
+</svg>`
+
 const EVIL_PAGE = `<?xml version="1.0" encoding="utf-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml"><head><title>Evil</title></head>
 <body><script>top.pwned = 'framed book file'</script></body></html>`
@@ -39,16 +46,17 @@ const OPF = `<?xml version="1.0" encoding="utf-8"?>
 <manifest>
 <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav" />
 <item id="chapter" href="chapter.xhtml" media-type="application/xhtml+xml" properties="scripted svg" />
+<item id="drawing" href="drawing.xhtml" media-type="application/xhtml+xml" properties="scripted svg" />
 <item id="evil-page" href="evil.xhtml" media-type="application/xhtml+xml" properties="scripted" />
 <item id="evil-script" href="evil.js" media-type="application/javascript" />
 </manifest>
-<spine><itemref idref="chapter" /></spine>
+<spine><itemref idref="chapter" /><itemref idref="drawing" /></spine>
 </package>`
 
 const NAV = `<?xml version="1.0" encoding="utf-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
 <head><title>Contents</title></head>
-<body><nav epub:type="toc"><ol><li><a href="chapter.xhtml">Hostile chapter</a></li></ol></nav></body>
+<body><nav epub:type="toc"><ol><li><a href="chapter.xhtml">Hostile chapter</a></li><li><a href="drawing.xhtml">Drawing</a></li></ol></nav></body>
 </html>`
 
 const CONTAINER = `<?xml version="1.0"?>
@@ -67,6 +75,7 @@ function hostileBook() {
       ['OEBPS/content.opf', OPF],
       ['OEBPS/nav.xhtml', NAV],
       ['OEBPS/chapter.xhtml', CHAPTER],
+      ['OEBPS/drawing.xhtml', DRAWING],
       ['OEBPS/evil.xhtml', EVIL_PAGE],
       ['OEBPS/evil.js', "top.pwned = 'script file'"],
     ]),
@@ -85,6 +94,24 @@ export async function expectBookScriptsBlocked(page: Page) {
   // Still the chapter: nothing navigated the frame away.
   const book = page.frameLocator('.epub-view iframe').first()
   await expect(book.locator('body')).toContainText('Plain prose follows')
+  await expectPolicy(page)
+
+  await page.getByRole('button', { name: 'Table of contents' }).click()
+  const contents = page.getByRole('dialog', { name: 'Table of contents' })
+  await contents.getByRole('button', { name: 'Drawing' }).click()
+  await expect(book.locator('body')).toContainText('Plain drawing text')
+  await page.waitForTimeout(1000)
+  expect(await page.evaluate(() => (globalThis as { pwned?: string }).pwned)).toBeUndefined()
+  await expectPolicy(page)
+}
+
+/** The rendered frame, not just the parsed section, carries the policy. */
+async function expectPolicy(page: Page) {
+  const policy = page
+    .frameLocator('.epub-view iframe')
+    .first()
+    .locator('head > meta[http-equiv="Content-Security-Policy"]')
+  await expect(policy).toHaveCount(1)
 }
 
 /** A zip with every entry stored uncompressed, which is all an EPUB needs. */

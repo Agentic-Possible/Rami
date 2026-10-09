@@ -77,9 +77,12 @@ describe('neutralizeScripts', () => {
     const doc = parse(
       '<svg xmlns="http://www.w3.org/2000/svg" onload="x()"><rect width="1" height="1"/></svg>',
     )
-    neutralizeScripts(doc)
+    // epub.js serializes the root it cached before the hooks, not the document.
+    const section = { contents: doc.documentElement }
+    neutralizeScripts(doc, section)
     const root = doc.documentElement
     expect(root.localName).toBe('html')
+    expect(section.contents).toBe(root)
     expect(root.firstElementChild?.firstElementChild?.getAttribute('http-equiv')).toBe(
       'Content-Security-Policy',
     )
