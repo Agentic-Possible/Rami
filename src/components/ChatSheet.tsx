@@ -25,6 +25,8 @@ export default function ChatSheet({
   const [streaming, setStreaming] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string>()
+  // The seed passage sits on one line until tapped, so the thread keeps the room.
+  const [passageOpen, setPassageOpen] = useState(false)
   const abortRef = useRef<AbortController>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   // The message the view is anchored to, or null when the reader is in charge.
@@ -86,12 +88,14 @@ export default function ChatSheet({
   }
 
   // Any scroll this component did not perform is the reader taking over, and
-  // the anchor gets out of the way for the rest of the turn.
+  // the anchor gets out of the way for the rest of the turn and an opened
+  // passage folds back to one line.
   function handleScroll(event: React.UIEvent<HTMLDivElement>) {
     const ours = setTopRef.current
     if (ours !== null && Math.abs(event.currentTarget.scrollTop - ours) <= 1) return
     pinnedRef.current = null
     setTopRef.current = null
+    setPassageOpen(false)
   }
 
   async function send(text: string) {
@@ -204,7 +208,8 @@ export default function ChatSheet({
       {conversation?.seedText && (
         <Passage
           className="mx-5 mt-5 shrink-0"
-          clamp
+          expanded={passageOpen}
+          onToggle={() => setPassageOpen((open) => !open)}
           cite={
             conversation.progress !== undefined
               ? `${Math.round(conversation.progress * 100)}% through the book`
