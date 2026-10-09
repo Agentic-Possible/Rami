@@ -64,6 +64,18 @@ class MarginaliaDB extends Dexie {
       messages:
         'id, conversationId, createdAt, [conversationId+createdAt], [conversationId+externalId]',
     })
+
+    // Audiobook playback was removed; drop its token and position so the
+    // secret does not outlive the feature.
+    this.version(5).upgrade(async (tx) => {
+      await tx
+        .table('settings')
+        .toCollection()
+        .modify((row: Record<string, unknown>) => {
+          delete row.audiobookAccessToken
+          delete row.audiobookPositionSeconds
+        })
+    })
   }
 }
 

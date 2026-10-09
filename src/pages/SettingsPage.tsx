@@ -224,8 +224,8 @@ export default function SettingsPage() {
           <p className="mt-1 font-ui text-body text-ink-soft">
             Everything lives in this browser's IndexedDB. The export is a JSON file containing your
             highlighted passages and the surrounding text, every thread, and Rami's running notes on
-            each book. It does not include your API key, audiobook token, or the book files. Treat
-            it as a record of what you read and thought.
+            each book. It does not include your API key or the book files. Treat it as a record of
+            what you read and thought.
           </p>
           <button onClick={() => void exportData()} className={`${button.secondary} mt-3`}>
             Export highlights and chats

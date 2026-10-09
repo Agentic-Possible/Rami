@@ -1,4 +1,4 @@
-export type Operation = 'app' | 'relay' | 'audiobooks'
+export type Operation = 'app' | 'relay'
 
 export function operationMetric(operation: Operation, status: number, durationMs: number) {
   return {

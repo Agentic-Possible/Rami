@@ -8,8 +8,6 @@ body:
       label: Application
       options:
         - PWA / chat relay
-        - Audiobook Worker
-        - Narrator
         - KOReader plugin
     validations:
       required: true

@@ -21,12 +21,10 @@ import TocDrawer from '../components/TocDrawer'
 import DisplaySheet from '../components/DisplaySheet'
 import SelectionBar from '../components/SelectionBar'
 import ChatSheet from '../components/ChatSheet'
-import AudiobookPlayer from '../components/AudiobookPlayer'
 import RemoveBookDialog from '../components/RemoveBookDialog'
 import Ribbon from '../components/Ribbon'
-import { BackIcon, ChatIcon, HeadphonesIcon, ListIcon, TypeIcon } from '../components/Icons'
+import { BackIcon, ChatIcon, ListIcon, TypeIcon } from '../components/Icons'
 import { iconButton } from '../components/ui'
-import { isTwilightOfTheIdols } from '../lib/audiobooks'
 
 /** A pending selection, or an existing highlight the reader tapped. */
 interface ActiveSelection {
@@ -46,8 +44,6 @@ export default function ReaderPage() {
   const [active, setActive] = useState<ActiveSelection>()
   const [chatId, setChatId] = useState<string>()
   const [removing, setRemoving] = useState(false)
-  const [audiobookOpen, setAudiobookOpen] = useState(false)
-  const [audiobookStarted, setAudiobookStarted] = useState(false)
   const [searchParams, setSearchParams] = useSearchParams()
 
   const book = useLiveQuery(() => (bookId ? db.books.get(bookId) : undefined), [bookId])
@@ -289,19 +285,6 @@ export default function ReaderPage() {
             </p>
           )}
           <div className="col-start-2 flex items-center justify-end gap-0.5 sm:col-start-3">
-            {isTwilightOfTheIdols(book.title) && (
-              <button
-                onClick={() => {
-                  setAudiobookStarted(true)
-                  setAudiobookOpen((open) => !open)
-                }}
-                aria-label={audiobookOpen ? 'Hide audiobook controls' : 'Show audiobook controls'}
-                aria-pressed={audiobookOpen}
-                className={`${iconButton} ${audiobookOpen ? activeClass : ''}`}
-              >
-                <HeadphonesIcon />
-              </button>
-            )}
             <button
               onClick={() => setPanel('display')}
               aria-label="Reader settings"
@@ -396,15 +379,6 @@ export default function ReaderPage() {
             clearSelection()
             setActive(undefined)
           }}
-        />
-      )}
-
-      {audiobookStarted && (
-        <AudiobookPlayer
-          token={settings.audiobookAccessToken}
-          hidden={!audiobookOpen}
-          initialPosition={settings.audiobookPositionSeconds ?? 0}
-          onHide={() => setAudiobookOpen(false)}
         />
       )}
 

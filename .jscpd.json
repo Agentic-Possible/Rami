@@ -1,5 +1,5 @@
 {
-  "path": ["src", "shared", "workers", "koreader/marginalia.koplugin", "tools/narrate/narrate"],
+  "path": ["src", "shared", "workers", "koreader/marginalia.koplugin"],
   "ignore": ["**/*.test.ts", "**/worker-configuration.d.ts"],
   "minLines": 15,
   "threshold": 5,

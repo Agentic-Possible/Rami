@@ -22,9 +22,8 @@ npm run test:list # test discovery without execution
 npm run check     # lint, typecheck, and all Vitest tests
 ```
 
-`npm run lint` rejects warnings. Run `npm run quality`, `npm run check:narrate`,
-and `npm run test:qa` for quality, strict Python checks, and desktop/mobile smoke
-tests. The Wasmoon Lua VM harness uses synthetic hosts and closes each VM.
+`npm run lint` rejects warnings. Run `npm run quality` and `npm run test:qa` for
+quality checks and desktop/mobile smoke tests. The Wasmoon Lua VM harness uses synthetic hosts and closes each VM.
 `npm run setup` installs pinned validation tools and the local pre-commit hook.
 
 ## Start the dev server detached

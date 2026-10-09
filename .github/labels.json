@@ -1,5 +1,5 @@
 {
   "priorities": ["priority:P0", "priority:P1", "priority:P2", "priority:P3"],
   "types": ["type:bug", "type:feature", "type:research"],
-  "areas": ["area:reader", "area:inference", "area:audiobooks", "area:narrate", "area:koreader"]
+  "areas": ["area:reader", "area:inference", "area:koreader"]
 }
