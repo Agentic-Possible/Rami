@@ -27,7 +27,8 @@ jobs:
           install -m 700 -d ~/.ssh
           printf '%s\n' "$MIRROR_DEPLOY_KEY" > ~/.ssh/mirror_key
           chmod 600 ~/.ssh/mirror_key
-          ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts
+          # GitHub's published host key: https://api.github.com/meta
+          echo 'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl' >> ~/.ssh/known_hosts
           git clone --bare "https://github.com/${GITHUB_REPOSITORY}.git" source.git
           GIT_SSH_COMMAND='ssh -i ~/.ssh/mirror_key -o IdentitiesOnly=yes' \
             git -C source.git push --mirror git@github.com:Agentic-Possible/Rami.git
