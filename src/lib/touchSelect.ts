@@ -7,9 +7,9 @@ import type { Contents } from 'epubjs'
  * on its own -- that threshold is what a resting thumb keeps tripping, and
  * matching it would give the reader nothing back.
  */
-const LONG_PRESS_MS = 650
+export const LONG_PRESS_MS = 650
 /** Movement that makes a press a swipe rather than a selection. */
-const MOVE_TOLERANCE_PX = 10
+export const MOVE_TOLERANCE_PX = 10
 
 interface Caret {
   node: Node
@@ -54,9 +54,9 @@ export function longPressToSelect(contents: Contents): () => void {
   let origin: { x: number; y: number } | undefined
   let selecting = false
 
-  // Deliberately the host window's timer, not the book frame's. The book is
-  // rendered in an iframe sandboxed without `allow-scripts`, so anything
-  // scheduled on its window is simply never run.
+  // Deliberately the host window's timer, not the book frame's: a frame's
+  // window is replaced whenever its section is, and WebKit runs nothing for a
+  // frame sandboxed without `allow-scripts`.
   const disarm = () => {
     window.clearTimeout(timer)
     timer = 0

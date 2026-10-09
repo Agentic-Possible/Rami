@@ -1,0 +1,126 @@
+import { crc32 } from 'node:zlib'
+import { expect, type Page } from '@playwright/test'
+
+// Each vector tries to mark the app's own window. The book frame shares the
+// app's origin, so any script that ran could as easily read IndexedDB.
+const CHAPTER = `<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
+<head>
+<title>Chapter</title>
+<script>top.pwned = 'inline script'</script>
+<script src="evil.js"></script>
+<meta http-equiv="refresh" content="0;url=evil.xhtml" />
+</head>
+<body>
+<h1>Hostile chapter</h1>
+<p>Plain prose follows the attempts below.</p>
+<img src="missing.png" alt="" onerror="top.pwned = 'onerror attribute'" />
+<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"><script>top.pwned = 'svg script'</script></svg>
+<iframe src="evil.xhtml" title="frame"></iframe>
+<object data="evil.xhtml" type="application/xhtml+xml"></object>
+</body>
+</html>`
+
+const EVIL_PAGE = `<?xml version="1.0" encoding="utf-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Evil</title></head>
+<body><script>top.pwned = 'framed book file'</script></body></html>`
+
+const OPF = `<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="id">
+<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+<dc:identifier id="id">urn:uuid:00000000-0000-4000-8000-000000000101</dc:identifier>
+<dc:title>Hostile Scripts</dc:title>
+<dc:creator>Synthetic Fixture</dc:creator>
+<dc:language>en</dc:language>
+<meta property="dcterms:modified">2026-01-01T00:00:00Z</meta>
+</metadata>
+<manifest>
+<item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav" />
+<item id="chapter" href="chapter.xhtml" media-type="application/xhtml+xml" properties="scripted svg" />
+<item id="evil-page" href="evil.xhtml" media-type="application/xhtml+xml" properties="scripted" />
+<item id="evil-script" href="evil.js" media-type="application/javascript" />
+</manifest>
+<spine><itemref idref="chapter" /></spine>
+</package>`
+
+const NAV = `<?xml version="1.0" encoding="utf-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
+<head><title>Contents</title></head>
+<body><nav epub:type="toc"><ol><li><a href="chapter.xhtml">Hostile chapter</a></li></ol></nav></body>
+</html>`
+
+const CONTAINER = `<?xml version="1.0"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+<rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml" /></rootfiles>
+</container>`
+
+/** A synthetic EPUB whose only content is attempts to run script. */
+function hostileBook() {
+  return {
+    name: 'hostile-scripts.epub',
+    mimeType: 'application/epub+zip',
+    buffer: storedZip([
+      ['mimetype', 'application/epub+zip'],
+      ['META-INF/container.xml', CONTAINER],
+      ['OEBPS/content.opf', OPF],
+      ['OEBPS/nav.xhtml', NAV],
+      ['OEBPS/chapter.xhtml', CHAPTER],
+      ['OEBPS/evil.xhtml', EVIL_PAGE],
+      ['OEBPS/evil.js', "top.pwned = 'script file'"],
+    ]),
+  }
+}
+
+/** Imports the hostile book, opens it, and checks that none of it ran. */
+export async function expectBookScriptsBlocked(page: Page) {
+  await page.goto('/')
+  await page.locator('input[type="file"]').setInputFiles(hostileBook())
+  await page.getByRole('button', { name: /^Hostile Scripts/ }).click()
+  // Long enough for the section to render, and for a refresh, a failed image
+  // and nested frames to fire.
+  await page.waitForTimeout(3000)
+  expect(await page.evaluate(() => (globalThis as { pwned?: string }).pwned)).toBeUndefined()
+  // Still the chapter: nothing navigated the frame away.
+  const book = page.frameLocator('.epub-view iframe').first()
+  await expect(book.locator('body')).toContainText('Plain prose follows')
+}
+
+/** A zip with every entry stored uncompressed, which is all an EPUB needs. */
+function storedZip(entries: [string, string][]): Buffer {
+  const locals: Buffer[] = []
+  const centrals: Buffer[] = []
+  let offset = 0
+  for (const [name, text] of entries) {
+    const path = Buffer.from(name)
+    const data = Buffer.from(text)
+    const checksum = crc32(data)
+    const local = Buffer.alloc(30)
+    local.writeUInt32LE(0x04034b50, 0)
+    local.writeUInt16LE(20, 4)
+    local.writeUInt32LE(checksum, 14)
+    local.writeUInt32LE(data.length, 18)
+    local.writeUInt32LE(data.length, 22)
+    local.writeUInt16LE(path.length, 26)
+    const central = Buffer.alloc(46)
+    central.writeUInt32LE(0x02014b50, 0)
+    central.writeUInt16LE(20, 4)
+    central.writeUInt16LE(20, 6)
+    central.writeUInt32LE(checksum, 16)
+    central.writeUInt32LE(data.length, 20)
+    central.writeUInt32LE(data.length, 24)
+    central.writeUInt16LE(path.length, 28)
+    central.writeUInt32LE(offset, 42)
+    locals.push(local, path, data)
+    centrals.push(central, path)
+    offset += local.length + path.length + data.length
+  }
+  const directory = Buffer.concat(centrals)
+  const end = Buffer.alloc(22)
+  end.writeUInt32LE(0x06054b50, 0)
+  end.writeUInt16LE(entries.length, 8)
+  end.writeUInt16LE(entries.length, 10)
+  end.writeUInt32LE(directory.length, 12)
+  end.writeUInt32LE(offset, 16)
+  return Buffer.concat([...locals, directory, end])
+}

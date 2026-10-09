@@ -225,8 +225,9 @@ must turn the page and leave `getSelection()` collapsed; a press held past 650ms
 select a word and *not* turn the page. Checking only the long press passes happily while
 every ordinary tap is still selecting, which was the original bug.
 
-The book frame is sandboxed without `allow-scripts`. Timers scheduled on its window never
-fire, so a handler that looks correct will simply never run — schedule on the host window.
+Schedule timers on the host window, not the book frame's. The frame needs `allow-scripts`:
+without it WebKit never calls the app's listeners in the frame at all, though Chromium does,
+so test touch changes in the `ipad` QA project, not only in Chromium.
 And a programmatic selection is collapsed again by the mouse events the browser
 synthesises at `touchend` unless that event is canceled, which reads as "the selection
 never happened" a full second after it did.
