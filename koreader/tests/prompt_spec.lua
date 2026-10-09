@@ -54,6 +54,11 @@ do
     H.contains(prompt, "Write prose.", "replies are prose")
     H.contains(
         prompt,
+        "Offer a connection, context, or interpretation when it helps.",
+        "interpretations are welcome"
+    )
+    H.contains(
+        prompt,
         "Do not add a closing question or suggest what to explore next unless they ask.",
         "reader chooses what to explore next"
     )
