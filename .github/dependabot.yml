@@ -5,6 +5,9 @@ updates:
     schedule: { interval: weekly }
     cooldown: { default-days: 7 }
     groups:
+      # Alone, so a QA failure after a bump points at the new browser builds.
+      playwright:
+        patterns: ['@playwright/test', 'playwright', 'playwright-core']
       development:
         dependency-type: development
       production:
