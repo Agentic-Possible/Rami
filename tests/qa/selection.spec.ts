@@ -1,4 +1,5 @@
-import { expect, test, type BrowserContext, type Page } from '@playwright/test'
+import type { BrowserContext, Page } from '@playwright/test'
+import { expect, test } from './fixtures.js'
 
 // A passage can be selected across a page break (issue #111). epub.js shows a
 // page-sized window of one wide strip of columns, so the text past the break is
@@ -118,9 +119,55 @@ async function expectBarOnScreen(page: Page) {
   expect(box.y + box.height).toBeLessThanOrEqual(page.viewportSize()!.height)
 }
 
-// `page.mouse.move` takes the browser down on the reader page, so drags and
-// holds go through CDP (see the marginalia-dev skill).
-async function pointer(context: BrowserContext, page: Page, touch: boolean) {
+// What a hand-made touch needs of the frame.
+interface TouchFrame {
+  contentDocument: {
+    body: EventTarget
+    elementFromPoint(x: number, y: number): EventTarget | null
+  }
+  getBoundingClientRect(): Rect
+}
+
+// WebKit will not construct a TouchEvent with touches, so on a WebKit phone the
+// touch is dispatched by hand to the book frame, as in ipad.spec.ts.
+function frameTouch(page: Page) {
+  let at = { x: 0, y: 0 }
+  const fire = (type: string, x: number, y: number) =>
+    frame(page).evaluate(
+      (element, { type, x, y }) => {
+        const iframe = element as unknown as TouchFrame
+        const doc = iframe.contentDocument
+        const box = iframe.getBoundingClientRect()
+        const point = { clientX: x - box.left, clientY: y - box.top }
+        const target = doc.elementFromPoint(point.clientX, point.clientY) ?? doc.body
+        const event = new Event(type, { bubbles: true, cancelable: true })
+        Object.defineProperty(event, 'touches', { value: type === 'touchend' ? [] : [point] })
+        Object.defineProperty(event, 'changedTouches', { value: [point] })
+        target.dispatchEvent(event)
+      },
+      { type, x, y },
+    )
+  return {
+    down: (x: number, y: number) => ((at = { x, y }), fire('touchstart', x, y)),
+    move: (x: number, y: number) => ((at = { x, y }), fire('touchmove', x, y)),
+    up: () => fire('touchend', at.x, at.y),
+  }
+}
+
+// In Chromium, `page.mouse.move` takes the browser down on the reader page, so
+// drags and holds go through CDP there (see the marginalia-dev skill).
+async function pointer(context: BrowserContext, page: Page, browserName: string, touch: boolean) {
+  if (browserName === 'webkit' && touch) return frameTouch(page)
+  if (browserName !== 'chromium') {
+    return {
+      down: async (x: number, y: number) => {
+        await page.mouse.move(x, y)
+        await page.mouse.down()
+      },
+      move: (x: number, y: number) => page.mouse.move(x, y),
+      up: () => page.mouse.up(),
+    }
+  }
   const cdp = await context.newCDPSession(page)
   if (touch) {
     const send = (type: string, x = 0, y = 0) =>
@@ -154,11 +201,12 @@ async function pointer(context: BrowserContext, page: Page, touch: boolean) {
 test('a selection dragged to the page edge runs onto the next page', async ({
   context,
   page,
+  browserName,
   isMobile,
 }) => {
   const box = await openChapterOne(page)
   const line = await lastLine(page)
-  const input = await pointer(context, page, isMobile)
+  const input = await pointer(context, page, browserName, isMobile)
   const start = await scrollLeft(page)
 
   await input.down(line.x, line.y)
@@ -185,11 +233,12 @@ test('a selection dragged to the page edge runs onto the next page', async ({
 test('a tap at the page edge carries a selection to the next page', async ({
   context,
   page,
+  browserName,
   isMobile,
 }) => {
   const box = await openChapterOne(page)
   const line = await lastLine(page)
-  const input = await pointer(context, page, isMobile)
+  const input = await pointer(context, page, browserName, isMobile)
 
   await input.down(line.x, line.y)
   await page.waitForTimeout(isMobile ? 900 : 100)

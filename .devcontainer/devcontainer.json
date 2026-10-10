@@ -4,7 +4,7 @@
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
-  "postCreateCommand": "npm run setup && npx --no-install playwright install --with-deps chromium webkit",
+  "postCreateCommand": "npm run setup && npx --no-install playwright install --with-deps chromium firefox webkit",
   "waitFor": "postCreateCommand",
   "forwardPorts": [5173],
   "portsAttributes": {
