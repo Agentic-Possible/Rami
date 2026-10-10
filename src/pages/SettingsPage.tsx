@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, getSettings, saveSettings } from '../db/db'
 import { DEFAULT_SETTINGS, type HighlightColor, type Provider, type ReaderFont } from '../db/types'
+import { BUILD } from '../lib/buildInfo'
 import { HIGHLIGHT_COLORS } from '../lib/highlights'
 import { READER_FONTS } from '../lib/themes'
 import { HOSTED_MODEL_LABEL, verifyKey } from '../lib/inference'
@@ -280,6 +281,17 @@ export default function SettingsPage() {
             </a>
           </div>
         </section>
+
+        <p className="text-center font-ui text-meta text-ink-faint">
+          Version{' '}
+          {BUILD.url ? (
+            <a href={BUILD.url} target="_blank" rel="noreferrer" className="underline">
+              {BUILD.label}
+            </a>
+          ) : (
+            BUILD.label
+          )}
+        </p>
       </main>
     </div>
   )
