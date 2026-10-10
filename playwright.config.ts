@@ -16,6 +16,7 @@ export default defineConfig({
     { name: 'mobile', use: { ...devices['Pixel 7'] }, testIgnore: /ipad\.spec/ },
     { name: 'firefox', use: { ...devices['Desktop Firefox'] }, testIgnore: /ipad\.spec/ },
     { name: 'webkit', use: { ...devices['Desktop Safari'] }, testIgnore: /ipad\.spec/ },
+    { name: 'iphone', use: { ...devices['iPhone 15'] }, testIgnore: /ipad\.spec/ },
     { name: 'ipad', use: { ...devices['iPad (gen 7)'] }, testMatch: /ipad\.spec/ },
   ],
   webServer: {

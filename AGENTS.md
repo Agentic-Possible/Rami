@@ -49,7 +49,7 @@ Additional gates:
 
 ```bash
 npm run quality              # formatter, unused/dead/duplicate code, module size, docs, contracts
-npm run test:qa              # Chromium, Firefox, WebKit, iPad WebKit; synthetic/offline
+npm run test:qa              # Chromium, Firefox, WebKit, iPhone, iPad; synthetic/offline
 npm run types:generate       # example secrets only, Worker bindings
 npm run docs:check           # generated API/storage documentation freshness
 node scripts/bundle-budget.mjs # after build
