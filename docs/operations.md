@@ -53,11 +53,18 @@ them. No deployment-frequency or successful-rollback claim follows from this doc
 
 ## Browser releases
 
-The nightly `browser-canary` workflow runs the Chromium QA projects in branded
-Chrome stable and beta (`npm run test:qa:canary`, channel from `QA_CHANNEL`,
-default `chrome-beta`). A failure opens or updates one issue per channel, which
-closes when that channel passes again. If beta fails but stable passes, a coming
-Chrome change is the likely cause: fix it or report it upstream before release.
+The nightly `browser-canary` workflow runs QA in three legs:
+
+- `chrome` and `chrome-beta`: the Chromium projects in branded Chrome
+  (`npm run test:qa:canary`, channel from `QA_CHANNEL`, default `chrome-beta`).
+- `playwright-next`: every project on Playwright's prerelease, whose Firefox
+  and WebKit builds run ahead of the pinned version's. This is the early
+  warning for Firefox and Safari; real Safari and iOS still need a manual check.
+
+A failure opens or updates one issue per leg, which closes when that leg passes
+again. If only beta or `playwright-next` fails, a coming browser change (or, for
+`playwright-next`, a Playwright change) is the likely cause: fix it or report it
+upstream before release.
 Dependabot bumps Playwright in its own PR, since that bump also replaces the
 bundled browsers.
 
