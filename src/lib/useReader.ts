@@ -188,7 +188,8 @@ export function useReader(
 
         // Registered before the first display so section one gets it too.
         rend.hooks.content.register((contents: Contents) => {
-          detachTouch.add(longPressToSelect(contents))
+          // A press on a highlight opens it; it must not also select a word.
+          detachTouch.add(longPressToSelect(contents, (since) => suppressTapUntil.current > since))
           detachTouch.add(keepFrameInPlace(contents.document))
           if (!ownsLinks) return
           contents.on('linkClicked', (href: string) => {

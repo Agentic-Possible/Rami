@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { useModal } from '../lib/useModal'
 import { CloseIcon } from './Icons'
 import { iconButton } from './ui'
@@ -34,10 +35,25 @@ export default function ReaderPanel({
   children: React.ReactNode
 }) {
   const ref = useModal<HTMLElement>(onClose, initialFocus)
+  // A panel opened by a touch in the book, like a tap on a highlight, appears
+  // under the finger before the touch ends. iOS then sends that touch's click to
+  // whatever is under it now, the scrim on a wide screen, which would close the
+  // panel at once. Only a press that began on the scrim may close it.
+  const pressedScrim = useRef(false)
 
   return (
     <div className={`fixed inset-0 flex justify-end ${zIndex}`}>
-      <div className="absolute inset-0 bg-scrim" onClick={onClose} aria-hidden />
+      <div
+        className="absolute inset-0 bg-scrim"
+        onPointerDown={() => {
+          pressedScrim.current = true
+        }}
+        onClick={() => {
+          if (pressedScrim.current) onClose()
+          pressedScrim.current = false
+        }}
+        aria-hidden
+      />
       <section
         ref={ref}
         role="dialog"

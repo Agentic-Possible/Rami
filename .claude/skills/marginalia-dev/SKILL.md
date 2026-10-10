@@ -232,6 +232,12 @@ And a programmatic selection is collapsed again by the mouse events the browser
 synthesises at `touchend` unless that event is canceled, which reads as "the selection
 never happened" a full second after it did.
 
+iOS does not paint that programmatic selection, so `longPressToSelect` draws it as
+`.marginalia-selection-mark` boxes and the theme hides the native paint on touch screens.
+Check for those boxes, not `::selection`. The same synthesised click is hit-tested where
+the finger was *after* the touch: a panel a tap opens, like a highlight's thread, must not
+close on a click whose press did not start on its scrim.
+
 ## Testing chat
 
 Chat defaults to the built-in provider, which POSTs to `/api/chat`. In dev that route is
