@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import type { Book } from '../db/types'
+import { repairLostCover } from '../lib/storedFile'
 import { useBlobUrl } from '../lib/useBlobUrl'
 
 const CLOTHS = ['bg-cloth-moss', 'bg-cloth-oxblood', 'bg-cloth-navy', 'bg-cloth-umber']
@@ -17,8 +19,22 @@ function clothFor(title: string) {
  */
 export default function BookCover({ book, compact }: { book: Book; compact?: boolean }) {
   const coverUrl = useBlobUrl(book.cover)
-  if (coverUrl) {
-    return <img src={coverUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
+  // Safari can lose a stored image's bytes while keeping the record; the
+  // board stands in rather than a broken-image glyph while the record is mended.
+  const [brokenUrl, setBrokenUrl] = useState<string>()
+  if (coverUrl && coverUrl !== brokenUrl) {
+    return (
+      <img
+        src={coverUrl}
+        alt=""
+        className="h-full w-full object-cover"
+        loading="lazy"
+        onError={() => {
+          setBrokenUrl(coverUrl)
+          void repairLostCover(book).catch(() => undefined)
+        }}
+      />
+    )
   }
   return (
     <div

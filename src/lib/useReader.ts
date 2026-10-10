@@ -7,6 +7,7 @@ import { epubThemeStyles } from './themes'
 import { buildAnchors, chapterAt, normalizeHref, type ChapterAnchor } from './chapters'
 import { LONG_PRESS_MS, MOVE_TOLERANCE_PX, longPressToSelect } from './touchSelect'
 import { keepFrameInPlace, neutralizeScripts } from './bookScripts'
+import { readBookFile } from './storedFile'
 
 interface ReaderLocation {
   cfi: string
@@ -150,7 +151,7 @@ export function useReader(
         // arrives while the book is still opening has to re-anchor to it too.
         anchorCfi.current = stored.lastCfi || undefined
 
-        const buffer = await stored.file.arrayBuffer()
+        const buffer = await readBookFile(stored, stored.file)
         if (canceled) return
 
         epubBook = ePub(buffer)
