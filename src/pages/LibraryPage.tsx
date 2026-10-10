@@ -9,6 +9,7 @@ import { seedSampleBooks } from '../lib/sampleBook'
 import { useModal } from '../lib/useModal'
 import AddBookDialog from '../components/AddBookDialog'
 import CoverPickerDialog from '../components/CoverPickerDialog'
+import InstallBanner from '../components/InstallBanner'
 import RemoveBookDialog from '../components/RemoveBookDialog'
 import BookCover from '../components/BookCover'
 import Ornament from '../components/Ornament'
@@ -213,6 +214,8 @@ export default function LibraryPage() {
           .
         </p>
       </footer>
+
+      <InstallBanner />
 
       {showAddBook && (
         <AddBookDialog
