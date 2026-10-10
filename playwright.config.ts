@@ -14,8 +14,9 @@ export default defineConfig({
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] }, testIgnore: /ipad\.spec/ },
     { name: 'mobile', use: { ...devices['Pixel 7'] }, testIgnore: /ipad\.spec/ },
-    // The spec launches its own persistent iPad context; see its header.
-    { name: 'ipad', testMatch: /ipad\.spec/ },
+    { name: 'firefox', use: { ...devices['Desktop Firefox'] }, testIgnore: /ipad\.spec/ },
+    { name: 'webkit', use: { ...devices['Desktop Safari'] }, testIgnore: /ipad\.spec/ },
+    { name: 'ipad', use: { ...devices['iPad (gen 7)'] }, testMatch: /ipad\.spec/ },
   ],
   webServer: {
     command: 'npm run dev',

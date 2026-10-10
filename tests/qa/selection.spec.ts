@@ -1,8 +1,12 @@
-import { expect, test, type BrowserContext, type Page } from '@playwright/test'
+import type { BrowserContext, Page } from '@playwright/test'
+import { expect, test } from './fixtures.js'
 
 // A passage can be selected across a page break (issue #111). epub.js shows a
 // page-sized window of one wide strip of columns, so the text past the break is
 // in the same document, only scrolled out of reach.
+
+// The drags go through CDP, which only Chromium speaks.
+test.skip(({ browserName }) => browserName !== 'chromium', 'drives input through CDP')
 
 test.beforeEach(async ({ context }) => {
   // QA must never contact hosted services.

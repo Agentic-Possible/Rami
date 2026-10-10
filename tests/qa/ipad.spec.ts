@@ -1,29 +1,14 @@
-import { mkdtemp, rm } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
-import { expect, test as base, devices, type Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
+import { expect, test } from './fixtures.js'
 import { expectBookScriptsBlocked } from './hostileBook.js'
 
 // Every iPad browser is WebKit, and WebKit never runs listeners the app adds to
 // a book frame sandboxed without `allow-scripts`. Chromium does, so only this
 // project can catch a regression.
-//
-// A persistent profile, because an ephemeral WebKit context refuses Blobs in
-// IndexedDB (as Private Browsing does) and the sample books never seed.
-const test = base.extend<{ page: Page }>({
-  page: async ({ playwright, baseURL }, provide) => {
-    const dir = await mkdtemp(join(tmpdir(), 'marginalia-ipad-'))
-    const { defaultBrowserType: _, ...ipad } = devices['iPad (gen 7)']
-    const context = await playwright.webkit.launchPersistentContext(dir, { ...ipad, baseURL })
-    // QA must never contact hosted services.
-    await context.route(/https:\/\/(?!127\.0\.0\.1)/, (route) => route.abort())
-    try {
-      await provide(context.pages()[0] ?? (await context.newPage()))
-    } finally {
-      await context.close()
-      await rm(dir, { recursive: true, force: true })
-    }
-  },
+
+test.beforeEach(async ({ context }) => {
+  // QA must never contact hosted services.
+  await context.route(/https:\/\/(?!127\.0\.0\.1)/, (route) => route.abort())
 })
 
 async function openChapterOne(page: Page) {
