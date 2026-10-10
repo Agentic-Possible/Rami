@@ -1,5 +1,5 @@
 import type { Contents } from 'epubjs'
-import { caretAt, edgeTurner, type TurnPage } from './selectionEdge'
+import { caretAt, edgeTurner, isTouchFirst, type TurnPage } from './selectionEdge'
 
 /**
  * How long a finger must rest before a press means "select this word".
@@ -40,8 +40,8 @@ const XHTML_NS = 'http://www.w3.org/1999/xhtml'
  * `isClaimed` reports whether something else, a tap on a highlight say, took
  * over a press that started at the given time; that press selects nothing.
  *
- * Coarse pointers only. Dragging a mouse to select is unambiguous, so on desktop
- * the native behavior is left alone.
+ * Touch screens only (see `isTouchFirst`). Dragging a mouse to select is
+ * unambiguous, so on desktop the native behavior is left alone.
  *
  * Dragging the selection to the edge of the page turns it (see `edgeTurner`),
  * so a passage can be selected across a page break.
@@ -54,7 +54,7 @@ export function longPressToSelect(
   const doc = contents.document
   const win = contents.window
   if (!doc?.body || !win) return () => {}
-  if (!win.matchMedia?.('(pointer: coarse)').matches) return () => {}
+  if (!isTouchFirst(win)) return () => {}
 
   const body = doc.body
   const setSelectable = (on: boolean) => {
