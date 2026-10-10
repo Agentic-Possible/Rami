@@ -53,7 +53,7 @@ jobs:
       # Runner package mirrors occasionally stall; retry rather than hit the job timeout.
       - run: |
           for attempt in 1 2 3; do
-            timeout 240 npx playwright install --with-deps chromium webkit && exit 0
+            timeout 240 npx playwright install --with-deps chromium firefox webkit && exit 0
             echo "Playwright install attempt $attempt failed"
           done
           exit 1

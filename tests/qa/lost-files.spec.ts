@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
+import { expect, test } from './fixtures.js'
 
 // iOS Safari can lose the file behind a Blob stored in IndexedDB while keeping
 // the row (issue #106). Chromium never does, so this stands in for it: a Blob
