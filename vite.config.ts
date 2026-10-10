@@ -7,6 +7,7 @@ import { handleRelayRequest } from './shared/relay.ts'
 import { handleGutenbergRequest } from './shared/gutenberg.ts'
 import { handleCoverRequest } from './shared/covers.ts'
 import { visualizer } from 'rollup-plugin-visualizer'
+import { execFileSync } from 'node:child_process'
 
 /**
  * Serves /api/chat in dev with the same handler the Cloudflare Worker uses,
@@ -94,6 +95,25 @@ function getRelay(
   }
 }
 
+function git(...args: string[]): string {
+  return execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim()
+}
+
+/**
+ * Names the commit a build came from, so a cached PWA can show which version
+ * it is running. Falls back to Workers Builds' variable when there is no .git,
+ * and marks builds with uncommitted changes as dirty.
+ */
+function buildCommit(): string {
+  try {
+    const sha = git('rev-parse', '--short', 'HEAD')
+    const dirty = git('status', '--porcelain', '--untracked-files=no') !== ''
+    return dirty ? `${sha}-dirty` : sha
+  } catch {
+    return process.env.WORKERS_CI_COMMIT_SHA?.slice(0, 7) ?? ''
+  }
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const remoteRelay = env.CHAT_RELAY_URL?.trim()
@@ -155,7 +175,11 @@ export default defineConfig(({ mode }) => {
       }),
     ],
     // epub.js references `global` in a few places.
-    define: { global: 'globalThis' },
+    define: {
+      global: 'globalThis',
+      'import.meta.env.APP_COMMIT': JSON.stringify(buildCommit()),
+      'import.meta.env.APP_BUILT_AT': JSON.stringify(new Date().toISOString()),
+    },
     build: { chunkSizeWarningLimit: 450 },
     server: {
       host: '127.0.0.1',
