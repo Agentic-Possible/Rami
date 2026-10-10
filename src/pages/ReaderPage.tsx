@@ -106,6 +106,17 @@ export default function ReaderPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reader.rendition, highlights, highlightColor, isDark, reader.ready])
 
+  // A page turn under a live selection moves it; follow its visible part, and
+  // let it go if the turn left its section (and so its document) behind.
+  const locationCfi = reader.location?.cfi
+  useEffect(() => {
+    setActive((current) => {
+      if (!current?.contents) return current
+      const rect = selectionRect(current.contents, current.cfiRange)
+      return rect ? { ...current, rect } : undefined
+    })
+  }, [locationCfi])
+
   // Deep link from the highlights list: jump once, then drop the param so a
   // later page turn isn't undone by a re-render.
   const requestedCfi = searchParams.get('cfi')
@@ -380,6 +391,8 @@ export default function ReaderPage() {
             clearSelection()
             setActive(undefined)
           }}
+          onTurn={(direction) => (direction === 'next' ? reader.next() : reader.prev())}
+          page={viewer}
         />
       )}
 
