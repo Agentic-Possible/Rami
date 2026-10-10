@@ -11,6 +11,29 @@ import { expect } from './fixtures.js'
 export async function settle(page: Page, quietMs = 1000) {
   const container = page.locator('.epub-container')
   await expect(container).toBeVisible()
+
+  // `goToSettled` re-displays once the frame's images and fonts are in, so
+  // wait for those before the quiet window starts. A resize rebuilds the view,
+  // leaving a frame with no document for a moment.
+  await expect
+    .poll(
+      () =>
+        page.locator('.epub-view iframe').evaluate((element) => {
+          const doc = (
+            element as unknown as {
+              contentDocument: {
+                images: Iterable<{ complete: boolean }>
+                fonts: { status: string }
+              } | null
+            }
+          ).contentDocument
+          if (!doc) return false
+          return [...doc.images].every((img) => img.complete) && doc.fonts.status === 'loaded'
+        }),
+      { message: "the book's images and fonts load", timeout: 20_000 },
+    )
+    .toBe(true)
+
   let last = ''
   let since = Date.now()
   await expect

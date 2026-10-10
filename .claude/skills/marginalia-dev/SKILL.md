@@ -114,9 +114,10 @@ Left alone the error accumulates without bound: paging back and forth inside one
 reached 80px after 200 turns and kept climbing, until the viewport straddled two columns
 and showed half of each page. Any change near navigation should assert that remainder
 over a few hundred turns, since a handful of turns looks perfectly fine.
-`tests/qa/drift.spec.ts` does this for 200 turns. An emulated viewport is whole CSS pixels,
-so the pitch is too and nothing drifts; the spec zooms the page to 1.05 to get a
-fractional pitch. Without it the test passes even with `snapToPage` removed.
+`tests/qa/drift.spec.ts` does this for 200 turns in the `mobile` project. An emulated
+viewport is whole CSS pixels, so the pitch is too and nothing drifts; the spec zooms the
+app's document (not the book frame) to 1.05 for a fractional pitch. Desktop, WebKit and
+Firefox still do not drift with `snapToPage` removed, so the test runs only there.
 
 ## The other unbounded drift: resizing
 

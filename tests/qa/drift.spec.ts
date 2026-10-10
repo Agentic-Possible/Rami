@@ -34,15 +34,19 @@ const savedCfi = (page: Page) =>
     return (await db.books.get('sample-moby-dick'))?.lastCfi
   })
 
-test('paging back and forth stays on whole pages', async ({ page, browserName }) => {
-  test.skip(browserName === 'firefox', 'Firefox lays a zoomed page out on whole pixels')
+test('paging back and forth stays on whole pages', async ({ page }, testInfo) => {
+  // The drift needs a fractional pitch on a fractional device pixel ratio,
+  // which a phone usually has (1080 device pixels at 2.625 is 411.43 CSS px).
+  // Of the QA projects only this one drifts with `snapToPage` removed: desktop
+  // rounds to whole pixels, and WebKit and Firefox lay the zoomed page out on
+  // a whole-pixel pitch.
+  test.skip(testInfo.project.name !== 'mobile', 'needs a fractional pitch and pixel ratio')
   test.setTimeout(120_000)
-  // The drift needs a fractional pitch, which a phone's layout width usually
-  // is (1080 device pixels at 2.625 is 411.43 CSS px). Emulated viewports are
-  // whole CSS pixels, so zoom the page to get one. A string, since this file is
-  // type-checked without the DOM library.
+  // Emulated viewports are whole CSS pixels, so zoom the page for a fractional
+  // pitch. Init scripts run in every frame, and only the app's own document
+  // should zoom. A string, since this file is type-checked without the DOM lib.
   await page.addInitScript(
-    `document.addEventListener('DOMContentLoaded', () => {
+    `if (window === window.top) document.addEventListener('DOMContentLoaded', () => {
       document.documentElement.style.zoom = '1.05'
     })`,
   )
