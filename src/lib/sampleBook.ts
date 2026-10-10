@@ -119,19 +119,34 @@ async function run(): Promise<boolean> {
   }
 }
 
+/** A bundled book, freshly fetched and parsed. Undefined for any other id; throws if the fetch fails. */
+export async function fetchSampleBook(id: string): Promise<Book | undefined> {
+  const sample = SAMPLE_BOOKS.find((candidate) => candidate.id === id)
+  if (!sample) return undefined
+  const book = await fetchSample(sample)
+  if (!book) throw new Error(`Could not fetch ${sample.filename}.`)
+  return book
+}
+
+async function fetchSample(sample: SampleBook): Promise<Book | undefined> {
+  const response = await fetch(`/books/${sample.filename}`)
+  if (!response.ok) return undefined
+
+  const book = await parseEpubFile(await response.blob(), sample.filename)
+  return {
+    ...book,
+    id: sample.id,
+    title: sample.title ?? book.title,
+    author: sample.author ?? book.author,
+  }
+}
+
 async function seed(sample: SampleBook, addedAt: number): Promise<boolean> {
   try {
-    const response = await fetch(`/books/${sample.filename}`)
-    if (!response.ok) return false
+    const book = await fetchSample(sample)
+    if (!book) return false
 
-    const book: Book = await parseEpubFile(await response.blob(), sample.filename)
-    await db.books.add({
-      ...book,
-      id: sample.id,
-      addedAt,
-      title: sample.title ?? book.title,
-      author: sample.author ?? book.author,
-    })
+    await db.books.add({ ...book, addedAt })
     return true
   } catch (err) {
     // A second tab beat us to this row. The book is on the shelf either way,
