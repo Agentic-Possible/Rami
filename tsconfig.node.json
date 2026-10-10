@@ -20,5 +20,13 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["vite.config.ts", "vitest.config.ts", "playwright.config.ts", "shared", "koreader/tests", "tests"]
+  "include": [
+    "vite.config.ts",
+    "vitest.config.ts",
+    "playwright.config.ts",
+    "playwright.canary.config.ts",
+    "shared",
+    "koreader/tests",
+    "tests"
+  ]
 }

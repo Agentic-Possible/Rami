@@ -51,6 +51,16 @@ on regression.
 These actions require hosted credentials and authorization; local QA never runs
 them. No deployment-frequency or successful-rollback claim follows from this doc.
 
+## Browser releases
+
+The nightly `browser-canary` workflow runs the Chromium QA projects in branded
+Chrome stable and beta (`npm run test:qa:canary`, channel from `QA_CHANNEL`,
+default `chrome-beta`). A failure opens or updates one issue per channel, which
+closes when that channel passes again. If beta fails but stable passes, a coming
+Chrome change is the likely cause: fix it or report it upstream before release.
+Dependabot bumps Playwright in its own PR, since that bump also replaces the
+bundled browsers.
+
 ## Data requests and error-to-issue flow
 
 Books, notes, conversations, and personal keys stay on the reader's device.
