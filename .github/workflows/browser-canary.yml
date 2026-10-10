@@ -1,7 +1,7 @@
 name: browser-canary
 
-# Nightly QA in branded Chrome stable and beta. Beta leads stable by about four
-# weeks, so a failure here is time to fix or report before users update.
+# Nightly QA in browsers ahead of the pinned Playwright's, so a failure here is
+# time to fix or report before users update.
 on:
   schedule:
     - cron: '23 7 * * *'
@@ -21,9 +21,24 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        channel: [chrome, chrome-beta]
+        include:
+          # Branded Chrome; beta leads stable by about four weeks.
+          - leg: chrome
+            channel: chrome
+            browsers: chrome
+            qa: test:qa:canary
+          - leg: chrome-beta
+            channel: chrome-beta
+            browsers: chrome-beta
+            qa: test:qa:canary
+          # Playwright's prerelease bundles newer Firefox and WebKit builds.
+          - leg: playwright-next
+            browsers: chromium firefox webkit
+            qa: test:qa
     env:
+      LEG: ${{ matrix.leg }}
       QA_CHANNEL: ${{ matrix.channel }}
+      BROWSERS: ${{ matrix.browsers }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -31,30 +46,26 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci
+      - if: matrix.leg == 'playwright-next'
+        run: npm install --no-save @playwright/test@next
       # Runner package mirrors occasionally stall; retry rather than hit the job timeout.
       - run: |
           for attempt in 1 2 3; do
-            timeout 240 npx playwright install --with-deps "$QA_CHANNEL" && exit 0
+            timeout 240 npx playwright install --with-deps $BROWSERS && exit 0
             echo "Playwright install attempt $attempt failed"
           done
           exit 1
       - id: version
-        run: |
-          node --input-type=module -e "
-            import { chromium } from '@playwright/test'
-            const browser = await chromium.launch({ channel: process.env.QA_CHANNEL })
-            console.log('browser=' + process.env.QA_CHANNEL + ' ' + browser.version())
-            await browser.close()
-          " >> "$GITHUB_OUTPUT"
-      - run: npm run test:qa:canary
+        run: node scripts/qa-browsers.mjs >> "$GITHUB_OUTPUT"
+      - run: npm run ${{ matrix.qa }}
       - uses: actions/upload-artifact@v6
         if: always()
         with:
-          name: browser-canary-${{ matrix.channel }}
+          name: browser-canary-${{ matrix.leg }}
           path: |
             playwright-report/
             test-results/
-      - name: Track the result in one open issue per channel
+      - name: Track the result in one open issue per leg
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
@@ -62,9 +73,9 @@ jobs:
           FAILED: ${{ job.status != 'success' }}
           RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          # Empty when setup failed, including Chrome not installing or launching.
-          BROWSER=${BROWSER:-$QA_CHANNEL (version unknown)}
-          title="Browser canary failing: $QA_CHANNEL"
+          # Empty when setup failed, including a browser not installing or launching.
+          BROWSER=${BROWSER:-$LEG (version unknown)}
+          title="Browser canary failing: $LEG"
           issue=$(gh issue list --state open --search "in:title \"$title\"" --json number,title \
             --jq "map(select(.title == \"$title\"))[0].number // empty")
           if [ "$FAILED" = true ]; then
@@ -73,7 +84,7 @@ jobs:
               gh issue comment "$issue" --body "$body"
             else
               gh issue create --title "$title" \
-                --body "$body"$'\n\n'"Rerun against \`chrome\` to tell a browser change from an app change."
+                --body "$body"$'\n\n'"If the other legs and PR QA pass, a coming browser or Playwright change is the likely cause."
             fi
           elif [ -n "$issue" ]; then
             gh issue close "$issue" --comment "Passing again in $BROWSER: $RUN"
