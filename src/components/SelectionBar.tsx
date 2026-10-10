@@ -35,7 +35,8 @@ export default function SelectionBar({
   const clamped = Math.min(Math.max(8, top), window.innerHeight - BAR_HEIGHT - 8)
 
   // The backdrop covers the book, so it answers the page-edge taps the book
-  // would: a selection can then be carried to the next page and extended there.
+  // would, keeping the selection. It still blocks gestures on the book, so a
+  // selection is extended across a page by dragging it to the edge instead.
   const onBackdrop = (event: MouseEvent) => {
     const bounds = page?.getBoundingClientRect() ?? { left: 0, width: window.innerWidth }
     const x = (event.clientX - bounds.left) / bounds.width
