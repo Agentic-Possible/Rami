@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
+import { expect, test } from './fixtures.js'
 
 test.beforeEach(async ({ context }) => {
   // QA must never contact hosted services.
@@ -23,7 +24,12 @@ async function offerInstall(page: Page) {
   })
 }
 
-test('the library offers to install and uses the browser prompt', async ({ page }) => {
+test('the library offers to install and uses the browser prompt', async ({
+  page,
+  isMobile,
+  browserName,
+}) => {
+  test.skip(isMobile && browserName === 'webkit', 'iOS has no install prompt; see the next test')
   await page.goto('/')
   const banner = page.getByRole('complementary', { name: 'Install Rami' })
   await expect(page.getByRole('button', { name: /^Moby Dick/ })).toBeVisible()
@@ -34,6 +40,19 @@ test('the library offers to install and uses the browser prompt', async ({ page 
   await banner.getByRole('button', { name: 'Install' }).click()
   await expect(banner).toHaveCount(0)
   expect(await page.evaluate(() => (globalThis as PageGlobal).prompted)).toBe(true)
+})
+
+test('an iPhone is told how to add Rami to the home screen', async ({
+  page,
+  isMobile,
+  browserName,
+}) => {
+  test.skip(!(isMobile && browserName === 'webkit'), 'iOS only')
+  await page.goto('/')
+  const banner = page.getByRole('complementary', { name: 'Install Rami' })
+  await expect(banner).toContainText('Tap Share, then “Add to Home Screen.”')
+  await banner.getByRole('button', { name: 'Not now' }).click()
+  await expect(banner).toHaveCount(0)
 })
 
 test('“Not now” keeps the offer away after a reload', async ({ page }) => {

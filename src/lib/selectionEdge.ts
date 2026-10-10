@@ -10,6 +10,20 @@ const EDGE_DWELL_MS = 600
 export type PageDirection = 'next' | 'prev'
 export type TurnPage = (direction: PageDirection) => Promise<unknown> | void
 
+/**
+ * Whether presses on the book are touches, read as taps and long presses. A
+ * coarse pointer says so, and so does a touch screen with nothing that hovers:
+ * Firefox for Android calls a phone whose screen also takes a stylus a fine
+ * pointer.
+ */
+export function isTouchFirst(win: Window): boolean {
+  const matches = (query: string) => win.matchMedia?.(query).matches ?? false
+  return (
+    matches('(pointer: coarse)') ||
+    (win.navigator.maxTouchPoints > 0 && !matches('(any-hover: hover)'))
+  )
+}
+
 interface EdgeTurner {
   /** Reports the dragging point, in the book frame's client coordinates. */
   track: (clientX: number, clientY: number) => void
@@ -113,7 +127,7 @@ export function edgeTurner(doc: Document, turn: TurnPage): EdgeTurner {
 export function mouseEdgeTurn(contents: Contents, turn: TurnPage): () => void {
   const doc = contents.document
   const win = contents.window
-  if (!doc || !win || win.matchMedia?.('(pointer: coarse)').matches) return () => {}
+  if (!doc || !win || isTouchFirst(win)) return () => {}
 
   const turner = edgeTurner(doc, turn)
   const onMove = (event: MouseEvent) => {
