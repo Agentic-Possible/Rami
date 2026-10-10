@@ -1,4 +1,5 @@
 import type { Contents } from 'epubjs'
+import { caretAt, edgeTurner, type TurnPage } from './selectionEdge'
 
 /**
  * How long a finger must rest before a press means "select this word".
@@ -17,11 +18,6 @@ export const DRAWN_SELECTION_CLASS = 'marginalia-drawn-selection'
 export const SELECTION_MARK_CLASS = 'marginalia-selection-mark'
 
 const XHTML_NS = 'http://www.w3.org/1999/xhtml'
-
-interface Caret {
-  node: Node
-  offset: number
-}
 
 /**
  * Replaces the browser's own touch text-selection with an explicit long press.
@@ -46,9 +42,13 @@ interface Caret {
  *
  * Coarse pointers only. Dragging a mouse to select is unambiguous, so on desktop
  * the native behavior is left alone.
+ *
+ * Dragging the selection to the edge of the page turns it (see `edgeTurner`),
+ * so a passage can be selected across a page break.
  */
 export function longPressToSelect(
   contents: Contents,
+  turn: TurnPage,
   isClaimed: (pressStartedAt: number) => boolean = () => false,
 ): () => void {
   const doc = contents.document
@@ -71,6 +71,7 @@ export function longPressToSelect(
   let timer = 0
   let origin: { x: number; y: number; at: number } | undefined
   let selecting = false
+  const turner = edgeTurner(doc, turn)
 
   // Deliberately the host window's timer, not the book frame's: a frame's
   // window is replaced whenever its section is, and WebKit runs nothing for a
@@ -87,6 +88,7 @@ export function longPressToSelect(
       // A second finger means a pinch, not a press. Drop out of selecting too,
       // or the zoom gesture would drag the selection along with it.
       selecting = false
+      turner.stop()
       disarm()
       return
     }
@@ -114,6 +116,7 @@ export function longPressToSelect(
       event.preventDefault()
       const caret = caretAt(doc, touch.clientX, touch.clientY)
       if (caret) win.getSelection()?.extend(caret.node, caret.offset)
+      turner.track(touch.clientX, touch.clientY)
       return
     }
 
@@ -129,6 +132,7 @@ export function longPressToSelect(
     // synthesise the trailing mousedown would collapse it again, and the click
     // behind it would reach the page-turn handler with nothing left to veto it.
     if (selecting) event.preventDefault()
+    turner.stop()
     disarm()
   }
 
@@ -138,6 +142,7 @@ export function longPressToSelect(
   doc.addEventListener('touchcancel', onTouchEnd, { passive: false })
 
   return () => {
+    turner.stop()
     disarm()
     doc.removeEventListener('touchstart', onTouchStart)
     doc.removeEventListener('touchmove', onTouchMove)
@@ -236,19 +241,4 @@ function selectWordAt(
   selection.removeAllRanges()
   selection.addRange(range)
   return true
-}
-
-function caretAt(doc: Document, x: number, y: number): Caret | undefined {
-  const api = doc as Document & {
-    caretRangeFromPoint?: (x: number, y: number) => Range | null
-    caretPositionFromPoint?: (x: number, y: number) => { offsetNode: Node; offset: number } | null
-  }
-
-  const range = api.caretRangeFromPoint?.(x, y)
-  if (range) return { node: range.startContainer, offset: range.startOffset }
-
-  const position = api.caretPositionFromPoint?.(x, y)
-  if (position) return { node: position.offsetNode, offset: position.offset }
-
-  return undefined
 }

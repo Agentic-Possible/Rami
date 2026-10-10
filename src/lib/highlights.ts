@@ -21,19 +21,26 @@ export interface SelectionRect {
  *
  * epub.js lays a whole spine section out as one very wide strip of columns and
  * scrolls `.epub-container` across it, so rects from inside the iframe are
- * offset by that scroll position.
+ * offset by that scroll position. A selection that runs across a page break
+ * is measured by its part on the visible page: its overall box spans both
+ * columns, from the top of one to the bottom of the other.
  */
 export function selectionRect(contents: Contents, cfiRange: string): SelectionRect | undefined {
   try {
     const range = contents.range(cfiRange)
     if (!range) return undefined
-    const rect = range.getBoundingClientRect()
-    if (!rect || (rect.width === 0 && rect.height === 0)) return undefined
 
     const container = contents.document.defaultView?.frameElement?.closest(
       '.epub-container',
     ) as HTMLElement | null
     const scrollLeft = container?.scrollLeft ?? 0
+    const scrollRight = scrollLeft + (container?.clientWidth ?? Infinity)
+
+    const visible = [...range.getClientRects()].filter(
+      (r) => r.width > 0 && r.right > scrollLeft && r.left < scrollRight,
+    )
+    const rect = visible.length ? unionOf(visible) : range.getBoundingClientRect()
+    if (!rect || (rect.width === 0 && rect.bottom === rect.top)) return undefined
 
     return {
       top: rect.top,
@@ -43,6 +50,17 @@ export function selectionRect(contents: Contents, cfiRange: string): SelectionRe
     }
   } catch {
     return undefined
+  }
+}
+
+function unionOf(rects: DOMRect[]): SelectionRect {
+  const left = Math.min(...rects.map((r) => r.left))
+  const right = Math.max(...rects.map((r) => r.right))
+  return {
+    top: Math.min(...rects.map((r) => r.top)),
+    bottom: Math.max(...rects.map((r) => r.bottom)),
+    left,
+    width: right - left,
   }
 }
 

@@ -6,6 +6,7 @@ import { db } from '../db/db'
 import { epubThemeStyles } from './themes'
 import { buildAnchors, chapterAt, normalizeHref, type ChapterAnchor } from './chapters'
 import { LONG_PRESS_MS, MOVE_TOLERANCE_PX, longPressToSelect } from './touchSelect'
+import { TAP_TURN_ZONE, mouseEdgeTurn, type TurnPage } from './selectionEdge'
 import { keepFrameInPlace, neutralizeScripts } from './bookScripts'
 import { readBookFile } from './storedFile'
 
@@ -185,11 +186,19 @@ export function useReader(
         // handler, costing another page when the link sat near an edge.
         const ownsLinks = takeOverLinks(rend)
         const book = epubBook
+        const view = rend
+        const turnPage: TurnPage = (direction) => {
+          supersede()
+          return direction === 'next' ? view.next() : view.prev()
+        }
 
         // Registered before the first display so section one gets it too.
         rend.hooks.content.register((contents: Contents) => {
           // A press on a highlight opens it; it must not also select a word.
-          detachTouch.add(longPressToSelect(contents, (since) => suppressTapUntil.current > since))
+          detachTouch.add(
+            longPressToSelect(contents, turnPage, (since) => suppressTapUntil.current > since),
+          )
+          detachTouch.add(mouseEdgeTurn(contents, turnPage))
           detachTouch.add(keepFrameInPlace(contents.document))
           if (!ownsLinks) return
           contents.on('linkClicked', (href: string) => {
@@ -419,10 +428,10 @@ export function useReader(
       // annotation callback claim the tap first.
       window.setTimeout(() => {
         if (suppressTapUntil.current > since) return
-        if (x < width * 0.28) {
+        if (x < width * TAP_TURN_ZONE) {
           supersede()
           void rendition.prev()
-        } else if (x > width * 0.72) {
+        } else if (x > width * (1 - TAP_TURN_ZONE)) {
           supersede()
           void rendition.next()
         } else optionsRef.current.onTapCenter?.()
