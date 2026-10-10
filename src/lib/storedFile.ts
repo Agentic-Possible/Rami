@@ -65,11 +65,12 @@ async function recoverLostFile(stored: Book): Promise<ArrayBuffer> {
 
   const coverLost = stored.cover ? await isLost(stored.cover) : false
 
-  if (sample?.file && (!stored.fileHash || sample.fileHash === stored.fileHash)) {
+  // A row from before fingerprints were kept cannot prove its edition, so its
+  // anchors are not handed to whatever is bundled now.
+  if (sample?.file && stored.fileHash && sample.fileHash === stored.fileHash) {
     // A cover the reader chose is kept, unless it was lost too.
     await db.books.update(stored.id, {
       file: sample.file,
-      fileHash: sample.fileHash,
       cover: stored.cover && !coverLost ? stored.cover : sample.cover,
     })
     return sample.file.arrayBuffer()
