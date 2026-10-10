@@ -14,7 +14,13 @@ import { button, iconButton } from './ui'
 export default function InstallBanner() {
   const [offer, setOffer] = useState(() => installOffer(currentInstallContext()))
 
-  useEffect(() => subscribeInstallPrompt(() => setOffer(installOffer(currentInstallContext()))), [])
+  useEffect(() => {
+    const refresh = () => setOffer(installOffer(currentInstallContext()))
+    const unsubscribe = subscribeInstallPrompt(refresh)
+    // The prompt may have arrived between the first render and subscribing.
+    refresh()
+    return unsubscribe
+  }, [])
 
   if (!offer) return null
 
