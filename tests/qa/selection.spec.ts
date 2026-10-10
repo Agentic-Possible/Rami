@@ -21,7 +21,7 @@ interface Rect {
 // What the probes need of the frame; QA code is typed without the DOM lib.
 interface BookFrame {
   contentDocument: {
-    querySelectorAll(selector: string): Iterable<object>
+    querySelectorAll(selector: string): Iterable<{ getBoundingClientRect(): Rect }>
     createRange(): { selectNodeContents(node: object): void; getClientRects(): Iterable<Rect> }
     getSelection(): {
       isCollapsed: boolean
@@ -95,9 +95,16 @@ function selectionSpan(page: Page) {
     const selection = iframe.contentDocument.getSelection()
     if (!selection || selection.isCollapsed || !selection.rangeCount) return undefined
     const rects = [...selection.getRangeAt(0).getClientRects()].filter((r) => r.width > 0)
+    // Touch selections are drawn by the app (iOS paints none); count the marks
+    // on the page now showing.
+    const marks = [...iframe.contentDocument.querySelectorAll('.marginalia-selection-mark')]
+    const right = page.scrollLeft + page.clientWidth
     return {
       startsBefore: rects[0].left < page.scrollLeft,
       endsOnPage: rects[rects.length - 1].left >= page.scrollLeft,
+      marksOnPage: marks
+        .map((mark) => mark.getBoundingClientRect())
+        .filter((r) => r.width > 0 && r.left >= page.scrollLeft && r.right <= right).length,
       text: selection.toString(),
     }
   })
@@ -171,6 +178,7 @@ test('a selection dragged to the page edge runs onto the next page', async ({
   const span = await selectionSpan(page)
   expect(span?.startsBefore, 'the selection starts on the earlier page').toBe(true)
   expect(span?.endsOnPage, 'the selection reaches the page now showing').toBe(true)
+  if (isMobile) expect(span?.marksOnPage, 'the drawn selection follows it').toBeGreaterThan(0)
   await expectBarOnScreen(page)
 })
 

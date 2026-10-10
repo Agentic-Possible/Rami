@@ -7,6 +7,7 @@ import charisItalic from '@fontsource/charis-sil/files/charis-sil-latin-400-ital
 import charisBold from '@fontsource/charis-sil/files/charis-sil-latin-700-normal.woff2?url'
 import charisBoldItalic from '@fontsource/charis-sil/files/charis-sil-latin-700-italic.woff2?url'
 import type { ReaderFont, ReaderTheme } from '../db/types'
+import { DRAWN_SELECTION_CLASS, SELECTION_MARK_CLASS } from './touchSelect'
 
 export interface ThemePalette {
   /** Reader-facing name. */
@@ -110,6 +111,7 @@ export function epubThemeStyles(theme: ReaderTheme, font: ReaderFont) {
   const p = THEMES[theme]
   // A value this build does not know (say, from a newer one) gets the default.
   const f = READER_FONTS[font] ?? READER_FONTS.literata
+  const selection = theme === 'dark' ? 'rgba(214, 176, 102, 0.26)' : 'rgba(190, 146, 58, 0.3)'
   return {
     '@font-face': f.files.map((file) => fontFace(f.family, file)),
     body: {
@@ -125,8 +127,12 @@ export function epubThemeStyles(theme: ReaderTheme, font: ReaderFont) {
     'h1, h2, h3, h4, h5, h6': { color: `${p.fg} !important` },
     a: { color: `${p.link} !important` },
     'img, svg': { 'max-width': '100% !important', height: 'auto !important' },
-    '::selection': {
-      background: theme === 'dark' ? 'rgba(214, 176, 102, 0.26)' : 'rgba(190, 146, 58, 0.3)',
+    '::selection': { background: selection },
+    // Touch screens draw the selection themselves; see `longPressToSelect`.
+    [`.${DRAWN_SELECTION_CLASS} ::selection`]: { background: 'transparent !important' },
+    [`.${SELECTION_MARK_CLASS}`]: {
+      background: selection,
+      ...(theme === 'dark' ? {} : { 'mix-blend-mode': 'multiply' }),
     },
   }
 }
