@@ -93,7 +93,7 @@ export interface DiagnosticContext {
   persisted?: boolean
   usageMb?: number
   quotaMb?: number
-  books: { total: number; removed: number }
+  books: { total: number; removed: number; missing: number }
 }
 
 function describeEntry(entry: DiagnosticEntry): string {
@@ -129,7 +129,7 @@ export function issueBody(context: DiagnosticContext, entries: DiagnosticEntry[]
     `- Browser: ${context.userAgent}`,
     `- Opened from: ${context.standalone ? 'home screen' : 'browser'}`,
     `- Storage: ${describeStorage(context)}`,
-    `- Books: ${books.total} (${books.removed} removed)`,
+    `- Books: ${books.total} (${books.removed} removed, ${books.missing} missing their EPUB)`,
     '',
     '```',
     ...(entries.length ? entries.map(describeEntry) : ['No storage events recorded.']),

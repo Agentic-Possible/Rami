@@ -29,11 +29,12 @@ export function useIssueUrl(issuesUrl: string): string {
 
 async function collectContext(): Promise<DiagnosticContext> {
   const storage = navigator.storage as StorageManager | undefined
-  const [persisted, estimate, total, removed] = await Promise.all([
+  const [persisted, estimate, total, removed, missing] = await Promise.all([
     storage?.persisted?.().catch(() => undefined),
     storage?.estimate?.().catch(() => undefined),
     db.books.count(),
     db.books.where('archivedAt').above(0).count(),
+    db.books.filter((book) => Boolean(book.missingFileAt)).count(),
   ])
   return {
     build: BUILD_ID,
@@ -44,6 +45,6 @@ async function collectContext(): Promise<DiagnosticContext> {
     persisted,
     usageMb: estimate?.usage === undefined ? undefined : Math.round(estimate.usage / MB),
     quotaMb: estimate?.quota === undefined ? undefined : Math.round(estimate.quota / MB),
-    books: { total, removed },
+    books: { total, removed, missing },
   }
 }

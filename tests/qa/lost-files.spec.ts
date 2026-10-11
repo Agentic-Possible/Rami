@@ -108,6 +108,7 @@ test('a lost file is logged for the issue link in Settings', async ({ page }) =>
   const body = new URL((await link.getAttribute('href'))!).searchParams.get('body')!
   expect(body).toMatch(/- Version: \S+ built \d{4}-\d{2}-\d{2}T[\d:.]+Z/)
   expect(body).toMatch(/\] lost EPUB, imported, unrecoverable, idle [\d.]+d/)
+  expect(body).toContain('1 missing their EPUB')
   expect(body).not.toContain('Meditations')
 })
 

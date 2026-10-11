@@ -27,7 +27,7 @@ const CONTEXT: DiagnosticContext = {
   persisted: false,
   usageMb: 42,
   quotaMb: 2048,
-  books: { total: 6, removed: 1 },
+  books: { total: 6, removed: 1, missing: 2 },
 }
 
 describe('diagnostic log', () => {
@@ -116,6 +116,7 @@ describe('issue report', () => {
     expect(body).toContain(`- Version: ${BUILD}`)
     expect(body).toContain('- Opened from: home screen')
     expect(body).toContain('- Storage: persistent no, 42 MB used of 2048 MB')
+    expect(body).toContain('- Books: 6 (1 removed, 2 missing their EPUB)')
     expect(body).toContain(
       '2026-10-11T15:00:00.000Z [old built 2026-10-01T00:00:00.000Z] lost EPUB, imported, unrecoverable, cover lost too, idle 2.1d',
     )
