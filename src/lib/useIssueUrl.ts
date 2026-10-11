@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react'
 import { db } from '../db/db'
 import { BUILD_ID } from './buildInfo'
-import { issueUrl, readDiagnostics, type DiagnosticContext } from './diagnostics'
+import {
+  describeClientHints,
+  issueUrl,
+  readDiagnostics,
+  type ClientHints,
+  type DiagnosticContext,
+} from './diagnostics'
 
 const MB = 1024 * 1024
 
@@ -29,7 +35,13 @@ export function useIssueUrl(issuesUrl: string): string {
 
 async function collectContext(): Promise<DiagnosticContext> {
   const storage = navigator.storage as StorageManager | undefined
-  const [persisted, estimate, total, removed, missing] = await Promise.all([
+  const userAgentData = (
+    navigator as { userAgentData?: { getHighEntropyValues(hints: string[]): Promise<ClientHints> } }
+  ).userAgentData
+  const [hints, persisted, estimate, total, removed, missing] = await Promise.all([
+    userAgentData
+      ?.getHighEntropyValues(['platformVersion', 'fullVersionList'])
+      .catch(() => undefined),
     storage?.persisted?.().catch(() => undefined),
     storage?.estimate?.().catch(() => undefined),
     db.books.count(),
@@ -38,6 +50,7 @@ async function collectContext(): Promise<DiagnosticContext> {
   ])
   return {
     build: BUILD_ID,
+    browser: hints && describeClientHints(hints),
     userAgent: navigator.userAgent,
     standalone:
       window.matchMedia('(display-mode: standalone)').matches ||
