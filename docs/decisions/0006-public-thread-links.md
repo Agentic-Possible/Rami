@@ -59,14 +59,14 @@ Proposed design, pending review:
   `DELETE /api/threads/<id>` (owner token in `Authorization`), documented in
   `docs/api.openapi.yml`.
 
-## Open questions
+## Settled questions
 
-1. Retention: expire links after a fixed period (90 days, 1 year) or keep them
-   until the owner deletes them?
-2. Republish: should republishing keep the same link (proposed), or mint a new
-   one each time?
-3. Moderation: is unpublish by the owner plus the contact email enough, or do
-   we want a report link on the viewer page?
+Decided 2026-10-11:
+
+1. Retention: links expire one year after their last publish.
+2. Republish: updating a published thread keeps the same link.
+3. Moderation: owner delete plus the contact email in Settings. No report
+   link on the viewer page.
 
 ## Alternatives and tradeoffs
 
