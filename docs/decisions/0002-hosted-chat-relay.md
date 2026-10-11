@@ -16,8 +16,7 @@ development and in the Cloudflare app Worker in production, so `npm run dev`
 exercises the real relay. The KOReader plugin uses the same relay.
 
 The endpoint is open to every visitor, so the relay pins model routing rather
-than taking it from the request. Bring-your-own OpenAI key remains an option in
-the PWA.
+than taking it from the request.
 
 ## History
 
@@ -27,6 +26,8 @@ the PWA.
   limit is the only spending ceiling (see `docs/operations.md`).
 - 2026-10-07: dropped the Netlify deployment; the relay runs only on
   Cloudflare Workers.
+- 2026-10-11: removed the bring-your-own OpenAI key option (#133). Dexie
+  version 6 deletes any stored key; the CSP no longer allows `api.openai.com`.
 
 ## Alternatives and tradeoffs
 

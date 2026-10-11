@@ -4,8 +4,8 @@
 
 Use `.env.example` for local keys; never commit populated environment files.
 The OpenRouter key is a server-side secret.
-The browser's optional personal OpenAI key remains in IndexedDB, is not encrypted,
-and must not be used on a shared profile. Never export keys or access tokens.
+The browser holds no API keys; chat goes through the relay. Never export keys or
+access tokens.
 
 The app has no third-party telemetry. Workers log only the operation metrics
 described below; read them in Cloudflare Workers observability. Builds do not

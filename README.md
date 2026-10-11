@@ -15,7 +15,7 @@ Milestones M1 to M5 of the original plan are implemented and verified end to end
 | M1 Library    | EPUB import, OPF metadata + cover extraction, library grid, delete with cascade                                                                                                            |
 | M2 Reader     | Paginated epub.js rendition, position persistence, TOC, themes, font size                                                                                                                  |
 | M3 Highlights | Selection action bar, one highlight color set in Settings, painted annotations, tap a highlight to reopen its chat, per-book list, share a passage or thread with its book and a link back |
-| M4 Chat       | Hosted relay or own OpenAI key, context assembly, streaming replies, persisted conversations                                                                                               |
+| M4 Chat       | Hosted relay, context assembly, streaming replies, persisted conversations                                                                                                                 |
 | M5 Memory     | Rolling per-book digest injected into every new conversation, readable and editable under the reader's Memory tab                                                                          |
 
 Not yet done (M6): PWA share-target import, re-anchoring highlights by text when a CFI breaks, JSON import to match the existing export.
@@ -59,17 +59,13 @@ desktop/mobile browser gates. Setup installs a pre-commit hook. See
 
 ## Inference
 
-Two providers, chosen in **Settings**:
-
-**Built-in (default).** The browser POSTs to `/api/chat`, a Cloudflare Worker route that adds the OpenRouter key and forwards to OpenRouter. Visitors need no account, and the key never reaches the client.
+The browser POSTs to `/api/chat`, a Cloudflare Worker route that adds the OpenRouter key and forwards to OpenRouter. Visitors need no account, and the key never reaches the client.
 
 | Model                       | Provider routing                                                   |
 | --------------------------- | ------------------------------------------------------------------ |
 | `google/gemma-4-26b-a4b-it` | Cloudflare first (fastest endpoint for this model), others allowed |
 
 One route, so every request is billed. A free-tier route (`:free`, served by Google AI Studio) used to run ahead of it, but it drew on a shared upstream pool that was regularly exhausted: most requests paid a refused round-trip before falling through to the paid model anyway, and the ones the free tier did answer came from the slower endpoint. Dropping it cut a wasted round-trip off the common path and made the faster provider the default for every answer, at the cost of a free-tier buffer that was mostly not there. **Watch the credit limit on the OpenRouter key** — it is now the only thing between the site and its own bill.
-
-**Own OpenAI key.** Stored in IndexedDB, sent only to `api.openai.com`, billed to the reader. Defaults to `gpt-4o-mini` for chat and the digest. Anyone with access to the browser profile can read it, so don't use that option on a shared device.
 
 ### Deploying
 
@@ -93,7 +89,7 @@ Because the relay is open to anyone who loads the site, `shared/relay.ts` pins t
 
 ### Untrusted book content
 
-Book content is treated as untrusted. EPUB scripts are not allowed to run. The book frame is `sandbox="allow-same-origin allow-scripts"`, because WebKit (every iPad and iPhone browser) delivers no events from a frame without `allow-scripts`, so taps and selection would go dead. That pair voids the sandbox, so every section passes through `src/lib/bookScripts.ts` before it renders: a `script-src 'none'` policy goes first in its head, scripts are disarmed, and event-handler attributes and refreshes are stripped. Scripted or interactive EPUBs lose their interactivity; the text still renders. Text drawn from a book is also fenced with a per-request delimiter before it reaches the model, so a passage cannot pose as an instruction. A CSP set in `workers/app/src/index.ts` is the second layer: `connect-src` allows only this origin — which covers `/api/chat`, since the relay is same-origin — and `api.openai.com` for readers using their own key.
+Book content is treated as untrusted. EPUB scripts are not allowed to run. The book frame is `sandbox="allow-same-origin allow-scripts"`, because WebKit (every iPad and iPhone browser) delivers no events from a frame without `allow-scripts`, so taps and selection would go dead. That pair voids the sandbox, so every section passes through `src/lib/bookScripts.ts` before it renders: a `script-src 'none'` policy goes first in its head, scripts are disarmed, and event-handler attributes and refreshes are stripped. Scripted or interactive EPUBs lose their interactivity; the text still renders. Text drawn from a book is also fenced with a per-request delimiter before it reaches the model, so a passage cannot pose as an instruction. A CSP set in `workers/app/src/index.ts` is the second layer: `connect-src` allows only this origin, which covers `/api/chat` since the relay is same-origin.
 
 ## How it works
 

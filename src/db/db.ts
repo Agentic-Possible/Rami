@@ -76,20 +76,27 @@ class MarginaliaDB extends Dexie {
           delete row.audiobookPositionSeconds
         })
     })
+
+    // The own-OpenAI-key option was removed; every request now goes through
+    // the relay. Drop the key so the secret does not outlive the feature.
+    this.version(6).upgrade(async (tx) => {
+      await tx
+        .table('settings')
+        .toCollection()
+        .modify((row: Record<string, unknown>) => {
+          delete row.provider
+          delete row.apiKey
+          delete row.model
+          delete row.summaryModel
+        })
+    })
   }
 }
 
 export const db = new MarginaliaDB()
 
 export async function getSettings(): Promise<Settings> {
-  const stored = await db.settings.get('settings')
-  const settings = { ...DEFAULT_SETTINGS, ...stored }
-
-  // Records written before the hosted relay existed have a key but no provider;
-  // those readers were using OpenAI directly and should stay on it.
-  if (stored && !stored.provider && stored.apiKey) settings.provider = 'openai'
-
-  return settings
+  return { ...DEFAULT_SETTINGS, ...(await db.settings.get('settings')) }
 }
 
 /**
@@ -101,9 +108,6 @@ export async function getSettings(): Promise<Settings> {
  */
 export async function saveSettings(patch: Partial<Settings>): Promise<void> {
   await db.transaction('rw', db.settings, async () => {
-    // Through getSettings, not the raw row: it applies the provider migration,
-    // and reading around it would write `hosted` over a reader who is on their
-    // own key the first time they change any unrelated setting.
     const current = await getSettings()
     await db.settings.put({ ...current, ...patch, id: 'settings' })
   })

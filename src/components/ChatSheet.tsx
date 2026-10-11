@@ -1,9 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, getSettings } from '../db/db'
 import { newId } from '../lib/id'
-import { InferenceError, streamChat, targetFor } from '../lib/inference'
+import { InferenceError, streamChat } from '../lib/inference'
 import { buildMessages } from '../lib/prompt'
 import { getBookMemory, updateBookMemory } from '../lib/memory'
 import { shareContent, threadShare } from '../lib/share'
@@ -155,11 +154,6 @@ export default function ChatSheet({
 
     try {
       const settings = await getSettings()
-      // Throws only when the reader chose their own key and has not entered
-      // one; the built-in provider needs nothing. Thrown here rather than
-      // before the try so a missing key rolls the turn back like any other
-      // failure, keeping the question in the composer.
-      const target = targetFor(settings)
 
       // Only clear the composer once the message is safely stored. Clearing it
       // first loses the text outright if IndexedDB rejects the write.
@@ -186,7 +180,6 @@ export default function ChatSheet({
 
       let acc = ''
       const reply = await streamChat({
-        target,
         signal: controller.signal,
         messages: buildMessages({ book, conversation, history, memory, settings }),
         onDelta: (delta) => {
@@ -304,14 +297,6 @@ export default function ChatSheet({
         {error && (
           <div className="rounded-md border border-danger bg-paper p-3 font-ui text-meta text-danger">
             {error}
-            {error.includes('Settings') && (
-              <>
-                {' '}
-                <Link to="/settings" className="underline">
-                  Open settings
-                </Link>
-              </>
-            )}
           </div>
         )}
       </div>

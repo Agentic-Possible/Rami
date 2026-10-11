@@ -120,18 +120,8 @@ export type ReaderTheme = 'light' | 'sepia' | 'dark'
 /** Typeface for the book's text inside the reader. */
 export type ReaderFont = 'literata' | 'garamond' | 'charis'
 
-/**
- * `hosted` routes through this site's relay, which holds an OpenRouter key
- * server-side. `openai` sends the reader's own key straight to OpenAI.
- */
-export type Provider = 'hosted' | 'openai'
-
 export interface Settings {
   id: 'settings'
-  provider: Provider
-  apiKey?: string
-  model: string
-  summaryModel: string
   theme: ReaderTheme
   fontSize: number
   readerFont: ReaderFont
@@ -158,9 +148,6 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = {
   id: 'settings',
-  provider: 'hosted',
-  model: 'gpt-4o-mini',
-  summaryModel: 'gpt-4o-mini',
   theme: 'light',
   fontSize: 100,
   readerFont: 'literata',
