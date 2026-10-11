@@ -6,6 +6,7 @@ import { DEFAULT_SETTINGS, type HighlightColor, type Provider, type ReaderFont }
 import { BUILD } from '../lib/buildInfo'
 import { HIGHLIGHT_COLORS } from '../lib/highlights'
 import { READER_FONTS } from '../lib/themes'
+import { useIssueUrl } from '../lib/useIssueUrl'
 import { HOSTED_MODEL_LABEL, verifyKey } from '../lib/inference'
 import { BackIcon } from '../components/Icons'
 import InstructionsEditor from '../components/InstructionsEditor'
@@ -28,6 +29,7 @@ const DISCUSSIONS_URL = 'https://github.com/critesjosh/marginalia/discussions'
 const CONTACT_EMAIL = 'rami@agenticpossible.com'
 
 export default function SettingsPage() {
+  const issueUrl = useIssueUrl(ISSUES_URL)
   const stored = useLiveQuery(() => getSettings(), [])
   const [apiKey, setApiKey] = useState('')
   const [dirtyKey, setDirtyKey] = useState(false)
@@ -269,11 +271,16 @@ export default function SettingsPage() {
             Share an idea or wander through other readers’ questions in the discussions. Something
             broken? Open an issue. Anything else, write to {CONTACT_EMAIL}.
           </p>
+          <p className="mt-2 font-ui text-meta text-ink-faint">
+            A new issue starts with this app’s version, your browser, and a short log of storage
+            problems on this device. It names no books or notes, and you can edit it before
+            submitting.
+          </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <a href={DISCUSSIONS_URL} target="_blank" rel="noreferrer" className={button.secondary}>
               Join the discussion ↗
             </a>
-            <a href={ISSUES_URL} target="_blank" rel="noreferrer" className={button.secondary}>
+            <a href={issueUrl} target="_blank" rel="noreferrer" className={button.secondary}>
               Report an issue ↗
             </a>
             <a href={`mailto:${CONTACT_EMAIL}`} className={button.secondary}>

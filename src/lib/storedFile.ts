@@ -1,7 +1,8 @@
 import { db } from '../db/db'
 import type { Book } from '../db/types'
+import { idleDays, logDiagnostic } from './diagnostics'
 import { readEpubCover } from './epub'
-import { fetchSampleBook } from './sampleBook'
+import { fetchSampleBook, isSampleBookId } from './sampleBook'
 
 /**
  * WebKit keeps a stored Blob's bytes in a file beside the database, and on iOS
@@ -34,6 +35,7 @@ export async function repairLostCover(book: Book): Promise<void> {
     await recoverLostFile(book)
     return
   }
+  logDiagnostic({ type: 'lost-cover', book: bookKind(book), idleDays: idleDays(book) })
   await db.books.update(book.id, { cover: book.file && (await readEpubCover(book.file)) })
 }
 
@@ -55,10 +57,20 @@ export async function readBookFile(stored: Book, file: Blob): Promise<ArrayBuffe
  * fingerprint and puts the file back under its notes.
  */
 async function recoverLostFile(stored: Book): Promise<ArrayBuffer> {
+  const log = (outcome: 'restored' | 'unrecoverable' | 'offline', coverLost = false) =>
+    logDiagnostic({
+      type: 'lost-file',
+      book: bookKind(stored),
+      outcome,
+      coverLost,
+      idleDays: idleDays(stored),
+    })
+
   let sample: Book | undefined
   try {
     sample = await fetchSampleBook(stored.id)
   } catch {
+    log('offline')
     throw new Error(
       'This book could not be read from this device. Try again when you are online to download it again.',
     )
@@ -74,9 +86,11 @@ async function recoverLostFile(stored: Book): Promise<ArrayBuffer> {
       file: sample.file,
       cover: stored.cover && !coverLost ? stored.cover : sample.cover,
     })
+    log('restored', coverLost)
     return sample.file.arrayBuffer()
   }
 
+  log('unrecoverable', coverLost)
   await db.books.update(stored.id, {
     missingFileAt: Date.now(),
     file: undefined,
@@ -85,4 +99,8 @@ async function recoverLostFile(stored: Book): Promise<ArrayBuffer> {
   throw new Error(
     'This device lost the EPUB for this book. Add the same EPUB again to keep reading; your highlights and conversations are safe.',
   )
+}
+
+function bookKind(book: Book): 'bundled' | 'imported' {
+  return isSampleBookId(book.id) ? 'bundled' : 'imported'
 }

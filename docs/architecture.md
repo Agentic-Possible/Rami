@@ -33,4 +33,5 @@ HTTP contracts are `docs/api.openapi.yml`. Lua-to-reader handoff validation is
 Chat sends the user-selected context to the chosen model provider. Offline
 reading and normal tests need no external services.
 The app sends no third-party telemetry. Worker metrics are fixed operation names,
-status codes, and numeric durations.
+status codes, and numeric durations. A local storage-loss log is shared only
+when the reader submits a prefilled GitHub issue from Settings.
