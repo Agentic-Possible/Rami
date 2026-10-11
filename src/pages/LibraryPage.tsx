@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { archiveBook, db, deleteBook, getSettings, saveSettings } from '../db/db'
+import { archiveBook, db, deleteBook, markHintSeen } from '../db/db'
 import type { Book } from '../db/types'
 import { EpubImportError } from '../lib/epub'
 import { importEpub } from '../lib/importBook'
+import { useUnseenHint } from '../lib/hints'
 import { FIRST_RUN_BOOK, seedSampleBooks } from '../lib/sampleBook'
 import { useModal } from '../lib/useModal'
 import AddBookDialog from '../components/AddBookDialog'
@@ -89,13 +90,9 @@ export default function LibraryPage() {
 
   const continuing = books?.find((book) => book.lastOpenedAt)
   const highlightCount = useLiveQuery(() => db.highlights.count(), [])
-  const hintDismissed = useLiveQuery(
-    () => getSettings().then((settings) => settings.firstRunHintDismissed ?? false),
-    [],
-  )
-  // Waits for both queries, so a returning reader never sees it flash past.
-  const showHint =
-    hintDismissed === false && chatCounts !== undefined && Object.keys(chatCounts).length === 0
+  const libraryHint = useUnseenHint('library')
+  // Also waits for the thread count, so a reader who already chats never sees it.
+  const showHint = libraryHint && chatCounts !== undefined && Object.keys(chatCounts).length === 0
 
   return (
     <div className="paper-grain min-h-full bg-paper text-ink">
@@ -160,7 +157,7 @@ export default function LibraryPage() {
         {showHint && (
           <FirstRunHint
             tryLink={firstRunLink(books)}
-            onDismiss={() => void saveSettings({ firstRunHintDismissed: true })}
+            onDismiss={() => void markHintSeen('library')}
           />
         )}
 

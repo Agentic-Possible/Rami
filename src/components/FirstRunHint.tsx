@@ -40,6 +40,10 @@ export default function FirstRunHint({
           <li key={step}>{step}</li>
         ))}
       </ol>
+      <p className="mt-4 font-ui text-meta text-ink-faint">
+        While reading, tap the right or left side of the page to turn forward or back, and tap the
+        middle to show or hide the toolbar.
+      </p>
       {tryLink && (
         <Link to={tryLink} className={`${button.secondary} mt-5`}>
           Try it with Moby Dick

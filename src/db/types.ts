@@ -152,9 +152,15 @@ export interface Settings {
    * reason it is separate from it.
    */
   seededSampleIds?: string[]
-  /** Set when the reader closes the library's “How Rami works” card. */
-  firstRunHintDismissed?: boolean
+  /** One-time hints the reader has already been shown, so each appears once. */
+  seenHints?: Hint[]
 }
+
+/**
+ * The library's “How Rami works” card, the note on a first thread, and the
+ * note when Rami first writes a book's memory.
+ */
+export type Hint = 'library' | 'thread' | 'memory'
 
 export const DEFAULT_SETTINGS: Settings = {
   id: 'settings',

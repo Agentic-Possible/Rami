@@ -7,6 +7,7 @@ import {
   type BookMemory,
   type Conversation,
   type Highlight,
+  type Hint,
   type Message,
   type Settings,
 } from './types'
@@ -106,6 +107,15 @@ export async function saveSettings(patch: Partial<Settings>): Promise<void> {
     // own key the first time they change any unrelated setting.
     const current = await getSettings()
     await db.settings.put({ ...current, ...patch, id: 'settings' })
+  })
+}
+
+/** Records a one-time hint as shown. Atomic, so two hints closing together both stick. */
+export async function markHintSeen(hint: Hint): Promise<void> {
+  await db.transaction('rw', db.settings, async () => {
+    const current = await getSettings()
+    if (current.seenHints?.includes(hint)) return
+    await db.settings.put({ ...current, seenHints: [...(current.seenHints ?? []), hint] })
   })
 }
 
