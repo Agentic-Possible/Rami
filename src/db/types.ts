@@ -152,6 +152,8 @@ export interface Settings {
    * reason it is separate from it.
    */
   seededSampleIds?: string[]
+  /** Set when the reader closes the library's “How Rami works” card. */
+  firstRunHintDismissed?: boolean
 }
 
 export const DEFAULT_SETTINGS: Settings = {

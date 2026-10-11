@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { archiveBook, db, deleteBook } from '../db/db'
+import { archiveBook, db, deleteBook, getSettings, saveSettings } from '../db/db'
 import type { Book } from '../db/types'
 import { EpubImportError } from '../lib/epub'
 import { importEpub } from '../lib/importBook'
-import { seedSampleBooks } from '../lib/sampleBook'
+import { FIRST_RUN_BOOK, seedSampleBooks } from '../lib/sampleBook'
 import { useModal } from '../lib/useModal'
 import AddBookDialog from '../components/AddBookDialog'
 import CoverPickerDialog from '../components/CoverPickerDialog'
+import FirstRunHint from '../components/FirstRunHint'
 import InstallBanner from '../components/InstallBanner'
 import RemoveBookDialog from '../components/RemoveBookDialog'
 import BookCover from '../components/BookCover'
@@ -88,6 +89,13 @@ export default function LibraryPage() {
 
   const continuing = books?.find((book) => book.lastOpenedAt)
   const highlightCount = useLiveQuery(() => db.highlights.count(), [])
+  const hintDismissed = useLiveQuery(
+    () => getSettings().then((settings) => settings.firstRunHintDismissed ?? false),
+    [],
+  )
+  // Waits for both queries, so a returning reader never sees it flash past.
+  const showHint =
+    hintDismissed === false && chatCounts !== undefined && Object.keys(chatCounts).length === 0
 
   return (
     <div className="paper-grain min-h-full bg-paper text-ink">
@@ -147,6 +155,13 @@ export default function LibraryPage() {
           <div className="mb-6 rounded-md border border-danger bg-paper-leaf p-3 font-ui text-meta whitespace-pre-line text-danger">
             {error}
           </div>
+        )}
+
+        {showHint && (
+          <FirstRunHint
+            tryLink={firstRunLink(books)}
+            onDismiss={() => void saveSettings({ firstRunHintDismissed: true })}
+          />
         )}
 
         {continuing && <ContinueCard book={continuing} />}
@@ -245,6 +260,14 @@ export default function LibraryPage() {
       )}
     </div>
   )
+}
+
+/** Opens at Chapter 1 the first time, and at the saved place after that. */
+function firstRunLink(books?: Book[]) {
+  const book = books?.find((candidate) => candidate.id === FIRST_RUN_BOOK.id)
+  if (!book) return undefined
+  const path = `/book/${book.id}`
+  return book.lastCfi ? path : `${path}?cfi=${encodeURIComponent(FIRST_RUN_BOOK.start)}`
 }
 
 function greeting(now = new Date()) {

@@ -120,8 +120,9 @@ export default function ReaderPage() {
     })
   }, [locationCfi])
 
-  // Deep link from the highlights list: jump once, then drop the param so a
-  // later page turn isn't undone by a re-render.
+  // Deep link from the highlights list (a CFI) or the library's first-run hint
+  // (a TOC href): jump once, then drop the param so a later page turn isn't
+  // undone by a re-render.
   const requestedCfi = searchParams.get('cfi')
   useEffect(() => {
     if (!requestedCfi || !reader.ready) return
