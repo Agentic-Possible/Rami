@@ -1,7 +1,7 @@
 # Publish shared threads at unlisted links
 
 Date: 2026-10-11
-Status: Proposed
+Status: Accepted
 
 ## Context
 
@@ -17,7 +17,6 @@ to "except threads a reader explicitly publishes."
 
 ## Decision
 
-Proposed design, pending review:
 
 - **Opt-in snapshot.** Nothing leaves the device until the reader taps
   "Publish link" and confirms that anyone with the link can read the thread.
@@ -45,7 +44,8 @@ Proposed design, pending review:
   the defenses stack, each cheap on its own:
   - Turnstile on publish only, in managed mode. Most readers never see a
     challenge, and reading or chatting never meets one. The secret stays a
-    Worker secret; the site key is public. CSP gains
+    Worker secret; the site key is public and the PWA reads it from
+    `GET /api/threads`, so no build variable is needed. CSP gains
     `challenges.cloudflare.com` for scripts and frames.
   - A Cloudflare WAF rate-limiting rule on `POST /api/threads`. The relay's
     in-memory limiter is per isolate, so it only slows a single client.
@@ -67,6 +67,8 @@ Decided 2026-10-11:
 2. Republish: updating a published thread keeps the same link.
 3. Moderation: owner delete plus the contact email in Settings. No report
    link on the viewer page.
+4. The architecture's local-only requirement and its no-server-storage
+   non-goal now carve out threads a reader explicitly publishes.
 
 ## Alternatives and tradeoffs
 

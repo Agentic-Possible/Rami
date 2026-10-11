@@ -3,12 +3,17 @@ import { handleGutenbergRequest } from '../../../shared/gutenberg.ts'
 import { isCrossOrigin } from '../../../shared/http-guards.ts'
 import { handleRelayRequest } from '../../../shared/relay.ts'
 import { operationMetric } from '../../../shared/telemetry.ts'
+import { handleThreadPage } from '../../../shared/threadPage.ts'
+import { handleThreadsRequest, type ThreadStore } from '../../../shared/threads.ts'
+
+/** Turnstile's challenge for publishing a thread (docs/decisions/0006). */
+const TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com'
 
 const CONTENT_SECURITY_POLICY =
-  "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' blob:; " +
+  `default-src 'self'; script-src 'self' ${TURNSTILE_ORIGIN}; style-src 'self' 'unsafe-inline' blob:; ` +
   "img-src 'self' data: blob: https://www.gutenberg.org; font-src 'self' data: blob:; " +
   "connect-src 'self' https://api.openai.com; " +
-  "frame-src 'self' blob: data:; object-src 'none'; base-uri 'self'; form-action 'self'"
+  `frame-src 'self' blob: data: ${TURNSTILE_ORIGIN}; object-src 'none'; base-uri 'self'; form-action 'self'`
 
 function withSecurityHeaders(response: Response): Response {
   const headers = new Headers(response.headers)
@@ -76,6 +81,17 @@ async function coversWithCache(request: Request, ctx: ExecutionContext): Promise
   return response
 }
 
+/** Published threads in Workers KV; see `shared/threads.ts`. */
+function threadStore(env: Env): ThreadStore | undefined {
+  const kv = env.THREADS
+  if (!kv) return undefined
+  return {
+    get: (id) => kv.get(id),
+    put: (id, value, ttlSeconds) => kv.put(id, value, { expirationTtl: ttlSeconds }),
+    delete: (id) => kv.delete(id),
+  }
+}
+
 const worker = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url)
@@ -108,6 +124,23 @@ const worker = {
 
       if (url.pathname === '/api/covers') {
         return await coversWithCache(request, ctx)
+      }
+
+      if (url.pathname === '/api/threads' || url.pathname.startsWith('/api/threads/')) {
+        return await handleThreadsRequest(
+          request,
+          {
+            store: threadStore(env),
+            enabled: env.THREADS_ENABLED !== 'false',
+            turnstileSecret: env.TURNSTILE_SECRET_KEY,
+            turnstileSiteKey: env.TURNSTILE_SITE_KEY,
+          },
+          { ip: request.headers.get('CF-Connecting-IP') ?? '' },
+        )
+      }
+
+      if (url.pathname.startsWith('/t/')) {
+        return withSecurityHeaders(await handleThreadPage(request, threadStore(env)))
       }
 
       if (url.pathname.startsWith('/api/')) {

@@ -90,6 +90,21 @@ export interface Conversation {
   source?: 'koreader'
   /** That source's own id for it. See `Highlight.externalId`. */
   externalId?: string
+  /** Set while the thread is published at a link (`src/lib/publish.ts`). */
+  published?: PublishedLink
+}
+
+/**
+ * A thread's public link. Not indexed, so adding it needed no Dexie version.
+ * The owner token is what lets this device update or remove the link; it is
+ * left out of exports.
+ */
+export interface PublishedLink {
+  id: string
+  url: string
+  ownerToken: string
+  publishedAt: number
+  expiresAt: number
 }
 
 export type Role = 'system' | 'user' | 'assistant'

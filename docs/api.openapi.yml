@@ -78,6 +78,85 @@ paths:
         "429": {description: Best-effort isolate-local throttle, separate from chat and Gutenberg}
         "502": {description: Upstream refused, or returned a non-raster or oversized image}
         "504": {description: Upstream headers exceeded 20 seconds}
+  /api/threads:
+    get:
+      summary: Turnstile site key for publishing a thread
+      responses:
+        "200": {description: 'Public site key', content: {application/json: {schema: {type: object, properties: {siteKey: {type: string}}}}}}
+        "403": {description: Cross-origin browser request}
+        "503": {description: Publishing disabled or storage or Turnstile not configured}
+    post:
+      summary: Publish a thread snapshot at an unlisted link
+      description: Requires a passing Turnstile token. The link expires one year after its last publish.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [thread, turnstileToken]
+              properties:
+                turnstileToken: {type: string}
+                thread:
+                  type: object
+                  required: [book, messages]
+                  properties:
+                    book:
+                      type: object
+                      required: [title, author]
+                      properties:
+                        title: {type: string, minLength: 1, maxLength: 300}
+                        author: {type: string, maxLength: 300}
+                    chapter: {type: string, maxLength: 300}
+                    passage: {type: string, maxLength: 2000}
+                    messages:
+                      type: array
+                      minItems: 1
+                      maxItems: 200
+                      items:
+                        type: object
+                        required: [role, content]
+                        properties:
+                          role: {enum: [user, assistant]}
+                          content: {type: string}
+              description: At most 64 KB. Unlisted fields are dropped.
+      responses:
+        "201":
+          description: 'Link created: id, url, ownerToken (shown once; the server keeps only its hash), expiresAt'
+          content:
+            application/json: {schema: {type: object}}
+        "400": {description: Invalid JSON or limits}
+        "403": {description: Cross-origin browser request or failed Turnstile check}
+        "429": {description: Best-effort isolate-local throttle}
+        "503": {description: Publishing disabled or storage or Turnstile not configured}
+  /api/threads/{id}:
+    parameters:
+      - {in: path, name: id, required: true, schema: {type: string, pattern: '^[A-Za-z0-9_-]{22}$'}}
+    put:
+      summary: Republish a thread to its existing link
+      description: 'Authorization: Bearer <ownerToken>. Same body as POST, without the Turnstile token. Restarts the one-year expiry.'
+      responses:
+        "200": {description: 'id, url, expiresAt'}
+        "400": {description: Invalid JSON or limits}
+        "401": {description: Missing owner token}
+        "404": {description: No such thread, or the token does not own it}
+        "429": {description: Best-effort isolate-local throttle}
+    delete:
+      summary: Remove a published thread
+      description: 'Authorization: Bearer <ownerToken>.'
+      responses:
+        "204": {description: Removed}
+        "401": {description: Missing owner token}
+        "404": {description: No such thread, or the token does not own it}
+  /t/{id}:
+    parameters:
+      - {in: path, name: id, required: true, schema: {type: string}}
+    get:
+      summary: Read-only page for a published thread
+      description: Static HTML, no scripts, noindex. Not cached, so a removed link stops working at once.
+      responses:
+        "200": {description: The thread, content: {text/html: {schema: {type: string}}}}
+        "404": {description: Expired, removed, or unknown link}
   /health:
     get:
       summary: Worker liveness, no provider or storage requests

@@ -4,6 +4,9 @@
   "main": "workers/app/src/index.ts",
   "compatibility_date": "2026-08-23",
   "compatibility_flags": ["nodejs_compat"],
+  // Published thread snapshots (docs/decisions/0006). No id: Wrangler creates
+  // the namespace on the first deploy.
+  "kv_namespaces": [{ "binding": "THREADS" }],
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
