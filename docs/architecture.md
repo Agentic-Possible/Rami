@@ -77,3 +77,4 @@ to `decisions/NNNN-short-title.md` and linking it here.
 - [0003 Match books by EPUB file hash, not title](decisions/0003-match-editions-by-file-hash.md)
 - [0004 Keep a bounded rolling digest per book as chat memory](decisions/0004-rolling-book-memory.md)
 - [0005 KOReader keeps its own digest and folds it lazily](decisions/0005-koreader-device-digest.md)
+- [0006 Publish shared threads at unlisted links](decisions/0006-public-thread-links.md) (proposed)
