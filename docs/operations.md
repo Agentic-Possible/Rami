@@ -11,6 +11,12 @@ The app has no third-party telemetry. Workers log only the operation metrics
 described below; read them in Cloudflare Workers observability. Builds do not
 emit source maps.
 
+Lost stored files and app updates are logged on the device in localStorage
+(`src/lib/diagnostics.ts`), each stamped with the exact build. Nothing is sent:
+Settings prefills a new GitHub issue with the log, the build, the browser and
+storage status, and the reader decides whether to submit it. The log names no
+books or notes.
+
 ## Health, outages, and spending
 
 The app Worker exposes `/health`, a liveness check only. It does not call

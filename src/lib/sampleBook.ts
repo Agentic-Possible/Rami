@@ -51,6 +51,10 @@ const SAMPLE_BOOKS: SampleBook[] = [
 
 const SAMPLE_IDS = new Set(SAMPLE_BOOKS.map((sample) => sample.id))
 
+export function isSampleBookId(id: string): boolean {
+  return SAMPLE_IDS.has(id)
+}
+
 /** StrictMode mounts effects twice in dev; one import attempt is enough. */
 let inFlight: Promise<boolean> | undefined
 

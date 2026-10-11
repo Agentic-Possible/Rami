@@ -94,6 +94,22 @@ test.beforeEach(async ({ context }) => {
   await context.addInitScript(loseBlobsReadFromStorage, LOST_SIZES)
 })
 
+test('a lost file is logged for the issue link in Settings', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByRole('button', { name: /^Meditations/ })).toBeVisible()
+  await storeLostCopy(page, 'sample-meditations', 'imported-meditations', ['file'])
+  await page.goto('/book/imported-meditations')
+  await expect(page.getByText(/removed from your library/)).toBeVisible()
+
+  await page.goto('/settings')
+  const link = page.getByRole('link', { name: /Report an issue/ })
+  await expect(link).toHaveAttribute('href', /lost%20EPUB/)
+  const body = new URL((await link.getAttribute('href'))!).searchParams.get('body')!
+  expect(body).toMatch(/- Version: \S+ built \d{4}-\d{2}-\d{2}T[\d:.]+Z/)
+  expect(body).toMatch(/\] lost EPUB, imported, unrecoverable, idle [\d.]+d/)
+  expect(body).not.toContain('Meditations')
+})
+
 test('a bundled book that lost its files is fetched again', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByRole('button', { name: /^Moby Dick/ })).toBeVisible()
