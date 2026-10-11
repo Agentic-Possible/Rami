@@ -41,9 +41,20 @@ Proposed design, pending review:
   with every value escaped, no scripts, `noindex`, the existing strict CSP,
   and Open Graph tags so chat apps show a card. It ends with a link to open
   Rami. This keeps the viewer working without the PWA bundle or IndexedDB.
-- **Limits.** Same-origin check and a per-IP rate limit as the relay uses, a
-  64 KB body cap, and a cap on the seed passage length so a link cannot
-  republish long stretches of an imported, possibly copyrighted, book.
+- **Abuse.** The risk is spammers using our domain to host links or text, so
+  the defenses stack, each cheap on its own:
+  - Turnstile on publish only, in managed mode. Most readers never see a
+    challenge, and reading or chatting never meets one. The secret stays a
+    Worker secret; the site key is public. CSP gains
+    `challenges.cloudflare.com` for scripts and frames.
+  - A Cloudflare WAF rate-limiting rule on `POST /api/threads`. The relay's
+    in-memory limiter is per isolate, so it only slows a single client.
+  - Make published pages worthless for spam: plain text only, URLs never
+    turned into links, `noindex, nofollow`, and every link expiring.
+  - Same-origin check, a 64 KB body cap, and a cap on the seed passage
+    length, so a link cannot republish long stretches of an imported,
+    possibly copyrighted, book.
+  - A `THREADS_ENABLED` kill switch, like `CHAT_ENABLED`, and owner delete.
 - **API.** `POST /api/threads` (create), `PUT /api/threads/<id>` and
   `DELETE /api/threads/<id>` (owner token in `Authorization`), documented in
   `docs/api.openapi.yml`.
@@ -58,6 +69,15 @@ Proposed design, pending review:
    we want a report link on the viewer page?
 
 ## Alternatives and tradeoffs
+
+- **No captcha, rate limits only:** no third-party script, but an IP-based
+  limit is easy to spread across addresses.
+- **Captcha on every chat as well:** would also protect the billed relay, but
+  adds friction to the core loop; out of scope here.
+- **Accept only threads the relay answered:** sign each assistant reply
+  server-side and check signatures on publish. Strong against fabricated
+  pages, but couples two endpoints and still lets the user's own turns carry
+  spam.
 
 - **R2 objects:** cheaper for large blobs, but no built-in expiry per object
   without lifecycle rules, and snapshots are small.
