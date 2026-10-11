@@ -8,7 +8,7 @@ describe('highlightShare', () => {
     const { title, text } = highlightShare(' Call me Ishmael. ', BOOK, 'Chapter 1. Loomings')
     expect(title).toBe('From Moby Dick')
     expect(text).toBe(
-      `“Call me Ishmael.”\n\nMoby Dick by Herman Melville, Chapter 1. Loomings\n\nRead with Marginalia: ${APP_URL}`,
+      `“Call me Ishmael.”\n\nMoby Dick by Herman Melville, Chapter 1. Loomings\n\nRead with Rami: ${APP_URL}`,
     )
   })
 
@@ -39,8 +39,8 @@ describe('threadShare', () => {
       'A conversation about Moby Dick by Herman Melville, Chapter 1',
       '“Call me Ishmael.”',
       'Me: Who is he?',
-      'Marginalia: The narrator.',
-      `Read with Marginalia: ${APP_URL}`,
+      'Rami: The narrator.',
+      `Read with Rami: ${APP_URL}`,
     ])
   })
 })

@@ -6,8 +6,8 @@
 
 import type { Book, Conversation, Message } from '../db/types'
 
-const APP_NAME = 'Marginalia'
-export const APP_URL = 'https://marginalia.adjacentpossible.dev'
+const APP_NAME = 'Rami'
+export const APP_URL = 'https://rami.agenticpossible.com'
 
 const SIGNATURE = `Read with ${APP_NAME}: ${APP_URL}`
 
