@@ -8,15 +8,15 @@ Chat works for every visitor with no signup and no API key: requests go through 
 
 ## Status
 
-Milestones M1 to M5 from `epub-chat-reader-plan.md` are implemented and verified end to end against Project Gutenberg's Moby Dick.
+Milestones M1 to M5 of the original plan are implemented and verified end to end against Project Gutenberg's Moby Dick. Goals, constraints and design decisions are in [`docs/architecture.md`](docs/architecture.md).
 
-| Milestone | What works |
-| --- | --- |
-| M1 Library | EPUB import, OPF metadata + cover extraction, library grid, delete with cascade |
-| M2 Reader | Paginated epub.js rendition, position persistence, TOC, themes, font size |
+| Milestone     | What works                                                                                                                                                                                 |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| M1 Library    | EPUB import, OPF metadata + cover extraction, library grid, delete with cascade                                                                                                            |
+| M2 Reader     | Paginated epub.js rendition, position persistence, TOC, themes, font size                                                                                                                  |
 | M3 Highlights | Selection action bar, one highlight color set in Settings, painted annotations, tap a highlight to reopen its chat, per-book list, share a passage or thread with its book and a link back |
-| M4 Chat | Hosted relay or own OpenAI key, context assembly, streaming replies, persisted conversations |
-| M5 Memory | Rolling per-book digest injected into every new conversation, readable and editable under the reader's Memory tab |
+| M4 Chat       | Hosted relay or own OpenAI key, context assembly, streaming replies, persisted conversations                                                                                               |
+| M5 Memory     | Rolling per-book digest injected into every new conversation, readable and editable under the reader's Memory tab                                                                          |
 
 Not yet done (M6): PWA share-target import, re-anchoring highlights by text when a CFI breaks, JSON import to match the existing export.
 
@@ -63,8 +63,8 @@ Two providers, chosen in **Settings**:
 
 **Built-in (default).** The browser POSTs to `/api/chat`, a Cloudflare Worker route that adds the OpenRouter key and forwards to OpenRouter. Visitors need no account, and the key never reaches the client.
 
-| Model | Provider routing |
-| --- | --- |
+| Model                       | Provider routing                                                   |
+| --------------------------- | ------------------------------------------------------------------ |
 | `google/gemma-4-26b-a4b-it` | Cloudflare first (fastest endpoint for this model), others allowed |
 
 One route, so every request is billed. A free-tier route (`:free`, served by Google AI Studio) used to run ahead of it, but it drew on a shared upstream pool that was regularly exhausted: most requests paid a refused round-trip before falling through to the paid model anyway, and the ones the free tier did answer came from the slower endpoint. Dropping it cut a wasted round-trip off the common path and made the faster provider the default for every answer, at the cost of a free-tier buffer that was mostly not there. **Watch the credit limit on the OpenRouter key** — it is now the only thing between the site and its own bill.
@@ -133,13 +133,13 @@ turn, and a tap on a highlight is claimed by the annotation callback, which need
 turn deferred by a task because marks-pane hand-proxies the same DOM event and the
 handler order is not guaranteed.
 
-**Single-file books.** Project Gutenberg puts an entire book in one XHTML file and splits chapters with `#anchor` fragments. Matching the table of contents on document href alone marks *every* chapter as current at once, so chapter detection resolves each anchor to a CFI and compares it against the reading position (`src/lib/chapters.ts`). Anchors are memoised per document — a 135-chapter book would otherwise re-measure the DOM on every page turn.
+**Single-file books.** Project Gutenberg puts an entire book in one XHTML file and splits chapters with `#anchor` fragments. Matching the table of contents on document href alone marks _every_ chapter as current at once, so chapter detection resolves each anchor to a CFI and compares it against the reading position (`src/lib/chapters.ts`). Anchors are memoised per document — a 135-chapter book would otherwise re-measure the DOM on every page turn.
 
 **Layout drift.** epub.js paginates such a file into a single strip tens of thousands of pixels wide. Images that finish loading after a jump reflow that strip and drag the target anchor several chapters off-screen, so navigation displays the target, waits for images and one animation frame, then displays it again (`goToSettled` in `src/lib/useReader.ts`).
 
 Chapter titles are matched against the page's **end** CFI, not its start: when a chapter heading appears partway down a page, the reader can see the new chapter even though the page still opens with the tail of the previous one.
 
-`useReader` takes a book *id* rather than a book record, because `useLiveQuery` returns a fresh object after every write and the hook writes the reading position on every relocate — depending on the record rebuilt the rendition in a loop.
+`useReader` takes a book _id_ rather than a book record, because `useLiveQuery` returns a fresh object after every write and the hook writes the reading position on every relocate — depending on the record rebuilt the rendition in a loop.
 
 ## Limitations
 
