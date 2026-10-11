@@ -118,23 +118,24 @@ test('an imported book that lost its EPUB waits for it again', async ({ page }) 
   await expect(page.getByRole('button', { name: /^Meditations/ })).toBeVisible()
   await storeLostCopy(page, 'sample-meditations', 'imported-meditations', ['file'])
 
-  // Opening it finds the file gone and shelves the book with its notes.
+  // Opening it finds the file gone and keeps the book on the shelf with its notes.
   await page.goto('/book/imported-meditations')
-  await expect(page.getByText(/was removed from your library/)).toBeVisible()
+  await expect(page.getByText(/lost the EPUB/)).toBeVisible()
 
   await page.goto('/')
-  const removed = page.getByRole('heading', { name: 'Removed books' }).locator('..')
-  await expect(removed.getByRole('listitem')).toHaveCount(1)
-  await expect(removed.getByRole('listitem')).toContainText('Meditations')
+  const missing = page.getByRole('listitem').filter({ hasText: 'EPUB missing' })
+  await expect(missing).toHaveCount(1)
+  await expect(page.getByRole('heading', { name: 'Removed books' })).toHaveCount(0)
 
   await page
     .locator('input[type="file"][accept^=".epub"]')
     .setInputFiles('public/books/meditations.epub')
-  await expect(page.getByRole('heading', { name: 'Removed books' })).toHaveCount(0)
+  await expect(missing).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /^Meditations/ })).toHaveCount(2)
 
   await page.goto('/book/imported-meditations')
   await expect(page.getByRole('button', { name: 'Table of contents' })).toBeVisible()
-  await expect(page.getByText(/was removed from your library/)).toHaveCount(0)
+  await expect(page.getByText(/lost the EPUB/)).toHaveCount(0)
 })
 
 test("an imported book that lost its cover gets the EPUB's own back", async ({ page }) => {
@@ -149,4 +150,20 @@ test("an imported book that lost its cover gets the EPUB's own back", async ({ p
       covers.evaluateAll((imgs) => imgs.map((img) => Reflect.get(img, 'naturalWidth') > 0)),
     )
     .toEqual([true, true])
+})
+
+test('browsing the library keeps an imported book whose files were lost (#122)', async ({
+  page,
+}) => {
+  await page.goto('/')
+  await expect(page.getByRole('button', { name: /^Meditations/ })).toBeVisible()
+  await storeLostCopy(page, 'sample-meditations', 'imported-meditations', ['file', 'cover'])
+  await page.reload()
+
+  // The broken cover sets off the repair, which finds the EPUB gone too.
+  const cards = page.getByRole('button', { name: /^Meditations/ })
+  await expect(page.getByRole('listitem').filter({ hasText: 'EPUB missing' })).toHaveCount(1)
+  await page.reload()
+  await expect(cards).toHaveCount(2)
+  await expect(page.getByRole('heading', { name: 'Removed books' })).toHaveCount(0)
 })

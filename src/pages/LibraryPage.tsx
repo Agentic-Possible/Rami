@@ -262,6 +262,12 @@ function plural(count: number, noun: string) {
 const RELATIVE = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' })
 
 /** "12 minutes ago", "yesterday", "last week": coarse, like a shelf label. */
+function readingStatus(book: Book): string {
+  if (book.missingFileAt) return 'EPUB missing · Add the same file again'
+  if (book.lastOpenedAt) return lastRead(book.lastOpenedAt)
+  return 'Not yet opened'
+}
+
 function lastRead(timestamp: number, now = Date.now()) {
   const minutes = Math.round((timestamp - now) / 60_000)
   if (minutes > -1) return 'just now'
@@ -358,7 +364,7 @@ function BookCard({
           <p className="mt-0.5 truncate font-ui text-meta text-ink-soft">{book.author}</p>
           {progress > 0 && <Ribbon progress={progress} showPercent={false} className="mt-2" />}
           <span className="mt-1 block font-ui text-caption text-ink-faint">
-            {book.lastOpenedAt ? lastRead(book.lastOpenedAt) : 'Not yet opened'}
+            {readingStatus(book)}
           </span>
         </div>
         <div className="relative -mr-2 shrink-0">
