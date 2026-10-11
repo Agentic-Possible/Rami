@@ -277,6 +277,21 @@ export default function ReaderPage() {
       </CenteredNote>
     )
   }
+  if (book.missingFileAt) {
+    return (
+      <CenteredNote>
+        This device lost the EPUB for “{book.title}”. Add the same EPUB again to keep reading. Your{' '}
+        <Link to={`/book/${book.id}/chats`} className="text-rubric underline underline-offset-2">
+          conversations and memory
+        </Link>{' '}
+        are still here.{' '}
+        <Link to="/" className="text-rubric underline underline-offset-2">
+          Back to library
+        </Link>
+        .
+      </CenteredNote>
+    )
+  }
 
   return (
     <div

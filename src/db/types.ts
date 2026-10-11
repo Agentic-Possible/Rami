@@ -8,9 +8,9 @@ export interface Book {
   language?: string
   cover?: Blob
   /**
-   * The EPUB itself. Absent once the book has been archived: the file is the
-   * only large part of the record, and dropping it is the point of removing a
-   * book while keeping its highlights, conversations and memory.
+   * The EPUB itself. Absent once the book has been archived, which reclaims
+   * the space while keeping its highlights, conversations and memory, or once
+   * the browser lost its bytes (`missingFileAt`).
    */
   file?: Blob
   /**
@@ -24,6 +24,8 @@ export interface Book {
   addedAt: number
   /** Set when the reader removed the book but kept the notes anchored to it. */
   archivedAt?: number
+  /** Set when the browser lost the stored EPUB; the book stays on the shelf until it is imported again. */
+  missingFileAt?: number
   lastOpenedAt?: number
   lastCfi?: string
   /** 0..1, epub.js locations-based progress at lastCfi. */
