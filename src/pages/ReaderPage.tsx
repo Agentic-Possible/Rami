@@ -17,6 +17,7 @@ import {
   type SelectionRect,
 } from '../lib/highlights'
 import { titleFromSeed } from '../lib/prompt'
+import { highlightShare, shareContent } from '../lib/share'
 import TocDrawer from '../components/TocDrawer'
 import DisplaySheet from '../components/DisplaySheet'
 import SelectionBar from '../components/SelectionBar'
@@ -229,15 +230,10 @@ export default function ReaderPage() {
     setChatId(conversation.id)
   }
 
-  async function copySelection() {
-    if (!active) return
-    try {
-      await navigator.clipboard.writeText(active.text)
-    } catch {
-      // Clipboard blocked; nothing useful to show for a copy failure.
-    }
-    clearSelection()
-    setActive(undefined)
+  function shareSelection() {
+    if (!active || !book) return Promise.resolve('failed' as const)
+    const chapter = active.highlight?.chapter ?? reader.location?.chapter
+    return shareContent(highlightShare(active.text, book, chapter))
   }
 
   const chromeClasses = useMemo(
@@ -407,7 +403,7 @@ export default function ReaderPage() {
           rect={active.rect}
           existing={Boolean(active.highlight)}
           onChat={() => void startChat()}
-          onCopy={() => void copySelection()}
+          onShare={shareSelection}
           onDelete={() => void deleteHighlight()}
           onDismiss={() => {
             clearSelection()

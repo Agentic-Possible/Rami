@@ -1,0 +1,86 @@
+import { describe, expect, it, vi } from 'vitest'
+import { APP_URL, highlightShare, shareContent, threadShare } from './share'
+
+const BOOK = { title: 'Moby Dick', author: 'Herman Melville' }
+
+describe('highlightShare', () => {
+  it('quotes the passage, cites the book and names the app', () => {
+    const { title, text } = highlightShare(' Call me Ishmael. ', BOOK, 'Chapter 1. Loomings')
+    expect(title).toBe('From Moby Dick')
+    expect(text).toBe(
+      `“Call me Ishmael.”\n\nMoby Dick by Herman Melville, Chapter 1. Loomings\n\nRead with Marginalia: ${APP_URL}`,
+    )
+  })
+
+  it('does not double a quote the passage already opens with', () => {
+    const { text } = highlightShare('“Oh, the rare old Whale,', BOOK)
+    expect(text.startsWith('“Oh, the rare old Whale,\n\n')).toBe(true)
+  })
+
+  it('leaves out a missing author or chapter', () => {
+    const { text } = highlightShare('Call me Ishmael.', { title: 'Moby Dick', author: '' })
+    expect(text).toContain('\n\nMoby Dick\n\n')
+  })
+})
+
+describe('threadShare', () => {
+  it('lays out the passage and each turn, skipping system messages', () => {
+    const { title, text } = threadShare(
+      { title: 'Ishmael', seedText: 'Call me Ishmael.', chapter: 'Chapter 1' },
+      [
+        { role: 'system', content: 'hidden' },
+        { role: 'user', content: 'Who is he?' },
+        { role: 'assistant', content: 'The narrator.' },
+      ],
+      BOOK,
+    )
+    expect(title).toBe('Ishmael')
+    expect(text.split('\n\n')).toEqual([
+      'A conversation about Moby Dick by Herman Melville, Chapter 1',
+      '“Call me Ishmael.”',
+      'Me: Who is he?',
+      'Marginalia: The narrator.',
+      `Read with Marginalia: ${APP_URL}`,
+    ])
+  })
+})
+
+describe('shareContent', () => {
+  const content = { title: 't', text: 'body' }
+
+  it('prefers the share sheet', async () => {
+    const share = vi.fn().mockResolvedValue(undefined)
+    const writeText = vi.fn()
+    expect(await shareContent(content, { share, clipboard: { writeText } })).toBe('shared')
+    expect(share).toHaveBeenCalledWith(content)
+    expect(writeText).not.toHaveBeenCalled()
+  })
+
+  it('treats dismissing the sheet as a cancel, not a failure', async () => {
+    const share = vi.fn().mockRejectedValue(new DOMException('', 'AbortError'))
+    const writeText = vi.fn()
+    expect(await shareContent(content, { share, clipboard: { writeText } })).toBe('cancelled')
+    expect(writeText).not.toHaveBeenCalled()
+  })
+
+  it('copies when there is no share sheet or it refuses', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    expect(await shareContent(content, { clipboard: { writeText } })).toBe('copied')
+
+    const share = vi.fn().mockRejectedValue(new DOMException('', 'NotAllowedError'))
+    expect(await shareContent(content, { share, clipboard: { writeText } })).toBe('copied')
+
+    const canShare = () => false
+    expect(await shareContent(content, { share, canShare, clipboard: { writeText } })).toBe(
+      'copied',
+    )
+    expect(writeText).toHaveBeenCalledTimes(3)
+    expect(writeText).toHaveBeenCalledWith('body')
+  })
+
+  it('reports a blocked clipboard', async () => {
+    const writeText = vi.fn().mockRejectedValue(new Error('denied'))
+    expect(await shareContent(content, { clipboard: { writeText } })).toBe('failed')
+    expect(await shareContent(content, {})).toBe('failed')
+  })
+})

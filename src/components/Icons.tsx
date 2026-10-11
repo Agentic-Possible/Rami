@@ -101,3 +101,11 @@ export function SendIcon({ className }: Props) {
     </Svg>
   )
 }
+
+export function ShareIcon({ className }: Props) {
+  return (
+    <Svg className={className}>
+      <path d="M12 15V3m-4 4 4-4 4 4M7 10H5v11h14V10h-2" />
+    </Svg>
+  )
+}
