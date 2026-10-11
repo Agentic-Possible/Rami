@@ -1,4 +1,4 @@
-# Working on Marginalia
+# Working on Rami
 
 ## Applications and boundaries
 
@@ -73,7 +73,7 @@ For reader layout or touch changes, follow the detailed checks in
 strip: inspect the visible scroll window, not the first text in the iframe.
 
 For KOReader UI changes, follow `koreader/README.md` on a device with KOReader:
-install the plugin, restart, open a book, select text, and choose Ask Marginalia.
+install the plugin, restart, open a book, select text, and choose Ask Rami.
 The fake-host integration harness tests wiring, not the device's real APIs.
 Device chat uses the hosted relay and is billed; ask before testing live chat.
 

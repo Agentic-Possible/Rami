@@ -9,6 +9,8 @@
     "public/**"
   ],
   "words": [
+    "adjacentpossible",
+    "agenticpossible",
     "anchorless",
     "autoregressive",
     "bidi",
@@ -71,8 +73,8 @@
     "libcs",
     "libkoreader",
     "libopus",
-    "literata",
     "liev",
+    "literata",
     "loomings",
     "ltn",
     "LuaJIT",
@@ -111,6 +113,7 @@
     "punycode",
     "pushcfunction",
     "pushvalue",
+    "Rami",
     "rapidjson",
     "readwise",
     "rects",

@@ -1,4 +1,4 @@
-# Marginalia
+# Rami
 
 A mobile-friendly EPUB reader that lets you highlight a passage and start an AI conversation about it, seeded with the book's metadata, your chapter and position, and the surrounding text. Conversations persist per book, and a rolling per-book memory makes new chats aware of what you've already discussed.
 
@@ -35,7 +35,7 @@ OPENROUTER_API_KEY=<a key from openrouter.ai/keys>
 
 A Vite plugin serves `/api/chat` in dev using the same handler the deployed edge function runs, so `npm run dev` exercises the real relay — no Wrangler needed.
 
-To use the deployed relay and its key instead, set `CHAT_RELAY_URL=https://marginalia.adjacentpossible.dev` in `.env.local`. Dev chat is then billed to the production key.
+To use the deployed relay and its key instead, set `CHAT_RELAY_URL=https://rami.agenticpossible.com` in `.env.local`. Dev chat is then billed to the production key.
 
 ```bash
 npm run build     # production build + service worker
@@ -73,7 +73,9 @@ One route, so every request is billed. A free-tier route (`:free`, served by Goo
 
 ### Deploying
 
-The app deploys to Cloudflare Workers at `marginalia.adjacentpossible.dev`.
+The app deploys to Cloudflare Workers at `rami.agenticpossible.com`. The old
+`marginalia.adjacentpossible.dev` route stays as an alias: KOReader plugins
+installed before the rename still send chat there.
 The root `wrangler.jsonc` serves the Vite output as Worker static assets, routes
 `/api/chat` through `workers/app/src/index.ts`, and applies the security
 headers. Keep the OpenRouter key as a Worker secret rather than a Wrangler
