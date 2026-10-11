@@ -10,13 +10,13 @@ Chat works for every visitor with no signup and no API key: requests go through 
 
 Milestones M1 to M5 of the original plan are implemented and verified end to end against Project Gutenberg's Moby Dick. Goals, constraints and design decisions are in [`docs/architecture.md`](docs/architecture.md).
 
-| Milestone     | What works                                                                                                                        |
-| ------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| M1 Library    | EPUB import, OPF metadata + cover extraction, library grid, delete with cascade                                                   |
-| M2 Reader     | Paginated epub.js rendition, position persistence, TOC, themes, font size                                                         |
-| M3 Highlights | Selection action bar, one highlight color set in Settings, painted annotations, tap a highlight to reopen its chat, per-book list |
-| M4 Chat       | Hosted relay or own OpenAI key, context assembly, streaming replies, persisted conversations                                      |
-| M5 Memory     | Rolling per-book digest injected into every new conversation, readable and editable under the reader's Memory tab                 |
+| Milestone     | What works                                                                                                                                                                                 |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| M1 Library    | EPUB import, OPF metadata + cover extraction, library grid, delete with cascade                                                                                                            |
+| M2 Reader     | Paginated epub.js rendition, position persistence, TOC, themes, font size                                                                                                                  |
+| M3 Highlights | Selection action bar, one highlight color set in Settings, painted annotations, tap a highlight to reopen its chat, per-book list, share a passage or thread with its book and a link back |
+| M4 Chat       | Hosted relay or own OpenAI key, context assembly, streaming replies, persisted conversations                                                                                               |
+| M5 Memory     | Rolling per-book digest injected into every new conversation, readable and editable under the reader's Memory tab                                                                          |
 
 Not yet done (M6): PWA share-target import, re-anchoring highlights by text when a CFI breaks, JSON import to match the existing export.
 

@@ -128,7 +128,7 @@ test('a touch selection is drawn over the text it covers', async ({ page }) => {
   expect(Math.max(...boxes.map((b) => b.right))).toBeCloseTo(range.right)
   expect(Math.max(...boxes.map((b) => b.bottom))).toBeCloseTo(range.bottom)
 
-  await page.getByRole('button', { name: 'Copy' }).click()
+  await page.getByRole('button', { name: 'Share' }).click()
   await expect(marks).toHaveCount(0)
 })
 
