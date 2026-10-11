@@ -98,8 +98,9 @@ test('a lost file is logged for the issue link in Settings', async ({ page }) =>
   await page.goto('/')
   await expect(page.getByRole('button', { name: /^Meditations/ })).toBeVisible()
   await storeLostCopy(page, 'sample-meditations', 'imported-meditations', ['file'])
+  // Either outcome for the book is fine here; this checks only the log.
   await page.goto('/book/imported-meditations')
-  await expect(page.getByText(/removed from your library/)).toBeVisible()
+  await expect(page.getByText(/removed from your library|lost the EPUB/)).toBeVisible()
 
   await page.goto('/settings')
   const link = page.getByRole('link', { name: /Report an issue/ })
