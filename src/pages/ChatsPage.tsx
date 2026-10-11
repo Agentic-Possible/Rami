@@ -29,7 +29,7 @@ export default function ChatsPage() {
   )
   const memory = useLiveQuery(() => (bookId ? db.bookMemory.get(bookId) : undefined), [bookId])
   const settings = useLiveQuery(() => getSettings(), []) ?? DEFAULT_SETTINGS
-  const readerAvailable = Boolean(book && !book.archivedAt)
+  const readerAvailable = Boolean(book && !book.archivedAt && !book.missingFileAt)
 
   return (
     <div className="paper-grain min-h-full bg-paper text-ink">

@@ -49,9 +49,10 @@ export async function readBookFile(stored: Book, file: Blob): Promise<ArrayBuffe
 
 /**
  * A bundled book is fetched again, as long as it is still the edition the
- * reading position and highlights were taken in. Anything else is shelved as
- * removed but kept, which is what it now is: importing the same EPUB again
- * matches it by fingerprint and puts the notes back with it.
+ * reading position and highlights were taken in. Anything else stays on the
+ * shelf, marked as missing its EPUB: the reader did not remove it, so it must
+ * not disappear (#122). Importing the same EPUB again matches it by
+ * fingerprint and puts the file back under its notes.
  */
 async function recoverLostFile(stored: Book): Promise<ArrayBuffer> {
   let sample: Book | undefined
@@ -77,11 +78,11 @@ async function recoverLostFile(stored: Book): Promise<ArrayBuffer> {
   }
 
   await db.books.update(stored.id, {
-    archivedAt: Date.now(),
+    missingFileAt: Date.now(),
     file: undefined,
     ...(coverLost && { cover: undefined }),
   })
   throw new Error(
-    'This book could not be read from this device. It is now under Removed books with its notes; import the EPUB again to keep reading.',
+    'This device lost the EPUB for this book. Add the same EPUB again to keep reading; your highlights and conversations are safe.',
   )
 }

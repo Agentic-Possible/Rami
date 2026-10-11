@@ -70,7 +70,7 @@ export default function KoreaderImport() {
     }
 
     // Adding the same EPUB twice while it is already on the shelf makes a
-    // second row: `findArchivedMatch` only reclaims books that were removed.
+    // second row: `findRestorableMatch` only reclaims books removed or missing their EPUB.
     // Picking one of them arbitrarily would put the highlights on whichever
     // happened to sort first, which is the failure the hash rule exists to
     // prevent — so say so instead.
