@@ -49,6 +49,10 @@ const SAMPLE_BOOKS: SampleBook[] = [
   { id: 'sample-king-james-bible', filename: 'king-james-bible.epub' },
 ]
 
+// Keep older bundled editions available for file recovery,
+// while offering only the current default shelf to new readers.
+const DEFAULT_BOOKS = SAMPLE_BOOKS.filter((sample) => sample.id !== 'sample-meditations')
+
 const SAMPLE_IDS = new Set(SAMPLE_BOOKS.map((sample) => sample.id))
 
 export function isSampleBookId(id: string): boolean {
@@ -78,8 +82,8 @@ async function run(): Promise<boolean> {
     if (settings.sampleBookSeeded) return false
 
     // Someone arriving with a library already built does not need the samples.
-    // Rows this function put there do not count, or a run that seeded three of
-    // four and failed on the last one would call the library built and set the
+    // Rows this function put there do not count, or a run that seeded two of
+    // three and failed on the last one would call the library built and set the
     // flag on its retry, stranding the book that never arrived.
     const existing = await db.books.toCollection().primaryKeys()
     if (existing.some((id) => !SAMPLE_IDS.has(id))) {
@@ -100,13 +104,13 @@ async function run(): Promise<boolean> {
     // a clean run would have.
     const addedAt = Date.now()
     const added = await Promise.all(
-      SAMPLE_BOOKS.map((sample, index) =>
+      DEFAULT_BOOKS.map((sample, index) =>
         offered.has(sample.id) ? false : seed(sample, addedAt - index),
       ),
     )
     if (!added.some(Boolean)) return false
 
-    const seeded = SAMPLE_BOOKS.filter(
+    const seeded = DEFAULT_BOOKS.filter(
       (sample, index) => offered.has(sample.id) || added[index],
     ).map((sample) => sample.id)
 
@@ -114,7 +118,7 @@ async function run(): Promise<boolean> {
     // partial first run retries the ones that are missing and only those.
     await saveSettings({
       seededSampleIds: seeded,
-      sampleBookSeeded: seeded.length === SAMPLE_BOOKS.length,
+      sampleBookSeeded: seeded.length === DEFAULT_BOOKS.length,
     })
     return true
   } catch {
