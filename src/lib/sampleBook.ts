@@ -15,12 +15,11 @@ interface SampleBook {
   id: string
   filename: string
   /**
-   * Replaces what the OPF says, for the two editions whose Gutenberg metadata
+   * Replaces what the OPF says, when Gutenberg metadata
    * does not survive contact with the UI. The Genealogy's `dc:title` is the
    * whole collected-works citation, which fills the reader's header bar and
-   * leaves no room for anything else; Meditations' `dc:creator` is a
-   * half-reversed "Emperor of Rome Marcus Aurelius". Both also go to the model
-   * as book metadata, so this is not only cosmetic.
+   * leaves no room for anything else. This also goes to the model as book
+   * metadata, so this is not only cosmetic.
    *
    * Applied here rather than by rewriting the EPUBs, so the shipped files stay
    * byte-identical to Gutenberg's and the edit stays visible in review.
@@ -32,14 +31,13 @@ interface SampleBook {
 /**
  * Public-domain shelf shipped in `public/` so a first-time visitor has
  * something to read without finding an EPUB first. Moby Dick is Project
- * Gutenberg #2701, Meditations #2680, The Genealogy of Morals #52319,
+ * Gutenberg #2701, The Genealogy of Morals #52319,
  * the King James Bible #10.
  *
  * Listed in the order they should appear on the shelf.
  */
 const SAMPLE_BOOKS: SampleBook[] = [
   { id: 'sample-moby-dick', filename: 'moby-dick.epub' },
-  { id: 'sample-meditations', filename: 'meditations.epub', author: 'Marcus Aurelius' },
   {
     id: 'sample-genealogy-of-morals',
     filename: 'genealogy-of-morals.epub',
@@ -48,10 +46,6 @@ const SAMPLE_BOOKS: SampleBook[] = [
   },
   { id: 'sample-king-james-bible', filename: 'king-james-bible.epub' },
 ]
-
-// Keep older bundled editions available for file recovery,
-// while offering only the current default shelf to new readers.
-const DEFAULT_BOOKS = SAMPLE_BOOKS.filter((sample) => sample.id !== 'sample-meditations')
 
 const SAMPLE_IDS = new Set(SAMPLE_BOOKS.map((sample) => sample.id))
 
@@ -104,13 +98,13 @@ async function run(): Promise<boolean> {
     // a clean run would have.
     const addedAt = Date.now()
     const added = await Promise.all(
-      DEFAULT_BOOKS.map((sample, index) =>
+      SAMPLE_BOOKS.map((sample, index) =>
         offered.has(sample.id) ? false : seed(sample, addedAt - index),
       ),
     )
     if (!added.some(Boolean)) return false
 
-    const seeded = DEFAULT_BOOKS.filter(
+    const seeded = SAMPLE_BOOKS.filter(
       (sample, index) => offered.has(sample.id) || added[index],
     ).map((sample) => sample.id)
 
@@ -118,7 +112,7 @@ async function run(): Promise<boolean> {
     // partial first run retries the ones that are missing and only those.
     await saveSettings({
       seededSampleIds: seeded,
-      sampleBookSeeded: seeded.length === DEFAULT_BOOKS.length,
+      sampleBookSeeded: seeded.length === SAMPLE_BOOKS.length,
     })
     return true
   } catch {
