@@ -200,7 +200,7 @@ export default function PublishDialog({
  * The Turnstile check. Most readers pass it without seeing a challenge; an
  * expired pass clears the token until the widget renews it.
  */
-function Challenge({
+export function Challenge({
   onToken,
   onError,
 }: {
