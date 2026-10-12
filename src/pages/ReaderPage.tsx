@@ -348,28 +348,22 @@ export default function ReaderPage() {
         </div>
       </header>
 
-      {/* The bars cover these margins, not the page. A tap on one shows the bars. */}
+      {/* Blank margins the bars cover, so they never hide text. A tap shows the bars. */}
       <div className="mx-auto flex h-full w-full max-w-[760px] flex-col">
         <button
           onClick={toggleChrome}
           tabIndex={-1}
           aria-hidden
-          className="reader-inset-top no-select flex min-w-0 items-end justify-center px-6 pb-2"
-        >
-          <span className="truncate font-ui text-caption text-ink-faint">
-            {reader.location?.chapter ?? book.title}
-          </span>
-        </button>
+          className="reader-inset-top no-select"
+        />
         {/* epub.js renders its iframe here; it owns all touch/selection inside. */}
         <div ref={setViewer} className="min-h-0 w-full flex-1" />
         <button
           onClick={toggleChrome}
           tabIndex={-1}
           aria-hidden
-          className="reader-inset-bottom no-select flex items-start justify-center pt-2 font-ui text-caption text-ink-faint [font-variant-numeric:oldstyle-nums]"
-        >
-          {percent}%
-        </button>
+          className="reader-inset-bottom no-select"
+        />
       </div>
 
       {/* Wide screens leave gutters beside the capped column; they turn pages
