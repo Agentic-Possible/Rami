@@ -45,8 +45,10 @@ export default function ShareBookDialog({ book, onClose }: { book: Book; onClose
   const sheet = prefersShareSheet()
 
   // A live link this device could not save holds the only owner token, so the
-  // dialog stays open until it is removed.
+  // dialog stays open until it is removed, and while a request that could
+  // produce one is still in flight.
   function dismiss() {
+    if (working) return
     if (unsaved) {
       setError(
         'Remove the link before closing. Otherwise it stays public with no way to remove it.',
