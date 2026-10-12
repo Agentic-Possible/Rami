@@ -17,6 +17,8 @@ export interface ShareContent {
   /** Used by targets that take a subject, such as email. */
   title: string
   text: string
+  /** What the clipboard gets when there is no share sheet, if not `text`. */
+  copyText?: string
 }
 
 /** `shared` went to the share sheet, `copied` to the clipboard. */
@@ -31,7 +33,9 @@ type ShareHost = {
 /** "Moby Dick by Herman Melville, Chapter 1. Loomings" */
 function source(book: BookInfo, chapter?: string): string {
   const byline = book.author ? `${book.title} by ${book.author}` : book.title
-  return chapter ? `${byline}, ${chapter}` : byline
+  // Table-of-contents labels often end in a period, which reads badly mid-sentence.
+  const label = chapter?.trim().replace(/[.,;:]+$/, '')
+  return label ? `${byline}, ${label}` : byline
 }
 
 /** Wraps a passage in quotes, unless it already opens with one of its own. */
@@ -63,6 +67,20 @@ export function threadShare(
   return { title: conversation.title, text: parts.join('\n\n') }
 }
 
+/** A published thread's link, introduced by what it is about. */
+export function linkShare(
+  conversation: Pick<Conversation, 'title' | 'chapter'>,
+  book: BookInfo,
+  url: string,
+): ShareContent {
+  return {
+    title: conversation.title,
+    text: `A conversation about ${source(book, conversation.chapter)}, on ${APP_NAME}: ${url}`,
+    // Copying is for pasting the link, so it gets the bare URL.
+    copyText: url,
+  }
+}
+
 /**
  * Opens the share sheet, or copies when there is none. Call it straight from
  * the click handler: browsers refuse `share()` once the tap's activation has
@@ -83,7 +101,7 @@ export async function shareContent(
   }
   if (!host.clipboard) return 'failed'
   try {
-    await host.clipboard.writeText(content.text)
+    await host.clipboard.writeText(content.copyText ?? content.text)
     return 'copied'
   } catch {
     return 'failed'

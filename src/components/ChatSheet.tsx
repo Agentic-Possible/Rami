@@ -9,7 +9,8 @@ import { shareContent, threadShare } from '../lib/share'
 import ReaderPanel from './ReaderPanel'
 import Passage from './Passage'
 import Mark from './Mark'
-import { SendIcon, ShareIcon } from './Icons'
+import { LinkIcon, SendIcon, ShareIcon } from './Icons'
+import PublishDialog from './PublishDialog'
 import { button } from './ui'
 
 /** Breathing room left above the pinned question, in pixels. */
@@ -29,6 +30,7 @@ export default function ChatSheet({
   // The seed passage sits on one line until tapped, so the thread keeps the room.
   const [passageOpen, setPassageOpen] = useState(false)
   const [shareNote, setShareNote] = useState<string>()
+  const [publishing, setPublishing] = useState(false)
   const abortRef = useRef<AbortController>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const composerRef = useRef<HTMLTextAreaElement>(null)
@@ -283,10 +285,14 @@ export default function ChatSheet({
         )}
 
         {messages && messages.length > 0 && !busy && book && (
-          <div className="flex items-center justify-center gap-2 pt-2">
+          <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
             <button onClick={() => void share()} className={button.quiet}>
               <ShareIcon />
               Share thread
+            </button>
+            <button onClick={() => setPublishing(true)} className={button.quiet}>
+              <LinkIcon />
+              {conversation?.published ? 'Published link' : 'Publish link'}
             </button>
             <span aria-live="polite" className="font-ui text-meta text-ink-soft">
               {shareNote}
@@ -332,6 +338,15 @@ export default function ChatSheet({
           <SendIcon className="h-4.5 w-4.5" />
         </button>
       </form>
+
+      {publishing && conversation && messages && book && (
+        <PublishDialog
+          conversation={conversation}
+          messages={messages}
+          book={book}
+          onClose={() => setPublishing(false)}
+        />
+      )}
     </ReaderPanel>
   )
 }

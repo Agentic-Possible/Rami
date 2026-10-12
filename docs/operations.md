@@ -39,6 +39,27 @@ Suggested hosted alerts, after deliberate operator setup: 5xx >5% for 5 minutes
 from two locations, or provider spend >80% of the chosen cap. Link alerts to this
 runbook. These are recommendations, not proof that alerts currently run.
 
+## Published threads
+
+Readers can publish a thread at `/t/<id>` (decision 0006). Snapshots live in the
+`THREADS` Workers KV namespace, which Wrangler creates on the first deploy that
+declares it, and expire a year after their last publish. Worker Previews use a
+separate `marginalia-threads-preview` namespace, bound under `previews` in
+`wrangler.jsonc`, and need `TURNSTILE_SECRET_KEY` in the Preview base config.
+
+Setup: create a Turnstile widget (managed mode) for the app's host names, put
+its public site key in `wrangler.jsonc` `vars.TURNSTILE_SITE_KEY`, then
+`wrangler secret put TURNSTILE_SECRET_KEY`. Until both are set, `/api/threads` answers 503 and the PWA
+shows that publishing is unavailable. Dev uses Turnstile's always-pass test keys.
+
+Abuse: add a WAF rate-limiting rule on `POST /api/threads`; the Worker's own
+throttle is per isolate. `wrangler secret put THREADS_ENABLED` with `false`
+stops publishing and updates; existing links keep serving and owners can
+still remove them. To take down one link, `wrangler kv key delete --binding
+THREADS --remote <id>`. A removal can take up to a minute to reach every edge
+location. Thread metrics log operation/status/duration only, never ids,
+content, or IPs.
+
 ## Release, canary, and rollback
 
 PR checks must pass before main changes. CI produces test, coverage, and bundle
@@ -76,7 +97,9 @@ bundled browsers.
 
 ## Data requests and error-to-issue flow
 
-Books, notes, conversations, and personal keys stay on the reader's device.
+Books, notes, conversations, and personal keys stay on the reader's device,
+except threads a reader publishes. A reader removes a published link from the
+thread itself; for a request by email, delete the key as described above.
 Use the UI's export/delete controls for reader data. Clear browser site data for
 complete local removal.
 

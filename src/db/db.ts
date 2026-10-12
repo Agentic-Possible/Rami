@@ -1,6 +1,7 @@
 import Dexie, { type EntityTable } from 'dexie'
 import { normalizeSummary } from '../lib/digest'
 import { fingerprint } from '../lib/fingerprint'
+import { unpublishAll } from '../lib/publish'
 import {
   DEFAULT_SETTINGS,
   type Book,
@@ -113,8 +114,12 @@ export async function saveSettings(patch: Partial<Settings>): Promise<void> {
   })
 }
 
-/** Removes a book and everything anchored to it. */
+/**
+ * Removes a book and everything anchored to it. Its published links go first,
+ * so a failure to remove one leaves the book in place.
+ */
 export async function deleteBook(bookId: string): Promise<void> {
+  await unpublishAll(await db.conversations.where('bookId').equals(bookId).toArray())
   await db.transaction(
     'rw',
     [db.books, db.highlights, db.conversations, db.messages, db.bookMemory],
@@ -196,8 +201,10 @@ export async function restoreBook(bookId: string, imported: Book): Promise<void>
   })
 }
 
-/** Removes a conversation and its messages. */
+/** Removes a conversation and its messages, and its published link first. */
 export async function deleteConversation(conversationId: string): Promise<void> {
+  const conversation = await db.conversations.get(conversationId)
+  if (conversation) await unpublishAll([conversation])
   await db.transaction('rw', [db.conversations, db.messages], async () => {
     await db.messages.where('conversationId').equals(conversationId).delete()
     await db.conversations.delete(conversationId)

@@ -219,7 +219,10 @@ async function exportData() {
     // Blobs are dropped: this is a notes backup, not a library backup.
     books: books.map(({ file: _f, cover: _c, locations: _l, ...rest }) => rest),
     highlights,
-    conversations,
+    // A shared backup must not let its reader take over a published link.
+    conversations: conversations.map(({ published, ...rest }) =>
+      published ? { ...rest, published: { ...published, ownerToken: undefined } } : rest,
+    ),
     messages,
     bookMemory,
   }

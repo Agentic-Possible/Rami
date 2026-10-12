@@ -15,6 +15,7 @@ export default function ChatsPage() {
   const { bookId } = useParams<{ bookId: string }>()
   const [tab, setTab] = useState<Tab>('chats')
   const [chatId, setChatId] = useState<string>()
+  const [deleteError, setDeleteError] = useState<string>()
 
   const book = useLiveQuery(() => (bookId ? db.books.get(bookId) : undefined), [bookId])
   const conversations = useLiveQuery(
@@ -70,6 +71,12 @@ export default function ChatsPage() {
               </Empty>
             )}
 
+            {deleteError && (
+              <p role="alert" className="mb-3 font-ui text-meta text-danger">
+                {deleteError}
+              </p>
+            )}
+
             <ul className="space-y-3">
               {conversations?.map((conversation) => (
                 <li
@@ -90,7 +97,14 @@ export default function ChatsPage() {
                     </p>
                   </button>
                   <button
-                    onClick={() => void deleteConversation(conversation.id)}
+                    onClick={() => {
+                      setDeleteError(undefined)
+                      deleteConversation(conversation.id).catch((err: unknown) =>
+                        setDeleteError(
+                          err instanceof Error ? err.message : 'Could not delete the thread.',
+                        ),
+                      )
+                    }}
                     aria-label={`Delete ${conversation.title}`}
                     className={`${iconButton} -mt-2 -mr-2`}
                   >

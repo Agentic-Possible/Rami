@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { APP_URL, highlightShare, shareContent, threadShare } from './share'
+import { APP_URL, highlightShare, linkShare, shareContent, threadShare } from './share'
 
 const BOOK = { title: 'Moby Dick', author: 'Herman Melville' }
 
@@ -42,6 +42,30 @@ describe('threadShare', () => {
       'Rami: The narrator.',
       `Read with Rami: ${APP_URL}`,
     ])
+  })
+})
+
+describe('linkShare', () => {
+  it('drops a chapter label’s trailing period', () => {
+    const { text } = linkShare({ title: 't', chapter: 'CHAPTER 1. Loomings.' }, BOOK, 'u')
+    expect(text).toContain('CHAPTER 1. Loomings, on Rami')
+  })
+
+  it('introduces the link with its book', () => {
+    expect(
+      linkShare({ title: 'Ishmael', chapter: 'Chapter 1' }, BOOK, 'https://x.test/t/a'),
+    ).toEqual({
+      title: 'Ishmael',
+      text: 'A conversation about Moby Dick by Herman Melville, Chapter 1, on Rami: https://x.test/t/a',
+      copyText: 'https://x.test/t/a',
+    })
+  })
+
+  it('copies only the link when there is no share sheet', async () => {
+    const writeText = vi.fn(async () => {})
+    const content = linkShare({ title: 't' }, BOOK, 'https://x.test/t/a')
+    expect(await shareContent(content, { clipboard: { writeText } })).toBe('copied')
+    expect(writeText).toHaveBeenCalledWith('https://x.test/t/a')
   })
 })
 
