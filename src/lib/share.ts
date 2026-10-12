@@ -17,6 +17,8 @@ export interface ShareContent {
   /** Used by targets that take a subject, such as email. */
   title: string
   text: string
+  /** What the clipboard gets when there is no share sheet, if not `text`. */
+  copyText?: string
 }
 
 /** `shared` went to the share sheet, `copied` to the clipboard. */
@@ -74,6 +76,8 @@ export function linkShare(
   return {
     title: conversation.title,
     text: `A conversation about ${source(book, conversation.chapter)}, on ${APP_NAME}: ${url}`,
+    // Copying is for pasting the link, so it gets the bare URL.
+    copyText: url,
   }
 }
 
@@ -97,7 +101,7 @@ export async function shareContent(
   }
   if (!host.clipboard) return 'failed'
   try {
-    await host.clipboard.writeText(content.text)
+    await host.clipboard.writeText(content.copyText ?? content.text)
     return 'copied'
   } catch {
     return 'failed'

@@ -57,7 +57,15 @@ describe('linkShare', () => {
     ).toEqual({
       title: 'Ishmael',
       text: 'A conversation about Moby Dick by Herman Melville, Chapter 1, on Rami: https://x.test/t/a',
+      copyText: 'https://x.test/t/a',
     })
+  })
+
+  it('copies only the link when there is no share sheet', async () => {
+    const writeText = vi.fn(async () => {})
+    const content = linkShare({ title: 't' }, BOOK, 'https://x.test/t/a')
+    expect(await shareContent(content, { clipboard: { writeText } })).toBe('copied')
+    expect(writeText).toHaveBeenCalledWith('https://x.test/t/a')
   })
 })
 
