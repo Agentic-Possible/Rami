@@ -32,6 +32,8 @@
   // Routes turn workers.dev off by default, so enable preview hostnames explicitly.
   "preview_urls": true,
   "previews": {
+    // Previews keep test threads out of production's namespace.
+    "kv_namespaces": [{ "binding": "THREADS", "id": "b4bff0c4922a45b3a525901837cc8147" }],
     "vars": {
       "TURNSTILE_SITE_KEY": "0x4AAAAAAFUKtahRDYHdeywo"
     }

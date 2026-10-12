@@ -43,7 +43,9 @@ runbook. These are recommendations, not proof that alerts currently run.
 
 Readers can publish a thread at `/t/<id>` (decision 0006). Snapshots live in the
 `THREADS` Workers KV namespace, which Wrangler creates on the first deploy that
-declares it, and expire a year after their last publish.
+declares it, and expire a year after their last publish. Worker Previews use a
+separate `marginalia-threads-preview` namespace, bound under `previews` in
+`wrangler.jsonc`, and need `TURNSTILE_SECRET_KEY` in the Preview base config.
 
 Setup: create a Turnstile widget (managed mode) for the app's host names, put
 its public site key in `wrangler.jsonc` `vars.TURNSTILE_SITE_KEY`, then
