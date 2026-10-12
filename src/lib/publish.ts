@@ -95,6 +95,23 @@ export async function unpublishThread(
   throw new PublishError(await failure(response))
 }
 
+/**
+ * Removes the links of conversations about to be deleted, since their owner
+ * tokens go with them. Throws if any link could not be removed.
+ */
+export async function unpublishAll(
+  conversations: Pick<Conversation, 'published'>[],
+  fetcher: typeof fetch = fetch,
+): Promise<void> {
+  await Promise.all(
+    conversations.map(({ published }) =>
+      published?.ownerToken
+        ? unpublishThread(published.id, published.ownerToken, fetcher)
+        : undefined,
+    ),
+  )
+}
+
 async function call<T>(fetcher: typeof fetch, url: string, init?: RequestInit): Promise<T> {
   const response = await fetcher(url, init).catch(() => undefined)
   if (!response?.ok) throw new PublishError(await failure(response))

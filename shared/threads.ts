@@ -126,14 +126,18 @@ async function route(
   { ip }: ThreadsRequestContext,
 ): Promise<Response> {
   const { store, enabled = true, turnstileSecret, turnstileSiteKey } = options
-  if (!enabled || !store || !turnstileSecret?.trim() || !turnstileSiteKey?.trim()) {
-    return errorResponse(503, 'Publishing threads is not available on this deployment.')
-  }
+  const unavailable = () =>
+    errorResponse(503, 'Publishing threads is not available on this deployment.')
+  if (!store) return unavailable()
   if (isCrossOrigin(request)) {
     return errorResponse(403, 'Cross-origin requests are not allowed.')
   }
 
   const id = new URL(request.url).pathname.replace(/^\/api\/threads\/?/, '')
+  // Owners can still remove their links while publishing is switched off.
+  if (request.method === 'DELETE' && ID_PATTERN.test(id)) return remove(request, store, id)
+  if (!enabled || !turnstileSecret?.trim() || !turnstileSiteKey?.trim()) return unavailable()
+
   if (!id) {
     if (request.method === 'GET') return json({ siteKey: turnstileSiteKey.trim() })
     if (request.method === 'POST') return create(request, options, store, ip)

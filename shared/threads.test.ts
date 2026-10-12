@@ -159,6 +159,17 @@ describe('owner actions', () => {
     const anonymous = await call(`/api/threads/${id}`, { method: 'DELETE' })
     expect(anonymous.status).toBe(401)
   })
+
+  it('still deletes while publishing is switched off', async () => {
+    const { store, id, auth } = await published()
+    const off = { store, enabled: false, turnstileSecret: '', turnstileSiteKey: '' }
+    const call = (init: RequestInit) =>
+      handleThreadsRequest(new Request(`${ORIGIN}/api/threads/${id}`, init), off, { ip: '' })
+
+    expect((await call({ method: 'PUT', headers: auth(), body: '{}' })).status).toBe(503)
+    expect((await call({ method: 'DELETE', headers: auth() })).status).toBe(204)
+    expect(await store.get(id)).toBeNull()
+  })
 })
 
 describe('parseBody', () => {

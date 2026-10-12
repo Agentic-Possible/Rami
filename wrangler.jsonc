@@ -7,6 +7,11 @@
   // Published thread snapshots (docs/decisions/0006). No id: Wrangler creates
   // the namespace on the first deploy.
   "kv_namespaces": [{ "binding": "THREADS" }],
+  // Public Turnstile site key for publishing threads. Its secret is set with
+  // `wrangler secret put TURNSTILE_SECRET_KEY`.
+  "vars": {
+    "TURNSTILE_SITE_KEY": "0x4AAAAAAFUKtahRDYHdeywo"
+  },
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
@@ -26,7 +31,11 @@
   // Worker Previews for PR builds; they do not inherit production vars or secrets.
   // Routes turn workers.dev off by default, so enable preview hostnames explicitly.
   "preview_urls": true,
-  "previews": {},
+  "previews": {
+    "vars": {
+      "TURNSTILE_SITE_KEY": "0x4AAAAAAFUKtahRDYHdeywo"
+    }
+  },
   "observability": {
     "enabled": true,
     "logs": {

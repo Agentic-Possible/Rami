@@ -36,6 +36,8 @@ export default function PublishDialog({
   const [note, setNote] = useState<string>()
   // Passing the check only unlocks the button: publishing waits for the tap.
   const [token, setToken] = useState<string>()
+  // A new link this device failed to save or remove; kept so removal can be retried.
+  const [unsaved, setUnsaved] = useState<{ id: string; ownerToken: string }>()
   const ref = useModal<HTMLDivElement>(onClose, '[data-cancel]')
 
   async function run(action: () => Promise<void>) {
@@ -56,9 +58,29 @@ export default function PublishDialog({
     run(async () => {
       if (!token) return
       const link = await publishThread(snapshot(), token)
-      await db.conversations.update(conversation.id, {
-        published: { ...link, publishedAt: Date.now() },
-      })
+      const saved = await db.conversations
+        .update(conversation.id, { published: { ...link, publishedAt: Date.now() } })
+        .catch(() => 0)
+      // Without its owner token on this device the link could never be removed.
+      if (!saved) {
+        const removed = await unpublishThread(link.id, link.ownerToken).then(
+          () => true,
+          () => false,
+        )
+        if (removed) throw new Error('Could not save the link on this device, so it was removed.')
+        setUnsaved(link)
+        throw new Error(
+          'Could not save the link on this device, and it is still live. Remove it before closing.',
+        )
+      }
+    })
+
+  const removeUnsaved = () =>
+    run(async () => {
+      if (!unsaved) return
+      await unpublishThread(unsaved.id, unsaved.ownerToken)
+      setUnsaved(undefined)
+      setNote('The link was removed.')
     })
 
   const republish = () =>
@@ -150,6 +172,14 @@ export default function PublishDialog({
           {published ? (
             <button onClick={() => void share()} disabled={working} className={button.primary}>
               Share link
+            </button>
+          ) : unsaved ? (
+            <button
+              onClick={() => void removeUnsaved()}
+              disabled={working}
+              className={button.danger}
+            >
+              Remove link
             </button>
           ) : (
             <button

@@ -1,5 +1,12 @@
 import { describe, expect, it, vi } from 'vitest'
-import { isStale, PublishError, publishThread, snapshotFor, unpublishThread } from './publish'
+import {
+  isStale,
+  PublishError,
+  publishThread,
+  snapshotFor,
+  unpublishAll,
+  unpublishThread,
+} from './publish'
 
 const BOOK = { title: 'Moby Dick', author: 'Herman Melville' }
 
@@ -66,5 +73,18 @@ describe('requests', () => {
       method: 'DELETE',
       headers: { Authorization: 'Bearer t' },
     })
+  })
+  it('removes every published link before a deletion, and fails if one cannot go', async () => {
+    const link = (id: string) => ({
+      published: { id, url: 'u', ownerToken: `t-${id}`, publishedAt: 0, expiresAt: 0 },
+    })
+    const ok = vi.fn(async () => new Response(null, { status: 204 }))
+    await unpublishAll([link('a'), {}, link('b')], ok)
+    expect(ok).toHaveBeenCalledTimes(2)
+
+    const offline = vi.fn(async () => {
+      throw new TypeError('offline')
+    })
+    await expect(unpublishAll([link('a')], offline)).rejects.toThrow(PublishError)
   })
 })

@@ -45,17 +45,18 @@ Readers can publish a thread at `/t/<id>` (decision 0006). Snapshots live in the
 `THREADS` Workers KV namespace, which Wrangler creates on the first deploy that
 declares it, and expire a year after their last publish.
 
-Setup: create a Turnstile widget (managed mode) for the app's host names, then
-`wrangler secret put TURNSTILE_SECRET_KEY` and `wrangler secret put
-TURNSTILE_SITE_KEY`. The site key is public but kept beside the secret so both
-change together. Until both are set, `/api/threads` answers 503 and the PWA
+Setup: create a Turnstile widget (managed mode) for the app's host names, put
+its public site key in `wrangler.jsonc` `vars.TURNSTILE_SITE_KEY`, then
+`wrangler secret put TURNSTILE_SECRET_KEY`. Until both are set, `/api/threads` answers 503 and the PWA
 shows that publishing is unavailable. Dev uses Turnstile's always-pass test keys.
 
 Abuse: add a WAF rate-limiting rule on `POST /api/threads`; the Worker's own
 throttle is per isolate. `wrangler secret put THREADS_ENABLED` with `false`
-stops publishing and updates; existing links keep serving. To take down one
-link, `wrangler kv key delete --binding THREADS --remote <id>`. Thread metrics
-log operation/status/duration only, never ids, content, or IPs.
+stops publishing and updates; existing links keep serving and owners can
+still remove them. To take down one link, `wrangler kv key delete --binding
+THREADS --remote <id>`. A removal can take up to a minute to reach every edge
+location. Thread metrics log operation/status/duration only, never ids,
+content, or IPs.
 
 ## Release, canary, and rollback
 

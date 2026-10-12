@@ -153,7 +153,7 @@ paths:
       - {in: path, name: id, required: true, schema: {type: string}}
     get:
       summary: Read-only page for a published thread
-      description: Static HTML, no scripts, noindex. Not cached, so a removed link stops working at once.
+      description: Static HTML, no scripts, noindex. Not cached by HTTP; Workers KV can serve a removed link for up to a minute in other locations.
       responses:
         "200": {description: The thread, content: {text/html: {schema: {type: string}}}}
         "404": {description: Expired, removed, or unknown link}

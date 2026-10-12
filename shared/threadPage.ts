@@ -28,7 +28,8 @@ function page(status: number, html: string): Response {
     status,
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
-      // A removed link has to stop working at once, not when a cache expires.
+      // No HTTP caching on top of KV, whose deletes already take up to a minute to
+      // reach every location.
       'Cache-Control': 'no-store',
       'X-Robots-Tag': 'noindex, nofollow',
     },
