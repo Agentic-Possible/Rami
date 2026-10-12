@@ -146,7 +146,8 @@ export async function fetchSampleBook(id: string): Promise<Book | undefined> {
  * A fresh Gutenberg download differs byte for byte from the shipped file, so
  * downloading would stand a second copy beside the sample the reader already
  * has, or one that seeding adds later. A sample they removed comes back with
- * its notes.
+ * its notes, but only if the bundle is still the edition those notes were
+ * taken in; otherwise the caller adds a fresh copy beside it.
  */
 export async function shelveSampleBook(
   gutenbergId: number,
@@ -160,6 +161,7 @@ export async function shelveSampleBook(
   const book = await fetchSample(sample).catch(() => undefined)
   if (!book || signal?.aborted) return undefined
   if (shelved) {
+    if (!shelved.fileHash || shelved.fileHash !== book.fileHash) return undefined
     await restoreBook(sample.id, book)
     return sample.id
   }

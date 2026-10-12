@@ -35,6 +35,15 @@ export async function bookCardFor(
   }
 }
 
+/** The book's link, unless it has expired; an expired one is replaced on the next share. */
+export function liveLink(
+  book: Pick<Book, 'sharedLink'>,
+  now = Date.now(),
+): PublishedBookLink | undefined {
+  const link = book.sharedLink
+  return link && link.expiresAt > now ? link : undefined
+}
+
 /** Identifies the cover a link was sent with, so a changed cover can be sent again. */
 export async function coverHash(cover: Blob | undefined): Promise<string> {
   return cover ? fingerprint(await cover.arrayBuffer()) : 'none'

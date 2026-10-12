@@ -1,5 +1,12 @@
 import { describe, expect, it, vi } from 'vitest'
-import { coverHash, publishBook, readSharedBook, republishBook, unpublishBook } from './bookLink'
+import {
+  coverHash,
+  liveLink,
+  publishBook,
+  readSharedBook,
+  republishBook,
+  unpublishBook,
+} from './bookLink'
 import { PublishError } from './publish'
 
 const SNAPSHOT = { book: { title: 'Moby Dick', author: 'Herman Melville', gutenbergId: 2701 } }
@@ -47,5 +54,22 @@ describe('coverHash', () => {
     expect(await coverHash(new Blob(['a']))).toBe(a)
     expect(await coverHash(new Blob(['b']))).not.toBe(a)
     expect(await coverHash(undefined)).toBe('none')
+  })
+})
+
+describe('liveLink', () => {
+  const link = {
+    id: 'x',
+    url: 'u',
+    ownerToken: 't',
+    publishedAt: 0,
+    expiresAt: 1_000,
+    coverHash: 'none',
+  }
+
+  it('treats an expired link as gone, so a new one is offered', () => {
+    expect(liveLink({ sharedLink: link }, 999)).toBe(link)
+    expect(liveLink({ sharedLink: link }, 1_000)).toBeUndefined()
+    expect(liveLink({}, 0)).toBeUndefined()
   })
 })

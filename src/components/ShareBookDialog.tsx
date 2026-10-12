@@ -2,9 +2,17 @@ import { useEffect, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/db'
 import type { Book } from '../db/types'
-import { bookCardFor, coverHash, publishBook, republishBook, unpublishBook } from '../lib/bookLink'
+import {
+  bookCardFor,
+  coverHash,
+  liveLink,
+  publishBook,
+  republishBook,
+  unpublishBook,
+} from '../lib/bookLink'
 import { readGutenbergId } from '../lib/epub'
 import { PublishError } from '../lib/publish'
+import { readBookFile } from '../lib/storedFile'
 import { bookShare, prefersShareSheet, shareContent } from '../lib/share'
 import { useModal } from '../lib/useModal'
 import BookCover from './BookCover'
@@ -20,9 +28,11 @@ import { button } from './ui'
 export default function ShareBookDialog({ book, onClose }: { book: Book; onClose: () => void }) {
   // Live, so the dialog follows the link this device saves or removes.
   const current = useLiveQuery(() => db.books.get(book.id), [book.id]) ?? book
-  const published = current.sharedLink
+  const published = liveLink(current)
   // Undefined while the EPUB is read; null when it is not a Gutenberg book.
   const [gutenbergId, setGutenbergId] = useState<number | null>()
+  // Why the EPUB could not be read, such as bytes the browser lost.
+  const [readError, setReadError] = useState<string>()
   const [working, setWorking] = useState(false)
   const [error, setError] = useState<string>()
   const [note, setNote] = useState<string>()
@@ -33,13 +43,22 @@ export default function ShareBookDialog({ book, onClose }: { book: Book; onClose
 
   useEffect(() => {
     let cancelled = false
-    void (book.file ? readGutenbergId(book.file) : Promise.resolve(undefined)).then((id) => {
-      if (!cancelled) setGutenbergId(id ?? null)
-    })
+    void (async () => {
+      try {
+        // Through the stored-file path, which recovers a bundled book whose bytes were lost.
+        const bytes = book.file ? await readBookFile(book, book.file) : undefined
+        const id = bytes ? await readGutenbergId(bytes) : undefined
+        if (!cancelled) setGutenbergId(id ?? null)
+      } catch (err) {
+        if (cancelled) return
+        setReadError(err instanceof Error ? err.message : 'Could not read this book.')
+        setGutenbergId(null)
+      }
+    })()
     return () => {
       cancelled = true
     }
-  }, [book.file])
+  }, [book])
 
   async function run(action: () => Promise<void>) {
     setWorking(true)
@@ -60,7 +79,7 @@ export default function ShareBookDialog({ book, onClose }: { book: Book; onClose
     if (!linkId || !gutenbergId) return
     void run(async () => {
       const stored = await db.books.get(book.id)
-      const link = stored?.sharedLink
+      const link = stored && liveLink(stored)
       if (!stored || !link) return
       const hash = await coverHash(stored.cover)
       if (hash === link.coverHash) return
@@ -112,7 +131,7 @@ export default function ShareBookDialog({ book, onClose }: { book: Book; onClose
     else if (outcome === 'failed') setNote('Could not share. Copy the link above instead.')
   }
 
-  const unsupported = gutenbergId === null ? unsupportedReason(book) : undefined
+  const unsupported = gutenbergId === null ? (readError ?? unsupportedReason(book)) : undefined
   // Known to be a Gutenberg book, so a link can be made.
   const shareable = typeof gutenbergId === 'number'
 

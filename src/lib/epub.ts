@@ -101,8 +101,7 @@ export async function readEpubCover(file: Blob): Promise<Blob | undefined> {
 }
 
 /** The Project Gutenberg book this EPUB was generated from, when it says so. */
-export async function readGutenbergId(file: Blob): Promise<number | undefined> {
-  const buffer = await file.arrayBuffer()
+export async function readGutenbergId(buffer: ArrayBuffer): Promise<number | undefined> {
   if (!looksLikeZip(buffer)) return undefined
 
   const ePub = await loadEpubJs()
