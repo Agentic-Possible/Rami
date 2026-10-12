@@ -42,8 +42,18 @@ export default function ShareBookDialog({ book, onClose }: { book: Book; onClose
   const [challenge, setChallenge] = useState(0)
   // A new link this device failed to save or remove; kept so removal can be retried.
   const [unsaved, setUnsaved] = useState<PublishedLink>()
-  const ref = useModal<HTMLDivElement>(onClose, '[data-cancel]')
   const sheet = prefersShareSheet()
+
+  // A live link this device could not save holds the only owner token, so the
+  // dialog stays open until it is removed.
+  function dismiss() {
+    if (unsaved) {
+      setError(
+        'Remove the link before closing. Otherwise it stays public with no way to remove it.',
+      )
+    } else onClose()
+  }
+  const ref = useModal<HTMLDivElement>(dismiss, '[data-cancel]')
 
   useEffect(() => {
     let cancelled = false
@@ -222,7 +232,7 @@ export default function ShareBookDialog({ book, onClose }: { book: Book; onClose
               Remove link
             </button>
           )}
-          <button data-cancel onClick={onClose} className={button.secondary}>
+          <button data-cancel onClick={dismiss} className={button.secondary}>
             {published || unsupported ? 'Done' : 'Cancel'}
           </button>
           {shareable && published && (
