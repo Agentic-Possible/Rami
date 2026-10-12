@@ -6,6 +6,7 @@ import {
   bookCardFor,
   coverHash,
   liveLink,
+  readSharedBook,
   publishBook,
   republishBook,
   unpublishBook,
@@ -89,7 +90,8 @@ export default function ShareBookDialog({ book, onClose }: { book: Book; onClose
   }
 
   // The preview is meant to show the cover the reader has now, so a link sent
-  // with an older one is brought up to date before it is shared again.
+  // with an older one is brought up to date before it is shared again. An
+  // unchanged one is still checked, since the link may have been taken down.
   const linkId = published?.id
   useEffect(() => {
     if (!linkId || !gutenbergId) return
@@ -98,8 +100,11 @@ export default function ShareBookDialog({ book, onClose }: { book: Book; onClose
       const link = stored && liveLink(stored)
       if (!stored || !link) return
       const hash = await coverHash(stored.cover)
-      if (hash === link.coverHash) return
       try {
+        if (hash === link.coverHash) {
+          await readSharedBook(link.id)
+          return
+        }
         const updated = await republishBook(link, await bookCardFor(stored, gutenbergId))
         await db.books.update(book.id, {
           sharedLink: { ...link, ...updated, coverHash: hash, publishedAt: Date.now() },
