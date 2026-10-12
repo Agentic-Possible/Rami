@@ -8,6 +8,7 @@ const STEPS = [
   'Choose “Ask about this” and follow the thread. Rami knows the book, your chapter and what you have talked about before.',
   'To share a highlight, select the passage in the book and choose “Share”.',
   'To share a conversation, open it from Threads and choose “Share thread” below the messages.',
+  'To share a Project Gutenberg book, tap its ⋯ menu, choose “Share book”, create a link, then share or copy the invitation so someone can add it to their library.',
   'Make your shelf your own: tap the ⋯ menu beside a book’s title, choose “Change cover”, and pick new cover art.',
 ]
 
