@@ -9,6 +9,8 @@
     "public/**"
   ],
   "words": [
+    "adjacentpossible",
+    "agenticpossible",
     "anchorless",
     "autoregressive",
     "bidi",

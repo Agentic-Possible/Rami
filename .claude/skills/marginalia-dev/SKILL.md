@@ -1,9 +1,9 @@
 ---
 name: marginalia-dev
-description: Run, verify and debug Marginalia locally. Use when starting the dev server, driving the reader or chat in a browser to check a change, or scanning for secrets before a commit.
+description: Run, verify and debug Rami locally. Use when starting the dev server, driving the reader or chat in a browser to check a change, or scanning for secrets before a commit.
 ---
 
-# Running and verifying Marginalia
+# Running and verifying Rami
 
 Almost everything is client side. The one server piece is `/api/chat`, the inference
 relay. Vitest covers the PWA's pure logic and the KOReader plugin (including a fake-host

@@ -8,7 +8,7 @@ import { button } from '../components/ui'
  * Where a shared link lands. The manifest registers this route as a share
  * target, so a Gutenberg book page shared out of the browser arrives here as a
  * query string. The reader already decided what they wanted by choosing
- * Marginalia from the share sheet, so this page just does it and opens the
+ * Rami from the share sheet, so this page just does it and opens the
  * book — there is nothing left to confirm.
  */
 export default function AddSharedPage() {

@@ -175,7 +175,7 @@ function spinePaths(book: EpubBook): string[] {
   return paths
 }
 
-/** Detects encryption that prevents Marginalia from reading EPUB content. */
+/** Detects encryption that prevents Rami from reading EPUB content. */
 async function hasDrm(book: EpubBook): Promise<boolean> {
   try {
     const archive = book.archive as unknown as {

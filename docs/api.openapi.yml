@@ -1,6 +1,6 @@
 openapi: 3.1.0
 info:
-  title: Marginalia APIs
+  title: Rami APIs
   version: 1.0.0
 paths:
   /api/chat:

@@ -140,7 +140,7 @@ export function parseHandoff(text: string): Handoff {
 
   const root = asRecord(payload, 'the file')
   if (root.format !== HANDOFF_FORMAT) {
-    throw new HandoffError('That is not a Marginalia export from KOReader.')
+    throw new HandoffError('That is not a Rami export from KOReader.')
   }
   if (root.version !== HANDOFF_VERSION) {
     throw new HandoffError(
