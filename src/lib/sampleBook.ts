@@ -165,6 +165,15 @@ export async function shelveSampleBook(
     await restoreBook(sample.id, book)
     return sample.id
   }
+
+  // The same file imported by hand after the sample was deleted: open that
+  // copy, or give it its EPUB back, rather than adding another.
+  const imported = await db.books.filter((row) => row.fileHash === book.fileHash).first()
+  if (imported) {
+    if (imported.archivedAt || imported.missingFileAt) await restoreBook(imported.id, book)
+    return imported.id
+  }
+
   await db.books.add(book).catch((err: { name?: string } | undefined) => {
     // Seeding in another tab got there first; the book is on the shelf either way.
     if (err?.name !== 'ConstraintError') throw err
