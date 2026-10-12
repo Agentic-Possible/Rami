@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/db'
-import type { Book } from '../db/types'
+import type { Book, PublishedLink } from '../db/types'
 import {
   bookCardFor,
   coverHash,
@@ -38,6 +38,10 @@ export default function ShareBookDialog({ book, onClose }: { book: Book; onClose
   const [note, setNote] = useState<string>()
   // Passing the check only unlocks the button: publishing waits for the tap.
   const [token, setToken] = useState<string>()
+  // Tokens are single use, so a failed attempt remounts the check for a fresh one.
+  const [challenge, setChallenge] = useState(0)
+  // A new link this device failed to save or remove; kept so removal can be retried.
+  const [unsaved, setUnsaved] = useState<PublishedLink>()
   const ref = useModal<HTMLDivElement>(onClose, '[data-cancel]')
   const sheet = prefersShareSheet()
 
@@ -102,16 +106,38 @@ export default function ShareBookDialog({ book, onClose }: { book: Book; onClose
   const create = () =>
     run(async () => {
       if (!token || !gutenbergId) return
-      const hash = await coverHash(current.cover)
-      const link = await publishBook(await bookCardFor(current, gutenbergId), token)
-      const saved = await db.books
-        .update(book.id, { sharedLink: { ...link, coverHash: hash, publishedAt: Date.now() } })
-        .catch(() => 0)
-      // Without its owner token on this device the link could never be removed.
-      if (!saved) {
-        await unpublishBook(link).catch(() => undefined)
-        throw new Error('Could not save the link on this device, so it was not shared.')
+      try {
+        const hash = await coverHash(current.cover)
+        const link = await publishBook(await bookCardFor(current, gutenbergId), token)
+        const publishedAt = Date.now()
+        const saved = await db.books
+          .update(book.id, { sharedLink: { ...link, coverHash: hash, publishedAt } })
+          .catch(() => 0)
+        // Without its owner token on this device the link could never be removed.
+        if (!saved) {
+          const removed = await unpublishBook(link).then(
+            () => true,
+            () => false,
+          )
+          if (removed) throw new Error('Could not save the link on this device, so it was removed.')
+          setUnsaved({ ...link, publishedAt })
+          throw new Error(
+            'Could not save the link on this device, and it is still live. Remove it before closing.',
+          )
+        }
+      } catch (err) {
+        setToken(undefined)
+        setChallenge((count) => count + 1)
+        throw err
       }
+    })
+
+  const removeUnsaved = () =>
+    run(async () => {
+      if (!unsaved) return
+      await unpublishBook(unsaved)
+      setUnsaved(undefined)
+      setNote('The link was removed.')
     })
 
   const remove = () =>
@@ -181,7 +207,7 @@ export default function ShareBookDialog({ book, onClose }: { book: Book; onClose
               cover, the title and the author, and nothing else from your library. The link lasts a
               year, and you can remove it from here.
             </p>
-            <Challenge onToken={setToken} onError={setError} />
+            <Challenge key={challenge} onToken={setToken} onError={setError} />
           </>
         )}
 
@@ -204,7 +230,16 @@ export default function ShareBookDialog({ book, onClose }: { book: Book; onClose
               {sheet ? 'Share' : 'Copy invitation'}
             </button>
           )}
-          {shareable && !published && (
+          {shareable && !published && unsaved && (
+            <button
+              onClick={() => void removeUnsaved()}
+              disabled={working}
+              className={button.danger}
+            >
+              Remove link
+            </button>
+          )}
+          {shareable && !published && !unsaved && (
             <button
               onClick={() => void create()}
               disabled={working || !token}
