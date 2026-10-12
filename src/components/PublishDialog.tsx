@@ -41,8 +41,10 @@ export default function PublishDialog({
   // A new link this device failed to save or remove; kept so removal can be retried.
   const [unsaved, setUnsaved] = useState<{ id: string; ownerToken: string }>()
   // A live link this device could not save holds the only owner token, so the
-  // dialog stays open until it is removed.
+  // dialog stays open until it is removed, and while a request that could
+  // produce one is still in flight.
   function dismiss() {
+    if (working) return
     if (unsaved)
       setError(
         'Remove the link before closing. Otherwise it stays public with no way to remove it.',
