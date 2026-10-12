@@ -85,14 +85,46 @@ export function idleDays(
   return Math.round((now - (book.lastOpenedAt ?? book.addedAt)) / 8_640_000) / 10
 }
 
+/** The subset of User-Agent Client Hints the report reads. */
+export interface ClientHints {
+  platform?: string
+  platformVersion?: string
+  fullVersionList?: { brand: string; version: string }[]
+}
+
+/**
+ * Chromium freezes its user agent (`Android 10; K`, `Chrome/155.0.0.0`), so the
+ * real OS and browser versions come from client hints. Undefined elsewhere.
+ */
+export function describeClientHints(hints: ClientHints): string | undefined {
+  // Skip the deliberately garbled GREASE brand, and Chromium when a named browser rides on it.
+  const brands = (hints.fullVersionList ?? []).filter(({ brand }) => !/not.?a.?brand/i.test(brand))
+  const browser = brands.find(({ brand }) => brand !== 'Chromium') ?? brands[0]
+  if (!browser || !hints.platform) return undefined
+  return `${browser.brand} ${browser.version} on ${describePlatform(hints.platform, hints.platformVersion)}`
+}
+
+function describePlatform(platform: string, version = ''): string {
+  if (platform === 'Windows') {
+    // Windows reports its UniversalApiContract version: 13 and up is Windows 11.
+    const major = Number.parseInt(version, 10)
+    if (major >= 13) return 'Windows 11'
+    if (major > 0) return 'Windows 10'
+  }
+  return version ? `${platform} ${version}` : platform
+}
+
 export interface DiagnosticContext {
   /** The exact build serving the page when the report is made. */
   build: string
+  /** Browser and OS with real versions, where client hints provide them. */
+  browser?: string
   userAgent: string
   standalone: boolean
   persisted?: boolean
   usageMb?: number
   quotaMb?: number
+  /** Every book record; `removed` and `missing` are subsets that never overlap. */
   books: { total: number; removed: number; missing: number }
 }
 
@@ -126,13 +158,14 @@ export function issueBody(context: DiagnosticContext, entries: DiagnosticEntry[]
     '<details><summary>Diagnostics (no book titles or notes)</summary>',
     '',
     `- Version: ${context.build}`,
-    `- Browser: ${context.userAgent}`,
+    ...(context.browser ? [`- Browser: ${context.browser}`] : []),
+    `- User agent: ${context.userAgent}`,
     `- Opened from: ${context.standalone ? 'home screen' : 'browser'}`,
     `- Storage: ${describeStorage(context)}`,
-    `- Books: ${books.total} (${books.removed} removed, ${books.missing} missing their EPUB)`,
+    `- Books: ${books.total - books.removed} on the shelf (${books.missing} missing their EPUB), ${books.removed} removed`,
     '',
     '```',
-    ...(entries.length ? entries.map(describeEntry) : ['No storage events recorded.']),
+    ...(entries.length ? entries.map(describeEntry) : ['No lost files or app updates recorded.']),
     '```',
     '</details>',
   ].join('\n')

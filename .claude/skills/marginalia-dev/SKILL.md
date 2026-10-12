@@ -261,10 +261,6 @@ call is billed. The provider is normally `cloudflare`; seeing another one means 
 routed around it, which the route allows, not a bug. The Origin header matters: the relay rejects cross-origin requests, and
 curl without one is treated as same-origin.
 
-The other provider is the reader's own OpenAI key, entered in Settings. Keep both models
-on `gpt-4o-mini` when testing it, since every exchange also triggers a background digest
-call.
-
 Memory digests fire every 4 messages (`MESSAGES_PER_UPDATE` in `src/lib/memory.ts`) and
 all summarizer failures are swallowed by design, so a broken digest is invisible in the
 UI. Check `db.bookMemory` directly when testing that path.

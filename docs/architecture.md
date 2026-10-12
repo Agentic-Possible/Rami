@@ -41,7 +41,6 @@ flowchart LR
   Relay --> OR[OpenRouter, billed]
   Relay --> PG[gutenberg.org]
   Relay --> OL[Open Library covers]
-  PWA --> OA[Optional own-key OpenAI, billed]
   Relay --> KV[(Workers KV: published threads)]
   Relay --> TS[Turnstile siteverify]
 ```
@@ -51,7 +50,7 @@ Deploy adapters share `shared/relay.ts`, `shared/gutenberg.ts` and
 
 ## Local storage schema
 
-`src/db/types.ts` defines records; `src/db/db.ts` owns Dexie versions 1–5.
+`src/db/types.ts` defines records; `src/db/db.ts` owns Dexie versions 1–6.
 Books own highlights, conversations, and memory. Conversations own messages.
 Compound indexes group children by book/conversation plus creation/update time.
 Version 2 repairs old digest delimiters, version 3 adds archives, and version 4

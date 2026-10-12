@@ -1,28 +1,17 @@
-import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, getSettings, saveSettings } from '../db/db'
-import { DEFAULT_SETTINGS, type HighlightColor, type Provider, type ReaderFont } from '../db/types'
+import { DEFAULT_SETTINGS, type HighlightColor, type ReaderFont } from '../db/types'
 import { BUILD } from '../lib/buildInfo'
 import { HIGHLIGHT_COLORS } from '../lib/highlights'
 import { READER_FONTS } from '../lib/themes'
 import { useIssueUrl } from '../lib/useIssueUrl'
-import { HOSTED_MODEL_LABEL, verifyKey } from '../lib/inference'
+import { HOSTED_MODEL_LABEL } from '../lib/inference'
 import { BackIcon } from '../components/Icons'
 import InstructionsEditor from '../components/InstructionsEditor'
 import KoreaderImport from '../components/KoreaderImport'
 import Ornament from '../components/Ornament'
-import { button, card, field, iconButton } from '../components/ui'
-
-// Keep retired models listed: a stored value with no matching option renders the
-// select blank, so anything a user might already have saved has to stay.
-const MODELS = [
-  { value: 'gpt-5.6-luna', label: 'gpt-5.6-luna — newest' },
-  { value: 'gpt-5', label: 'gpt-5 — general purpose' },
-  { value: 'gpt-5.4-mini', label: 'gpt-5.4-mini — small and fast' },
-  { value: 'gpt-4o-mini', label: 'gpt-4o-mini — small and fast, older' },
-  { value: 'gpt-4o', label: 'gpt-4o — older' },
-]
+import { button, card, iconButton } from '../components/ui'
 
 const ISSUES_URL = 'https://github.com/critesjosh/marginalia/issues'
 const DISCUSSIONS_URL = 'https://github.com/critesjosh/marginalia/discussions'
@@ -31,39 +20,7 @@ const CONTACT_EMAIL = 'rami@agenticpossible.com'
 export default function SettingsPage() {
   const issueUrl = useIssueUrl(ISSUES_URL)
   const stored = useLiveQuery(() => getSettings(), [])
-  const [apiKey, setApiKey] = useState('')
-  const [dirtyKey, setDirtyKey] = useState(false)
-  const [status, setStatus] = useState<'idle' | 'checking' | 'ok' | 'error'>('idle')
-  const [message, setMessage] = useState<string>()
-
   const settings = stored ?? DEFAULT_SETTINGS
-
-  useEffect(() => {
-    if (stored && !dirtyKey) setApiKey(stored.apiKey ?? '')
-  }, [stored, dirtyKey])
-
-  async function testAndSave() {
-    const key = apiKey.trim()
-    if (!key) {
-      await saveSettings({ apiKey: undefined })
-      setStatus('idle')
-      setMessage('Key cleared.')
-      return
-    }
-
-    setStatus('checking')
-    setMessage(undefined)
-    try {
-      await verifyKey(key, settings.model)
-      await saveSettings({ apiKey: key })
-      setDirtyKey(false)
-      setStatus('ok')
-      setMessage('Key works and is saved on this device.')
-    } catch (err) {
-      setStatus('error')
-      setMessage(err instanceof Error ? err.message : 'Could not verify that key.')
-    }
-  }
 
   return (
     <div className="paper-grain min-h-full bg-paper text-ink">
@@ -82,97 +39,10 @@ export default function SettingsPage() {
           <p className="mt-1 font-ui text-body text-ink-soft">
             Chat works out of the box — no account or key needed.
           </p>
-
-          <div className="mt-3 space-y-2">
-            <ProviderOption
-              value="hosted"
-              current={settings.provider}
-              title="Built-in model"
-              detail={`${HOSTED_MODEL_LABEL}. Free, and your key stays out of it — requests go through this site's relay.`}
-            />
-            <ProviderOption
-              value="openai"
-              current={settings.provider}
-              title="My own OpenAI key"
-              detail="Sends your conversations straight to api.openai.com, billed to you."
-            />
-          </div>
+          <p className="mt-2 font-ui text-meta text-ink-faint">
+            {HOSTED_MODEL_LABEL}. Requests go through this site's relay.
+          </p>
         </section>
-
-        {settings.provider === 'openai' && (
-          <>
-            <section className={card}>
-              <h2 className="font-book text-heading font-medium">OpenAI API key</h2>
-              <p className="mt-1 font-ui text-body text-ink-soft">
-                Stored only in this browser and sent only to api.openai.com. Don't use this on a
-                shared device.
-              </p>
-
-              <input
-                type="password"
-                value={apiKey}
-                onChange={(e) => {
-                  setApiKey(e.target.value)
-                  setDirtyKey(true)
-                  setStatus('idle')
-                  setMessage(undefined)
-                }}
-                placeholder="sk-…"
-                autoComplete="off"
-                spellCheck={false}
-                className={`${field} mt-3 font-mono text-[15px]`}
-              />
-
-              <div className="mt-3 flex items-center gap-3">
-                <button
-                  onClick={() => void testAndSave()}
-                  disabled={status === 'checking'}
-                  className={button.primary}
-                >
-                  {status === 'checking' ? 'Checking…' : 'Test and save'}
-                </button>
-                {message && (
-                  <p
-                    className={`font-ui text-meta ${status === 'error' ? 'text-danger' : 'text-moss'}`}
-                  >
-                    {message}
-                  </p>
-                )}
-              </div>
-            </section>
-
-            <section className={card}>
-              <h2 className="font-book text-heading font-medium">OpenAI models</h2>
-              <select
-                value={settings.model}
-                onChange={(e) => void saveSettings({ model: e.target.value })}
-                className={`${field} mt-2`}
-              >
-                {MODELS.map((m) => (
-                  <option key={m.value} value={m.value}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
-
-              <h3 className="mt-5 font-ui text-label font-medium">Summary model</h3>
-              <p className="mt-1 font-ui text-body text-ink-soft">
-                Used for the per-book memory digest. A cheap model is plenty.
-              </p>
-              <select
-                value={settings.summaryModel}
-                onChange={(e) => void saveSettings({ summaryModel: e.target.value })}
-                className={`${field} mt-2`}
-              >
-                {MODELS.map((m) => (
-                  <option key={m.value} value={m.value}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
-            </section>
-          </>
-        )}
 
         <Ornament short />
 
@@ -255,8 +125,8 @@ export default function SettingsPage() {
           <p className="mt-1 font-ui text-body text-ink-soft">
             Everything lives in this browser's IndexedDB. The export is a JSON file containing your
             highlighted passages and the surrounding text, every thread, and Rami's running notes on
-            each book. It does not include your API key or the book files. Treat it as a record of
-            what you read and thought.
+            each book. It does not include the book files. Treat it as a record of what you read and
+            thought.
           </p>
           <button onClick={() => void exportData()} className={`${button.secondary} mt-3`}>
             Export highlights and chats
@@ -301,41 +171,6 @@ export default function SettingsPage() {
         </p>
       </main>
     </div>
-  )
-}
-
-function ProviderOption({
-  value,
-  current,
-  title,
-  detail,
-}: {
-  value: Provider
-  current: Provider
-  title: string
-  detail: string
-}) {
-  const selected = current === value
-
-  return (
-    <label
-      className={`flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors duration-150 ${
-        selected ? 'border-moss bg-paper' : 'border-rule hover:bg-paper-sunk'
-      }`}
-    >
-      <input
-        type="radio"
-        name="provider"
-        value={value}
-        checked={selected}
-        onChange={() => void saveSettings({ provider: value })}
-        className="mt-1 h-4 w-4 accent-moss"
-      />
-      <span>
-        <span className="font-ui text-label font-medium">{title}</span>
-        <span className="mt-0.5 block font-ui text-meta text-ink-soft">{detail}</span>
-      </span>
-    </label>
   )
 }
 

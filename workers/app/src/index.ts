@@ -12,7 +12,7 @@ const TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com'
 const CONTENT_SECURITY_POLICY =
   `default-src 'self'; script-src 'self' ${TURNSTILE_ORIGIN}; style-src 'self' 'unsafe-inline' blob:; ` +
   "img-src 'self' data: blob: https://www.gutenberg.org; font-src 'self' data: blob:; " +
-  "connect-src 'self' https://api.openai.com; " +
+  "connect-src 'self'; " +
   `frame-src 'self' blob: data: ${TURNSTILE_ORIGIN}; object-src 'none'; base-uri 'self'; form-action 'self'`
 
 function withSecurityHeaders(response: Response): Response {
