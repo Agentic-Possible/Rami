@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import { expect, test } from './fixtures.js'
+import { expect, openContents, test } from './fixtures.js'
 
 // iOS Safari can lose the file behind a Blob stored in IndexedDB while keeping
 // the row (issue #106). Chromium never does, so this stands in for it: a Blob
@@ -123,11 +123,7 @@ test('a bundled book that lost its files is fetched again', async ({ page }) => 
   await expect(card.locator('img')).toBeVisible()
 
   await card.click()
-  await page.getByRole('button', { name: 'Table of contents' }).click()
-  await page
-    .getByRole('dialog', { name: 'Table of contents' })
-    .getByRole('button', { name: /Loomings/i })
-    .click()
+  await (await openContents(page)).getByRole('button', { name: /Loomings/i }).click()
   await expect(page.frameLocator('iframe').first().locator('body')).toContainText('Call me Ishmael')
 })
 
